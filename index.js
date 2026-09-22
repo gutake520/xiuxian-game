@@ -14,8 +14,8 @@ async function dbRequest(mode,operation){
   tx.onerror=()=>{}; // Transaction errors abort by default; reject from onabort.
  })
 }
-async function dbGet(slot){return (await dbRequest('readonly',store=>store.get(slot)))||null}
-async function dbPut(data){await dbRequest('readwrite',store=>store.put(data));return data}
+async function dbGet(slot){const data=(await dbRequest('readonly',store=>store.get(slot)))||null;if(data&&trimEventHistory(data))await dbPut(data);return data}
+async function dbPut(data){trimEventHistory(data);await dbRequest('readwrite',store=>store.put(data));return data}
 async function dbDelete(slot){await dbRequest('readwrite',store=>store.delete(slot))}
 async function runAction(action){try{return await action()}catch(error){console.error('[xiuxian-game]',error);alert('操作未完成，请重试。存档读取或写入失败。')}}
 function escapeHTML(value){return String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
@@ -50,9 +50,64 @@ const STAT_NAMES=['悟性','根骨','福缘','神识','魅力'], FREE_POINTS=30,
 function emptyAllocation(){return{悟性:0,根骨:0,福缘:0,神识:0,魅力:0}}
 function finalStats(root,alloc){const out={};for(const k of STAT_NAMES)out[k]=(alloc[k]||0)+(root.bonus[k]||0);return out}
 function rootDesc(root){const b=STAT_NAMES.filter(k=>root.bonus[k]).map(k=>k+(root.bonus[k]>0?'+':'')+root.bonus[k]).join(' · ');return root.name+'｜'+b}
-function newSave(name,gender,root,alloc){const stats=finalStats(root,alloc);return{slot:currentSlot,version:3,createdAt:Date.now(),updatedAt:Date.now(),player:{name,gender,realm:'炼气一层',sect:'无门无派',cultivation:0,spirit:100,hp:100,mind:60,spiritRoot:root.name,rootType:root.type,rootDesc:rootDesc(root),aptitude:root.bonus,stats},story:{chapter:1,revenge:true,homeDestroyed:true},inventory:[],events:[],flags:{}}}
+function newSave(name,gender,root,alloc){const stats=finalStats(root,alloc);return{slot:currentSlot,version:3,createdAt:Date.now(),updatedAt:Date.now(),player:{name,gender,realm:'炼气一层',sect:'无门无派',cultivation:0,spirit:100,hp:100,mind:60,spiritRoot:root.name,rootType:root.type,rootDesc:rootDesc(root),aptitude:root.bonus,stats},story:{chapter:1,revenge:true,homeDestroyed:true},inventory:[],events:[],actionRound:0,world:{location:'荒山古道',day:1},flags:{}}}
 async function saveNow(){if(!currentSave||!currentSlot)return;currentSave.slot=currentSlot;currentSave.updatedAt=Date.now();await dbPut(currentSave)}
-function renderHome(){activatePage('home');const p=currentSave.player;document.getElementById('xg-content').innerHTML=`<div class="xg-card xg-player"><div><strong>${escapeHTML(p.name)}</strong><small>${escapeHTML(p.gender||'未设')} · ${escapeHTML(p.sect)}</small></div><em>${escapeHTML(p.realm)}</em></div><div class="xg-card"><h3>⌖ 荒山古道</h3><p>故山已成焦土。你将旧门残玉收在怀中，自此踏上修行路。<br>仇人的名字尚未从世间消失，你也不会。</p></div><div class="xg-card xg-stats"><h3>${escapeHTML(p.spiritRoot)}</h3><small>${escapeHTML(p.rootDesc)}</small><p>悟性 ${escapeHTML(p.stats.悟性)}　根骨 ${escapeHTML(p.stats.根骨)}　福缘 ${escapeHTML(p.stats.福缘)}<br>神识 ${escapeHTML(p.stats.神识)}　魅力 ${escapeHTML(p.stats.魅力)}</p></div><div class="xg-actions"><button>打坐吐纳</button><button>寻找落脚处</button><button>打听仇家消息</button><button>随意走走</button></div>`}
+// Only narrative history is capped. Inventory, quests and flags remain untouched.
+const EVENT_ROUND_LIMIT=10;
+function trimEventHistory(save){
+ const before=JSON.stringify(save.events),source=Array.isArray(save.events)?save.events:[];
+ let serial=0;const groups=[];
+ for(const item of source){
+  const event=typeof item==='string'?{text:item}:item;
+  if(!event||typeof event!=='object')continue;
+  const explicit=Number.isSafeInteger(event.round)&&event.round>=0;
+  const round=explicit?event.round:serial+1;serial=Math.max(serial,round);
+  let group=groups.find(entry=>entry.round===round);
+  if(!group){group={round,location:event.location||'',messages:[]};groups.push(group)}
+  const messages=Array.isArray(event.messages)?event.messages:[event.text??event.message??event.description];
+  group.messages.push(...messages.filter(text=>typeof text==='string'&&text.trim()));
+ }
+ const latest=Math.max(Number.isSafeInteger(save.actionRound)?save.actionRound:0,serial);
+ save.actionRound=latest;
+ save.events=groups.filter(group=>group.round>latest-EVENT_ROUND_LIMIT).sort((a,b)=>a.round-b.round).slice(-EVENT_ROUND_LIMIT);
+ return before!==JSON.stringify(save.events);
+}
+async function recordAction(messages,applyResult){
+ if(!currentSave||!currentSlot)return;
+ if(actionPending)return;
+ actionPending=true;
+ try{
+  const next=structuredClone(currentSave);trimEventHistory(next);
+  if(applyResult)await applyResult(next);
+  next.actionRound++;
+  next.events.push({round:next.actionRound,location:next.world?.location||'荒山古道',messages:(Array.isArray(messages)?messages:[messages]).filter(text=>typeof text==='string')});
+  next.updatedAt=Date.now();await dbPut(next);currentSave=next;
+ }finally{actionPending=false}
+}
+let actionPending=false;
+function renderHome(){
+ activatePage('home');const p=currentSave.player,world=currentSave.world||{};
+ const location=world.location||'荒山古道',day=Number.isSafeInteger(world.day)&&world.day>0?world.day:1;
+ const requirement=p.cultivationRequired,known=Number.isFinite(requirement)&&requirement>0;
+ const progress=known?Math.max(0,Math.min(100,(p.cultivation||0)/requirement*100)):0;
+ const inSect=p.sect&&p.sect!=='无门无派';
+ const atSect=inSect&&location===p.sect;
+ const actions=atSect?['宗门走访','同门交谈','离开山门']:['四下探索','寻人交谈','前往别处'];
+ const history=Array.isArray(currentSave.events)?currentSave.events:[];
+ document.getElementById('xg-content').innerHTML=`<section class="xg-home-sheet">
+ <div class="xg-card"><div class="xg-player"><div><strong>${escapeHTML(p.name)}</strong><small>${escapeHTML(p.gender||'未设')} · ${escapeHTML(p.sect||'无门无派')}</small></div><em>${escapeHTML(p.realm)}</em></div>
+ <div class="xg-home-cultivation"><span>修为</span><span>${sheetValue(p.cultivation)} / ${sheetValue(requirement)}</span></div>
+ <div class="xg-progress" ${known?`role="progressbar" aria-label="修为" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${progress}"`:'aria-label="突破所需修为尚未设定"'}><i style="width:${progress}%"></i></div>
+ </div>
+ <div class="xg-world-line"><span>⌖ ${escapeHTML(location)}</span><span>第 ${day} 日</span></div>
+ <div class="xg-card xg-daily"><h3>宗门日课</h3><p>${inSect?'暂无可领取的日课。':'尚未入宗，暂无宗门日课。'}</p></div>
+ <div class="xg-location-actions">${actions.map(label=>`<button type="button" data-home-action>${label}</button>`).join('')}</div>
+ <p id="xg-home-feedback" role="status" aria-live="polite"></p>
+ <div class="xg-card xg-history"><div class="xg-history-heading"><h3>近日见闻</h3><small>最近十轮</small></div>
+ ${history.length?[...history].reverse().map(event=>`<article><div class="xg-event-meta"><span>第 ${escapeHTML(event.round)} 轮</span><span>${escapeHTML(event.location||'')}</span></div>${event.messages.map(text=>`<p>${escapeHTML(text)}</p>`).join('')}</article>`).join(''):'<p class="xg-history-empty">行路伊始，尚无新的见闻。</p>'}
+ </div></section>`;
+ document.querySelectorAll('[data-home-action]').forEach(button=>button.onclick=()=>{document.getElementById('xg-home-feedback').textContent='此处行动尚未开放。'});
+}
 function activatePage(page){
  document.querySelectorAll('#xg-panel nav button').forEach(button=>{
   const active=button.id==='xg-'+page;
@@ -68,7 +123,6 @@ function renderCharacter(){
  const p=currentSave.player,stats=p.stats||{},combat=p.combat||{};
  const root=roots.find(root=>root.name===p.spiritRoot);
  const type={variant:'变异灵根',single:'单灵根',double:'双灵根',triple:'三灵根',quad:'四灵根',five:'五灵根'}[p.rootType||root?.type]||'未详';
- const statRoles={悟性:'突破成功率',根骨:'修炼速度',神识:'功法学习速度',魅力:'人缘与好感',福缘:'奇遇机缘'};
  const cell=(label,value)=>`<div class="xg-value-cell"><span>${label}</span><strong>${value}</strong></div>`;
  document.getElementById('xg-content').innerHTML=`<section class="xg-character" aria-label="人物面板">
  <div class="xg-card"><div class="xg-character-title"><small>人物 · 道途</small><h2>${escapeHTML(p.name||'未命名')}</h2></div>
@@ -76,11 +130,11 @@ function renderCharacter(){
  <div class="xg-root-detail"><strong>${escapeHTML(p.spiritRoot||'未详')}</strong><small>${escapeHTML(p.rootDesc||'')}</small></div>
  <div class="xg-cultivation"><span>修为</span><strong>${sheetValue(p.cultivation)} / ${sheetValue(p.cultivationRequired)}</strong></div>
  </div>
- <div class="xg-card"><h3>五维资质</h3><div class="xg-aptitude-grid">${['悟性','根骨','神识','魅力','福缘'].map(k=>`<div><span>${k}</span><strong>${sheetValue(stats[k])}</strong><small>${statRoles[k]}</small></div>`).join('')}</div></div>
+ <div class="xg-card"><h3>资质</h3><div class="xg-aptitude-grid">${['悟性','根骨','神识','魅力','福缘'].map(k=>`<div><span>${k}</span><strong>${sheetValue(stats[k])}</strong></div>`).join('')}</div></div>
  <div class="xg-card"><h3>战斗属性</h3><div class="xg-combat-grid">${[
  ['生命 HP',combat.hp??p.hp],['法力 MP',combat.mp??p.mp??p.spirit],['攻击',combat.attack],['防御',combat.defense],['速度',combat.speed],['暴击率',combat.critRate,'%'],['闪避率',combat.dodgeRate,'%']
  ].map(([label,value,suffix])=>cell(label,sheetValue(value,suffix))).join('')}</div>
- <h4>属性免伤</h4><div class="xg-resist-grid">${elements.map(k=>cell(k,sheetValue(combat.resistances?.[k],'%'))).join('')}</div><small class="xg-sheet-note">— 表示数值尚未设定</small></div>
+ <h4>属性免伤</h4><div class="xg-resist-grid">${elements.map(k=>cell(k,sheetValue(combat.resistances?.[k],'%'))).join('')}</div></div>
  <div class="xg-card"><h3>装备</h3><div class="xg-equipment-grid">${['武器','防具','饰品'].map(label=>cell(label,'未装备')).join('')}</div>
  <h4>修炼功法</h4><div class="xg-method-row"><span>主修</span><span>未装备</span></div><div class="xg-method-row"><span>辅修</span><span>未装备</span></div>
  <h4>战斗功法</h4><p class="xg-empty-note">尚未装备战斗功法</p></div>
@@ -94,7 +148,7 @@ function showPrologue(){let root=pickRoot(),alloc=emptyAllocation();const el=doc
  document.getElementById('xg-onboard-cancel').onclick=()=>{el.classList.remove('open');runAction(showSlots)};
  document.getElementById('xg-begin').onclick=()=>runAction(async()=>{const name=document.getElementById('xg-name').value.trim(),gender=document.getElementById('xg-gender').value,used=STAT_NAMES.reduce((n,k)=>n+alloc[k],0);if(!name)return document.getElementById('xg-name').focus();if(used!==FREE_POINTS)return alert('还有 '+(FREE_POINTS-used)+' 点属性没有分配。');const button=document.getElementById('xg-begin');if(button.disabled)return;button.disabled=true;document.getElementById('xg-onboard-cancel').disabled=true;try{const next=newSave(name,gender,root,alloc);await dbPut(next);currentSave=next;localStorage.setItem(LAST_SLOT_KEY,currentSlot);el.classList.remove('open');renderHome()}finally{button.disabled=false;document.getElementById('xg-onboard-cancel').disabled=false}})}
 async function showSlots(){const sheet=document.getElementById('xg-slots');sheet.classList.add('open');const list=document.getElementById('xg-slot-list');list.innerHTML='';for(let i=0;i<5;i++){const slot=SLOTS[i],s=await dbGet(slot),row=document.createElement('div');row.className='xg-slot';row.innerHTML=s?`<div><b>存档 ${i+1} · ${escapeHTML(s.player.name)}</b><small>${escapeHTML(s.player.gender||'')}　${escapeHTML(s.player.spiritRoot)}　${escapeHTML(s.player.realm)}</small></div><div><button data-load>进入</button><button data-del>删除</button></div>`:`<div><b>存档 ${i+1}</b><small>空白命途</small></div><button data-new>新建</button>`;row.querySelector('[data-load]')?.addEventListener('click',async()=>{currentSlot=slot;currentSave=s;localStorage.setItem(LAST_SLOT_KEY,slot);sheet.classList.remove('open');renderHome()});row.querySelector('[data-new]')?.addEventListener('click',()=>{currentSlot=slot;currentSave=null;sheet.classList.remove('open');showPrologue()});row.querySelector('[data-del]')?.addEventListener('click',()=>runAction(async()=>{if(confirm('删除这个存档？此操作无法撤销。')){await dbDelete(slot);if(currentSlot===slot){currentSlot=null;currentSave=null;document.getElementById('xg-content').textContent='';localStorage.removeItem(LAST_SLOT_KEY)}await showSlots()}}));list.append(row)}}
-async function loadGame(){const last=localStorage.getItem(LAST_SLOT_KEY);if(last){const s=await dbGet(last);if(s){currentSlot=last;currentSave=s;renderHome();return}}await showSlots()}
+async function loadGame(){await Promise.all(SLOTS.map(dbGet));const last=localStorage.getItem(LAST_SLOT_KEY);if(last){const s=await dbGet(last);if(s){currentSlot=last;currentSave=s;renderHome();return}}await showSlots()}
 function mount(){if(document.getElementById('xg-fab'))return;const fab=document.createElement('button');fab.id='xg-fab';fab.type='button';fab.title='问我';fab.setAttribute('aria-label','打开问我');fab.innerHTML='<span class="xg-moon-emoji" aria-hidden="true">🌙</span>';const panel=document.createElement('section');panel.id='xg-panel';panel.innerHTML=`<div class="xg-head"><div><b>问 我</b><small>一念成仙 · 一念为凡</small></div><button id="xg-head-moon" class="xg-head-moon" type="button" aria-label="关闭面板"><span aria-hidden="true">🌙</span></button><div class="xg-mountain"><i></i><i></i><i></i></div></div><main id="xg-content"></main><nav aria-label="游戏导航">${navButton('home','主页','xg-home',true)}${navButton('person','人物','xg-person')}${navButton('bag','储物')}${navButton('map','地图')}${navButton('settings','设置','xg-settings')}</nav><div id="xg-settings-sheet"><div class="xg-setting-title">设置<button id="xg-settings-close">×</button></div><button id="xg-slots-btn">五世存档</button><button id="xg-save">保存当前存档</button><button id="xg-update">重新载入游戏<small>应用已经下载好的扩展更新</small></button><p>五个独立存档均保存在本机 IndexedDB。角色资质、灵根、性别、门派与事件标记会随档保存，供后续奇遇系统判定。</p></div><div id="xg-slots"><div class="xg-setting-title">选择命途<button id="xg-slots-close">×</button></div><div id="xg-slot-list"></div></div><div id="xg-onboard"><button id="xg-onboard-cancel" type="button">← 返回存档</button><div class="xg-prologue"><small>序 · 烬余</small><h2>山门已灭，故人无归。</h2><p>那一夜，火烧了整座山。师门上下无一幸免，唯有你从断崖下醒来。</p><p>你记得剑光，也记得仇人的衣纹。可如今的你连握剑的手都在发抖。</p><p>想报仇，先活下去。想活下去，便修行。</p><label>留下你的名字</label><input id="xg-name" maxlength="12" placeholder="输入姓名"><label>性别</label><select id="xg-gender"><option value="女" selected>女</option><option value="男">男</option><option value="不详">不详</option></select><div id="xg-roll"></div><button id="xg-reroll">重测灵根</button><button id="xg-begin">此身入道</button></div></div>`;document.body.append(fab,panel);
 let moved=false,sx=0,sy=0,sl=0,st=0;const restorePosition=()=>{let saved;try{saved=JSON.parse(localStorage.getItem(POS_KEY)||'null')}catch{localStorage.removeItem(POS_KEY)}if(!saved)return;const pos=clampFabPosition(saved.left,saved.top,52,52,innerWidth,innerHeight);fab.style.left=pos.left+'px';fab.style.top=pos.top+'px';fab.style.right='auto';fab.style.transform='none'};restorePosition();window.addEventListener('resize',restorePosition);const start=e=>{moved=false;const p=e.touches?.[0]||e;sx=p.clientX;sy=p.clientY;const r=fab.getBoundingClientRect();sl=r.left;st=r.top},move=e=>{if(!sx&&!sy)return;const p=e.touches?.[0]||e,dx=p.clientX-sx,dy=p.clientY-sy;if(Math.abs(dx)+Math.abs(dy)>6)moved=true;if(!moved)return;e.preventDefault();fab.style.transform='none';fab.style.right='auto';fab.style.left=Math.max(4,Math.min(innerWidth-fab.offsetWidth-4,sl+dx))+'px';fab.style.top=Math.max(4,Math.min(innerHeight-fab.offsetHeight-4,st+dy))+'px'},end=()=>{if(moved){const r=fab.getBoundingClientRect(),left=r.left+r.width/2<innerWidth/2?8:innerWidth-r.width-8;fab.style.left=left+'px';localStorage.setItem(POS_KEY,JSON.stringify({left,top:r.top}))}sx=sy=0};fab.addEventListener('touchstart',start,{passive:true});fab.addEventListener('touchmove',move,{passive:false});fab.addEventListener('touchend',end);fab.addEventListener('pointerdown',start);window.addEventListener('pointermove',move);window.addEventListener('pointerup',end);fab.onclick=()=>{if(!moved){panel.classList.add('open');fab.classList.add('hide');runAction(loadGame)}};
 document.getElementById('xg-home').onclick=()=>{if(currentSave)renderHome();else runAction(showSlots)};document.getElementById('xg-person').onclick=renderCharacter;

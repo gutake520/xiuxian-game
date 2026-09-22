@@ -159,3 +159,46 @@
 #xg-panel .xg-character-actions button:disabled{opacity:.6;cursor:default}
 #xg-panel #xg-character-message{color:#dfc28b!important;text-align:center;margin:10px 0;line-height:1.7;font-size:13px}
 @media(max-width:380px){#xg-panel .xg-character{font-size:12px}#xg-panel .xg-info-grid,#xg-panel .xg-combat-grid{gap:10px}}
+
+/* Home overview: compact status, local actions and bounded narrative history. */
+#xg-panel .xg-home-sheet{font-size:13px;color:#e7e0d1}
+#xg-panel .xg-home-sheet .xg-card{padding:13px;margin:10px 0}
+#xg-panel .xg-home-sheet h3{font-size:15px;margin:0;color:#dfc28b!important}
+#xg-panel .xg-home-sheet p{color:#c5ccbf!important;font-size:12px;line-height:1.7}
+#xg-panel .xg-home-cultivation,#xg-panel .xg-world-line,#xg-panel .xg-event-meta,#xg-panel .xg-history-heading{display:flex;justify-content:space-between;align-items:center;gap:10px}
+#xg-panel .xg-home-cultivation{margin-top:12px;font-size:12px;color:#d9caa9}
+#xg-panel .xg-home-cultivation span{color:#d9caa9!important}
+#xg-panel .xg-progress{height:4px;border-radius:8px;background:#26372e;margin-top:7px;overflow:hidden}
+#xg-panel .xg-progress i{height:100%;display:block;background:#d8bb83}
+#xg-panel .xg-world-line{margin:6px 2px 10px;font-size:11px}
+#xg-panel .xg-world-line span{color:#b8c3b5!important;overflow-wrap:anywhere}
+#xg-panel .xg-world-line span:last-child{white-space:nowrap}
+#xg-panel .xg-daily p{margin:7px 0 0}
+#xg-panel .xg-location-actions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
+#xg-panel .xg-location-actions button{font:inherit;font-size:12px;min-height:40px;padding:8px 3px;color:#e1cfaa!important;background:#0d1d1a;border:1px solid #6b5c40;border-radius:8px;box-shadow:none;text-shadow:none}
+#xg-panel #xg-home-feedback{margin:6px 0;text-align:center;color:#d8bb83!important;font-size:12px}
+#xg-panel #xg-home-feedback:empty{display:none}
+#xg-panel .xg-history-heading small{font-size:10px;color:#aab9a6!important}
+#xg-panel .xg-history article{padding:10px 0;border-bottom:1px solid #334237}
+#xg-panel .xg-history article:last-child{border-bottom:0;padding-bottom:0}
+#xg-panel .xg-event-meta{font-size:10px;margin-bottom:5px}
+#xg-panel .xg-event-meta span{color:#adbbab!important}
+#xg-panel .xg-history-empty{margin-top:10px}
+/* Character: inline values and tighter spacing instead of explanatory tiles. */
+#xg-panel .xg-character .xg-card{padding:12px;margin:9px 0}
+#xg-panel .xg-character h2{margin:3px 0 10px;font-size:22px}
+#xg-panel .xg-character h3{margin:0 0 9px;font-size:15px}
+#xg-panel .xg-character h4{margin:12px 0 7px;font-size:12px}
+#xg-panel .xg-aptitude-grid{gap:6px}
+#xg-panel .xg-aptitude-grid>div{padding:6px 9px;align-items:center;gap:6px;border-radius:6px}
+#xg-panel .xg-aptitude-grid strong{font-size:16px}
+#xg-panel .xg-combat-grid{gap:0 12px}
+#xg-panel .xg-combat-grid .xg-value-cell{flex-direction:row;justify-content:space-between;align-items:center;gap:6px;padding:7px 0}
+#xg-panel .xg-combat-grid .xg-value-cell>span{font-size:11px}
+#xg-panel .xg-combat-grid .xg-value-cell>strong{font-size:13px}
+#xg-panel .xg-resist-grid .xg-value-cell{gap:2px;font-size:12px}
+#xg-panel .xg-info-grid{gap:8px 12px}
+#xg-panel .xg-root-detail{margin-top:10px;padding-top:8px}
+#xg-panel .xg-cultivation{margin-top:10px;padding:7px 10px}
+#xg-panel .xg-equipment-grid .xg-value-cell{padding:8px 4px}
+#xg-panel .xg-method-row{padding:6px 0;font-size:12px}
