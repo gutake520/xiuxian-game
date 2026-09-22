@@ -37,3 +37,22 @@
 #xg-panel nav button{padding:2px 0;line-height:1.05}
 #xg-panel nav small{margin-top:2px}
 @media(max-width:600px){.xg-head{min-height:102px}.xg-head b{font-size:30px}.xg-head-moon{width:40px;height:40px;right:18px;top:30px}.xg-head-moon:after{width:37px;height:37px;left:-8px;top:-6px}.xg-mountain{height:38px}#xg-panel nav{padding:4px 7px 2px;min-height:48px}}
+
+/* tighter mobile chrome: preserve gold crescent and give content more room */
+.xg-head{min-height:88px;padding-top:0}
+.xg-head b{font-size:34px;line-height:1}
+.xg-head small{margin-top:0;line-height:1.2}
+.xg-head-moon{top:12px;right:22px;background:#efd39a!important;box-shadow:0 0 17px #d7b96f55!important;overflow:visible}
+.xg-head-moon:after{background:#10231f!important;z-index:1}
+.xg-mountain{height:32px;bottom:0}
+#xg-panel nav{min-height:42px;padding:2px 9px 0;margin-bottom:-20px}
+#xg-panel nav button{padding:0;line-height:.95}
+#xg-panel nav small{margin-top:0;line-height:1}
+@media(max-width:600px){
+ .xg-head{min-height:78px}
+ .xg-head b{font-size:28px}
+ .xg-head-moon{top:8px;right:16px;width:40px;height:40px}
+ .xg-head-moon:after{width:37px;height:37px;left:-8px;top:-6px}
+ .xg-mountain{height:27px}
+ #xg-panel nav{min-height:40px;padding:1px 7px 0;margin-bottom:-15px}
+}
