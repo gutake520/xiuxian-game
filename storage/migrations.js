@@ -1,5 +1,27 @@
-/**
- * 旧存档校验与版本迁移，补缺省字段并保留已有进度。
- * 目录占位：尚未实现或迁移，当前不被入口加载。
- * 实施前阅读 docs/STRUCTURE.md；不要在这里复制一份现有状态或数值。
- */
+import {INITIAL_STONES,INITIAL_BAG_SIZE} from '../data/balance.js';
+import {QI_REQUIREMENTS,realmProgress,addCultivation} from '../data/realms.js';
+import {localDay} from '../systems/cultivation.js';
+export function migrateSave(save,now=Date.now()){
+ if(!save?.player)throw new Error('存档缺少人物信息。');
+ const p=save.player;
+ if(!Number.isFinite(p.spiritStones))p.spiritStones=INITIAL_STONES;
+ save.inventory=Array.isArray(save.inventory)?save.inventory:[];
+ save.bagCapacity=Number.isSafeInteger(save.bagCapacity)?Math.max(INITIAL_BAG_SIZE,save.bagCapacity):INITIAL_BAG_SIZE;
+ save.equipment??={weapon:null,armor:null};
+ save.techniques??={mastered:[],main:null,puzzles:{}};
+ save.techniques.mastered??=[];save.techniques.puzzles??={};
+ save.itemSerial=Math.max(save.itemSerial||0,save.inventory.length);
+ for(const item of save.inventory){if(!item.uid)item.uid='legacy-'+(++save.itemSerial)}
+ // Earlier "learnedMethods" only recorded the gift; no learning challenge existed.
+ if((save.version||0)<4&&save.learnedMethods?.some(method=>method.id==='basic-qi-guide')&&!save.techniques.mastered.includes('basic-qi-guide')&&!save.inventory.some(item=>item.itemId==='qi-manual')){
+  save.inventory.push({uid:'item-'+(++save.itemSerial),itemId:'qi-manual',quantity:1});
+ }
+ save.events=Array.isArray(save.events)?save.events:[];save.events=save.events.slice(-10);
+ save.actionRound=Math.max(save.actionRound||0,...save.events.map(e=>e.round||0));
+ save.idle??={lastAt:now,day:localDay(now),usedMs:0,totalEarned:0};
+ if(!Number.isFinite(save.idle.lastAt))save.idle.lastAt=now;
+ if(!Number.isFinite(save.idle.usedMs))save.idle.usedMs=0;
+ if(!save.idle.day)save.idle.day=localDay(now);
+ const progress=realmProgress(p);if(progress.index>=0){p.cultivationRequired=QI_REQUIREMENTS[progress.index]??null;if(progress.required&&p.cultivation>=progress.required){const xp=p.cultivation;p.cultivation=0;addCultivation(save,xp)}}
+ save.version=4;return save;
+}

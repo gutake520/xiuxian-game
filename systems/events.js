@@ -1,5 +1,5 @@
-/**
- * 按有效行动分组的见闻，最多保留十轮；不删除永久进度。
- * 目录占位：尚未实现或迁移，当前不被入口加载。
- * 实施前阅读 docs/STRUCTURE.md；不要在这里复制一份现有状态或数值。
- */
+export function appendEvent(save,messages){
+ save.actionRound=(save.actionRound||0)+1;
+ save.events.push({round:save.actionRound,location:save.world?.location||'荒山古道',messages:Array.isArray(messages)?messages:[messages]});
+ save.events=save.events.filter(event=>event.round>save.actionRound-10).slice(-10);
+}

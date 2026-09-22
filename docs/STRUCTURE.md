@@ -2,7 +2,7 @@
 
 ## 当前状态
 
-本次只建立目录、说明和无执行逻辑的 JS 占位文件，尚未拆迁现有代码。SillyTavern 仍由 `manifest.json` 加载根目录 `index.js` 与 `style.css`。`index.html` 是早期独立演示，不是扩展入口。
+已接入炼气成长、挂机、主动修炼、储物商店和功法学习模块。SillyTavern 由 `manifest.json` 加载 `index.js`，再通过 ES modules 导入功能；`style.css` 导入 `styles/progression.css`。存档读写已移至 `storage/saves.js`，新操作统一经 `core/actions.js` 原子结算。`index.html` 是早期独立演示，不是扩展入口。
 
 以后先查下表定位目标文件；目标仍为空时，到现有入口中找对应实现，再进行迁移。不要因文件存在就认定功能已完成。最终 `index.js` 只负责启动和组装。
 
@@ -97,3 +97,18 @@
 | 地点或移动有问题 | `data/locations.js`、`systems/map.js`、`ui/map.js` |
 | 旧档读取异常 | `storage/migrations.js`、`storage/saves.js` |
 | 页面布局问题 | 对应 `ui/` 文件与 `styles/` 样式 |
+ 
+
+## 已接入的第一阶段功能
+
+- `data/realms.js`：炼气升级需求，满条自动提升小境界，炼气圆满后等待后续筑基规则。
+- `data/balance.js`：开局灵石、背包容量、每日挂机时长与首版小游戏参数。
+- `systems/cultivation.js`：按本机日期分段的挂机结算；更换主修前结算旧收益。
+- `systems/practice.js`、`ui/cultivation.js`：彩色打砖块，根骨影响板长。首版三条命、每块两点、最多六十；无主修时有效练习只得基础一点。
+- `systems/techniques.js`、`ui/techniques.js`：唯一解行列数阵，三至五阶，学习进度与提示次数保存。
+- `systems/inventory.js`、`ui/inventory.js`：购买、格子、装备和典籍入口。黑市与扩容定价尚未开放。
+- `ui/progression.js`、`ui/shared.js`：功能组装、人物修为条及共用界面。
+- `storage/migrations.js`：旧档只补发一次二十灵石；旧版赠送典籍转为待参悟的实体典籍。
+- `tests/progression.test.js`：核心规则及 IndexedDB 事务测试；运行 `npm install` 后执行 `npm test`。
+
+人物、宗门、创建与旧界面仍部分保留在根入口；其它注释占位文件暂未启用。新增战斗等玩法时再逐步迁移。
