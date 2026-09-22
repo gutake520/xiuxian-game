@@ -90,3 +90,12 @@
 @media(max-width:600px){
  .xg-head-moon:before{box-shadow:10px 7px 0 0 #efd39a,13px 9px 15px 0 #d7b96f55}
 }
+
+/* emoji moons: no masks, pseudo-elements or cutout circles */
+.xg-head-moon,.xg-fab-moon{background:transparent!important;box-shadow:none!important}
+.xg-head-moon:before,.xg-head-moon:after,.xg-fab-moon:before,.xg-fab-moon:after{content:none!important;display:none!important;box-shadow:none!important}
+.xg-head-moon{display:flex!important;align-items:center;justify-content:center;font-size:46px;line-height:1;width:54px;height:54px}
+.xg-head-moon span,.xg-moon-emoji{display:block;line-height:1;filter:drop-shadow(0 0 7px #d7b96f55)}
+.xg-moon-emoji{font-size:31px}
+#xg-fab{display:flex;align-items:center;justify-content:center}
+@media(max-width:600px){.xg-head-moon{font-size:40px;width:46px;height:46px}}
