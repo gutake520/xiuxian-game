@@ -130,6 +130,7 @@ function renderCharacter(){
  <div class="xg-root-detail"><strong>${escapeHTML(p.spiritRoot||'未详')}</strong><small>${escapeHTML(p.rootDesc||'')}</small></div>
  <div class="xg-cultivation"><span>修为</span><strong>${sheetValue(p.cultivation)} / ${sheetValue(p.cultivationRequired)}</strong></div>
  </div>
+ ${companionMarkup(p)}
  <div class="xg-card"><h3>资质</h3><div class="xg-aptitude-grid">${['悟性','根骨','神识','魅力','福缘'].map(k=>`<div><span>${k}</span><strong>${sheetValue(stats[k])}</strong></div>`).join('')}</div></div>
  <div class="xg-card"><h3>战斗属性</h3><div class="xg-combat-grid">${[
  ['生命 HP',combat.hp??p.hp],['法力 MP',combat.mp??p.mp??p.spirit],['攻击',combat.attack],['防御',combat.defense],['速度',combat.speed],['暴击率',combat.critRate,'%'],['闪避率',combat.dodgeRate,'%']
@@ -140,8 +141,90 @@ function renderCharacter(){
  <h4>战斗功法</h4><p class="xg-empty-note">尚未装备战斗功法</p></div>
  <div class="xg-character-actions"><button type="button" id="xg-sect">门派</button><button type="button" disabled>修炼<small>尚未开放</small></button><button type="button" disabled>突破<small>尚未开放</small></button></div>
  <p id="xg-character-message" role="status" aria-live="polite"></p></section>`;
- document.getElementById('xg-sect').onclick=()=>{document.getElementById('xg-character-message').textContent='尚未加入宗门。'};
+ document.getElementById('xg-sect').onclick=showSect;
 }
+const SECTS=[
+ {id:'tiangong',name:'天工阁',roots:['金','火'],condition:'金或火灵根',feature:'炼器与装备打造，提升装备耐久。'},
+ {id:'danxia',name:'丹霞谷',roots:['火','木'],condition:'火或木灵根',feature:'炼丹制药，辅助修行。'},
+ {id:'qinglan',name:'青岚谷',roots:['木','水'],condition:'木或水灵根',feature:'医修传承，擅长治疗与恢复。'},
+ {id:'hehuan',name:'合欢宗',stat:['魅力',8],condition:'魅力 ≥ 8',feature:'人际与情缘，可结三位正式道侣。'},
+ {id:'wanling',name:'万灵山',roots:['木','土','风'],condition:'木、土或风灵根',feature:'御兽之道，培养灵兽并肩作战。'},
+ {id:'lingxiao',name:'凌霄剑宗',roots:['金','雷','冰'],condition:'金、雷或冰灵根',feature:'以剑求道，专精攻击与高伤害。'},
+ {id:'xuanji',name:'玄机门',roots:['冰'],stat:['神识',8],condition:'冰灵根或神识 ≥ 8',feature:'阵法与控制，限制敌人行动。'},
+ {id:'taixu',name:'太虚符宗',allStats:[['神识',6],['悟性',7]],condition:'神识 ≥ 6，且悟性 ≥ 7',feature:'符箓传承与功能型术法。'},
+ {id:'zhenyue',name:'镇岳宗',roots:['雷','土'],stat:['根骨',8],condition:'雷、土灵根或根骨 ≥ 8',feature:'锤炼肉身，擅长近战与生存。'}
+];
+function sectEligibility(player,sect){
+ const name=player.spiritRoot||'';
+ const variant=['雷','冰','风'].some(element=>name.includes(element));
+ const enough=([key,min])=>Number.isFinite(player.stats?.[key])&&player.stats[key]>=min;
+ const specialty=sect.allStats?sect.allStats.every(enough):Boolean(sect.roots?.some(element=>name.includes(element))||(sect.stat&&enough(sect.stat)));
+ return{join:variant||specialty,specialty};
+}
+function playerSect(player){return SECTS.find(sect=>sect.name===player.sect)||null}
+function companionLimit(player){return player.sect==='合欢宗'?3:1}
+function companionMarkup(player){
+ const list=Array.isArray(player.companions)?player.companions:[],limit=companionLimit(player);
+ return `<div class="xg-card xg-companions"><h3>道侣 <small>${list.length} / ${limit}</small></h3><div class="xg-companion-list">${Array.from({length:Math.max(limit,list.length)},(_,i)=>`<span>${escapeHTML(typeof list[i]==='string'?list[i]:list[i]?.name||'缘分未至')}</span>`).join('')}</div></div>`;
+}
+function sectOverlay(){
+ let sheet=document.getElementById('xg-sect-sheet');
+ if(!sheet){sheet=document.createElement('div');sheet.id='xg-sect-sheet';sheet.setAttribute('role','dialog');sheet.setAttribute('aria-modal','true');sheet.setAttribute('aria-label','宗门');document.getElementById('xg-panel').append(sheet)}
+ sheet.classList.add('open');return sheet;
+}
+function closeSect(){document.getElementById('xg-sect-sheet')?.classList.remove('open');if(currentSave)renderCharacter()}
+function showSect(){
+ if(!currentSave)return;
+ const sect=playerSect(currentSave.player);
+ if(sect){if(currentSave.sectProgress?.introPending)renderSectIntro(sect);else renderSectHall(sect);return}
+ const sheet=sectOverlay();
+ sheet.innerHTML=`<div class="xg-sect-heading"><h2>择宗入道</h2><button type="button" id="xg-sect-back">返回人物</button></div><p class="xg-sect-hint">择一山门，寻一条修行路。变异灵根可入各宗，特色传承仍需满足专精条件。</p><div class="xg-sect-list">${SECTS.map(sect=>{const eligible=sectEligibility(currentSave.player,sect);return `<button type="button" data-sect="${sect.id}" ${eligible.join?'':'disabled'}><strong>${sect.name}</strong><small>${sect.condition}</small><span>${sect.feature}</span><em>${eligible.join?(eligible.specialty?'可入宗 · 可学特色传承':'可入宗 · 仅通用功法'):'暂不符合条件'}</em></button>`}).join('')}</div>`;
+ document.getElementById('xg-sect-back').onclick=closeSect;
+ sheet.querySelectorAll('[data-sect]').forEach(button=>button.onclick=()=>previewSect(SECTS.find(sect=>sect.id===button.dataset.sect)));
+ sheet.scrollTop=0;
+}
+function previewSect(sect){
+ if(!sect||!currentSave||!sectEligibility(currentSave.player,sect).join)return;
+ const sheet=sectOverlay(),eligible=sectEligibility(currentSave.player,sect);
+ sheet.innerHTML=`<div class="xg-sect-heading"><h2>${sect.name}</h2><button type="button" id="xg-sect-back">返回选择</button></div><div class="xg-card"><p>${sect.feature}</p><p class="xg-sect-hint">${eligible.specialty?'你已满足本宗专精条件。':'你可凭变异灵根入宗，但暂不能学习本宗特色传承。'}</p></div><p class="xg-sect-hint">拜师后获赠通用功法《引气诀》。当前仅收录典籍，尚无数值效果。</p><button type="button" id="xg-sect-join">拜入山门</button><p id="xg-sect-error" role="status"></p>`;
+ document.getElementById('xg-sect-back').onclick=showSect;
+ document.getElementById('xg-sect-join').onclick=async()=>{
+  const button=document.getElementById('xg-sect-join'),back=document.getElementById('xg-sect-back');button.disabled=back.disabled=true;
+  try{await joinSect(sect.id);renderSectIntro(sect)}catch(error){console.error('[xiuxian-game]',error);document.getElementById('xg-sect-error').textContent='拜师未完成，请重试。';button.disabled=back.disabled=false}
+ };
+ sheet.scrollTop=0;
+}
+let sectBusy=false;
+async function joinSect(id){
+ if(sectBusy||actionPending)throw new Error('操作进行中');
+ const sect=SECTS.find(sect=>sect.id===id);
+ if(!currentSave||!sect||!sectEligibility(currentSave.player,sect).join)throw new Error('入宗资格不足');
+ if(currentSave.player.sect&&currentSave.player.sect!=='无门无派')throw new Error('已归属宗门');
+ sectBusy=true;
+ try{
+  const next=structuredClone(currentSave);next.player.sect=sect.name;
+  next.world={...(next.world||{}),location:sect.name,day:next.world?.day||1};
+  next.learnedMethods=Array.isArray(next.learnedMethods)?next.learnedMethods:[];
+  if(!next.learnedMethods.some(method=>method.id==='basic-qi-guide'))next.learnedMethods.push({id:'basic-qi-guide',name:'引气诀',kind:'cultivation',rarity:'普通',sectExclusive:false,effects:[],description:'收心凝神，感应天地灵气的入门典籍。'});
+  next.sectProgress={id:sect.id,introPending:true};
+  trimEventHistory(next);next.actionRound++;next.events.push({round:next.actionRound,location:sect.name,messages:[`拜入${sect.name}，受赐入门典籍《引气诀》。`]});
+  next.updatedAt=Date.now();await dbPut(next);currentSave=next;
+ }finally{sectBusy=false}
+}
+function renderSectIntro(sect){
+ const sheet=sectOverlay();
+ sheet.innerHTML=`<div class="xg-sect-cg"><small>入门 · ${sect.name}</small><div class="xg-cg-moon" aria-hidden="true">☾</div><h2>山门已开</h2><p>你沿石阶走入山门，在堂前停步，向授业长老行了拜师礼。</p><p>长老将一册薄薄的典籍交到你手中。</p><blockquote>“修行先须定心。此后勤学慎行，莫负今日之志。”</blockquote><div class="xg-sect-gift"><strong>引气诀</strong><small>普通 · 通用修炼功法 · 已收录</small></div><button type="button" id="xg-sect-enter">收下典籍，进入宗门</button><p id="xg-sect-error" role="status"></p></div>`;
+ document.getElementById('xg-sect-enter').onclick=async()=>{
+  const button=document.getElementById('xg-sect-enter');button.disabled=true;
+  try{const next=structuredClone(currentSave);next.sectProgress.introPending=false;next.updatedAt=Date.now();await dbPut(next);currentSave=next;renderSectHall(sect)}catch(error){console.error('[xiuxian-game]',error);document.getElementById('xg-sect-error').textContent='保存未完成，请重试。';button.disabled=false}
+ };sheet.scrollTop=0;
+}
+function renderSectHall(sect){
+ const sheet=sectOverlay(),eligible=sectEligibility(currentSave.player,sect);
+ sheet.innerHTML=`<div class="xg-sect-heading"><h2>${sect.name}</h2><button type="button" id="xg-sect-back">返回人物</button></div><p class="xg-sect-hint">${sect.feature}</p><div class="xg-card"><strong>${eligible.specialty?'特色传承资格已满足':'当前仅可学习通用功法'}</strong><p class="xg-sect-hint">已收录《引气诀》 · 暂无数值效果</p></div><div class="xg-sect-facilities">${['日课堂','藏书阁','宗门大比','师尊授业','门派商店'].map(name=>`<button type="button" disabled>${name}<small>尚未开放</small></button>`).join('')}</div><details class="xg-sect-rules"><summary>离宗与情缘须知</summary><p>离宗后，本宗专属功法与物品停止生效，专属功法自动卸下；已学记录保留，通用物品不受影响。</p><p>主动解除道侣关系须支付灵石。离开合欢宗时，至多保留一位道侣，其余关系须先结清费用。灵石不足时不能办理。</p><p>费用及重返宗门规则待定，退出、更换道侣暂未开放。</p></details>`;
+ document.getElementById('xg-sect-back').onclick=closeSect;sheet.scrollTop=0;
+}
+
 function showPrologue(){let root=pickRoot(),alloc=emptyAllocation();const el=document.getElementById('xg-onboard');el.classList.add('open');
  const paint=()=>{const used=STAT_NAMES.reduce((n,k)=>n+alloc[k],0),left=FREE_POINTS-used;document.getElementById('xg-roll').innerHTML=`<b>${root.name}</b><small>${rootDesc(root)}</small><div class="xg-points">剩余自由点 <strong>${left}</strong> / ${FREE_POINTS}</div><div class="xg-alloc">${STAT_NAMES.map(k=>`<div><span>${k}<small>最终 ${alloc[k]+(root.bonus[k]||0)}</small></span><button data-stat="${k}" data-d="-">−</button><b>${alloc[k]}</b><button data-stat="${k}" data-d="+">＋</button></div>`).join('')}</div><small>单项最多自由投入 ${STAT_CAP} 点；显示的最终值已包含灵根修正。</small>`;document.querySelectorAll('#xg-roll [data-stat]').forEach(btn=>btn.onclick=()=>{const k=btn.dataset.stat,usedNow=STAT_NAMES.reduce((n,x)=>n+alloc[x],0);if(btn.dataset.d==='+'&&alloc[k]<STAT_CAP&&usedNow<FREE_POINTS)alloc[k]++;if(btn.dataset.d==='-'&&alloc[k]>0)alloc[k]--;paint()})};paint();
  document.getElementById('xg-reroll').onclick=()=>{root=pickRoot();paint()};
@@ -152,5 +235,5 @@ async function loadGame(){await Promise.all(SLOTS.map(dbGet));const last=localSt
 function mount(){if(document.getElementById('xg-fab'))return;const fab=document.createElement('button');fab.id='xg-fab';fab.type='button';fab.title='问我';fab.setAttribute('aria-label','打开问我');fab.innerHTML='<span class="xg-moon-emoji" aria-hidden="true">🌙</span>';const panel=document.createElement('section');panel.id='xg-panel';panel.innerHTML=`<div class="xg-head"><div><b>问 我</b><small>一念成仙 · 一念为凡</small></div><button id="xg-head-moon" class="xg-head-moon" type="button" aria-label="关闭面板"><span aria-hidden="true">🌙</span></button><div class="xg-mountain"><i></i><i></i><i></i></div></div><main id="xg-content"></main><nav aria-label="游戏导航">${navButton('home','主页','xg-home',true)}${navButton('person','人物','xg-person')}${navButton('bag','储物')}${navButton('map','地图')}${navButton('settings','设置','xg-settings')}</nav><div id="xg-settings-sheet"><div class="xg-setting-title">设置<button id="xg-settings-close">×</button></div><button id="xg-slots-btn">五世存档</button><button id="xg-save">保存当前存档</button><button id="xg-update">重新载入游戏<small>应用已经下载好的扩展更新</small></button><p>五个独立存档均保存在本机 IndexedDB。角色资质、灵根、性别、门派与事件标记会随档保存，供后续奇遇系统判定。</p></div><div id="xg-slots"><div class="xg-setting-title">选择命途<button id="xg-slots-close">×</button></div><div id="xg-slot-list"></div></div><div id="xg-onboard"><button id="xg-onboard-cancel" type="button">← 返回存档</button><div class="xg-prologue"><small>序 · 烬余</small><h2>山门已灭，故人无归。</h2><p>那一夜，火烧了整座山。师门上下无一幸免，唯有你从断崖下醒来。</p><p>你记得剑光，也记得仇人的衣纹。可如今的你连握剑的手都在发抖。</p><p>想报仇，先活下去。想活下去，便修行。</p><label>留下你的名字</label><input id="xg-name" maxlength="12" placeholder="输入姓名"><label>性别</label><select id="xg-gender"><option value="女" selected>女</option><option value="男">男</option><option value="不详">不详</option></select><div id="xg-roll"></div><button id="xg-reroll">重测灵根</button><button id="xg-begin">此身入道</button></div></div>`;document.body.append(fab,panel);
 let moved=false,sx=0,sy=0,sl=0,st=0;const restorePosition=()=>{let saved;try{saved=JSON.parse(localStorage.getItem(POS_KEY)||'null')}catch{localStorage.removeItem(POS_KEY)}if(!saved)return;const pos=clampFabPosition(saved.left,saved.top,52,52,innerWidth,innerHeight);fab.style.left=pos.left+'px';fab.style.top=pos.top+'px';fab.style.right='auto';fab.style.transform='none'};restorePosition();window.addEventListener('resize',restorePosition);const start=e=>{moved=false;const p=e.touches?.[0]||e;sx=p.clientX;sy=p.clientY;const r=fab.getBoundingClientRect();sl=r.left;st=r.top},move=e=>{if(!sx&&!sy)return;const p=e.touches?.[0]||e,dx=p.clientX-sx,dy=p.clientY-sy;if(Math.abs(dx)+Math.abs(dy)>6)moved=true;if(!moved)return;e.preventDefault();fab.style.transform='none';fab.style.right='auto';fab.style.left=Math.max(4,Math.min(innerWidth-fab.offsetWidth-4,sl+dx))+'px';fab.style.top=Math.max(4,Math.min(innerHeight-fab.offsetHeight-4,st+dy))+'px'},end=()=>{if(moved){const r=fab.getBoundingClientRect(),left=r.left+r.width/2<innerWidth/2?8:innerWidth-r.width-8;fab.style.left=left+'px';localStorage.setItem(POS_KEY,JSON.stringify({left,top:r.top}))}sx=sy=0};fab.addEventListener('touchstart',start,{passive:true});fab.addEventListener('touchmove',move,{passive:false});fab.addEventListener('touchend',end);fab.addEventListener('pointerdown',start);window.addEventListener('pointermove',move);window.addEventListener('pointerup',end);fab.onclick=()=>{if(!moved){panel.classList.add('open');fab.classList.add('hide');runAction(loadGame)}};
 document.getElementById('xg-home').onclick=()=>{if(currentSave)renderHome();else runAction(showSlots)};document.getElementById('xg-person').onclick=renderCharacter;
-const collapse=()=>{panel.classList.remove('open');document.getElementById('xg-settings-sheet').classList.remove('open');document.getElementById('xg-slots').classList.remove('open');document.getElementById('xg-onboard').classList.remove('open');fab.classList.remove('hide')};document.getElementById('xg-head-moon').onclick=collapse;document.getElementById('xg-settings').onclick=()=>document.getElementById('xg-settings-sheet').classList.add('open');document.getElementById('xg-settings-close').onclick=()=>document.getElementById('xg-settings-sheet').classList.remove('open');document.getElementById('xg-slots-btn').onclick=()=>{document.getElementById('xg-settings-sheet').classList.remove('open');runAction(showSlots)};document.getElementById('xg-slots-close').onclick=()=>document.getElementById('xg-slots').classList.remove('open');document.getElementById('xg-save').onclick=()=>runAction(saveNow);document.getElementById('xg-update').onclick=()=>runAction(async()=>{await saveNow();location.reload()})}
+const collapse=()=>{document.getElementById('xg-sect-sheet')?.classList.remove('open');panel.classList.remove('open');document.getElementById('xg-settings-sheet').classList.remove('open');document.getElementById('xg-slots').classList.remove('open');document.getElementById('xg-onboard').classList.remove('open');fab.classList.remove('hide')};document.getElementById('xg-head-moon').onclick=collapse;document.getElementById('xg-settings').onclick=()=>document.getElementById('xg-settings-sheet').classList.add('open');document.getElementById('xg-settings-close').onclick=()=>document.getElementById('xg-settings-sheet').classList.remove('open');document.getElementById('xg-slots-btn').onclick=()=>{document.getElementById('xg-settings-sheet').classList.remove('open');runAction(showSlots)};document.getElementById('xg-slots-close').onclick=()=>document.getElementById('xg-slots').classList.remove('open');document.getElementById('xg-save').onclick=()=>runAction(saveNow);document.getElementById('xg-update').onclick=()=>runAction(async()=>{await saveNow();location.reload()})}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',mount);else mount();
