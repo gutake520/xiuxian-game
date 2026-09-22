@@ -67,3 +67,26 @@
 .xg-head-moon:after{background:#0b211d!important;box-shadow:none!important}
 .xg-fab-moon:after{background:#0b1c19!important;box-shadow:none!important}
 #xg-fab .xg-fab-moon:after{background:#0b1c19!important}
+
+/* real crescent: no dark masking disk */
+.xg-head-moon,.xg-fab-moon{
+  background:transparent!important;
+  box-shadow:none!important;
+  overflow:visible!important;
+}
+.xg-head-moon:before,.xg-fab-moon:before{
+  content:"";
+  position:absolute;
+  inset:0;
+  border-radius:50%;
+  background:transparent;
+  box-shadow:12px 8px 0 0 #efd39a,16px 11px 18px 0 #d7b96f55;
+}
+.xg-head-moon:after,.xg-fab-moon:after{
+  content:none!important;
+  display:none!important;
+}
+.xg-fab-moon{position:relative}
+@media(max-width:600px){
+ .xg-head-moon:before{box-shadow:10px 7px 0 0 #efd39a,13px 9px 15px 0 #d7b96f55}
+}
