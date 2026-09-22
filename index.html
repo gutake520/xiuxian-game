@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>问道</title>
+<style>
+:root{--bg:#071312;--panel:#0d1c1a;--line:#8d7950;--gold:#e2c58e;--text:#e8e1d2;--muted:#9faaa3}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 70% 8%,#17302b 0,#071312 38%,#040b0b 100%);color:var(--text);font-family:"Songti SC","STSong","Noto Serif SC",serif;min-height:100svh}
+.app{width:min(68vw,720px);min-width:320px;margin:4svh auto 8svh;border:1px solid #756545;border-radius:16px;overflow:hidden;background:linear-gradient(180deg,rgba(9,25,23,.96),rgba(6,18,17,.98));box-shadow:0 30px 80px #0008;position:relative}
+.hero{height:190px;padding:26px 28px;position:relative;overflow:hidden;border-bottom:1px solid #4e4938}.title{font-size:48px;color:var(--gold);letter-spacing:.12em}.tag{color:#c6ad7b;letter-spacing:.2em;margin-top:6px}.date{position:absolute;right:24px;top:30px;color:#dcc393}.moon{position:absolute;width:48px;height:48px;border-radius:50%;background:#f0d79c;right:38px;bottom:35px;box-shadow:0 0 28px #d5bd7a55}.moon:after{content:"";position:absolute;width:43px;height:43px;border-radius:50%;background:#10221f;left:-8px;top:-6px}
+.mountains{position:absolute;inset:auto 0 0;height:90px;opacity:.65}.mountains svg{width:100%;height:100%}
+main{padding:16px}.card{border:1px solid #554e3c;border-radius:12px;background:linear-gradient(135deg,#10211fdd,#091715dd);padding:20px;margin-bottom:14px}.who{display:flex;justify-content:space-between;gap:14px}.name{font-size:25px;color:#ead4a6}.realm{border:1px solid #746444;border-radius:6px;padding:4px 9px;color:#d9c08d}.bars{margin-top:16px;display:grid;grid-template-columns:48px 1fr 92px;gap:9px 10px;align-items:center;font-size:14px}.bar{height:5px;background:#26322f;border-radius:9px;overflow:hidden}.bar i{display:block;height:100%;background:#dfc38d;border-radius:9px}.scene h2{color:#e6cc98;font-weight:500;margin:0 0 14px}.scene p{line-height:2;margin:0;color:#d5d7d0}.actions{display:grid;gap:9px}.action{border:1px solid #806c45;border-radius:8px;padding:14px 16px;display:flex;justify-content:space-between;background:#0d1d1a;color:#e8dfcc;font:inherit;font-size:16px}.action small{color:#8f9a94}
+.motto{text-align:center;color:#b79b68;padding:12px 0 20px;letter-spacing:.18em}
+nav{display:grid;grid-template-columns:repeat(5,1fr);border-top:1px solid #5d523c;background:#081513;padding:10px 4px calc(10px + env(safe-area-inset-bottom))}.nav{background:none;border:0;color:#aaa99f;font:inherit;padding:7px 2px}.nav.active{color:#e4c78f}.nav span{display:block;font-size:21px;margin-bottom:3px}
+.update-toast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);background:#172723;border:1px solid #8d7950;padding:10px 16px;border-radius:20px;color:#e2c58e;opacity:0;pointer-events:none;transition:.25s}.update-toast.show{opacity:1}
+@media(max-width:600px){.app{width:68vw;min-width:0;margin:3svh auto 6svh;border-radius:13px}.hero{height:155px;padding:20px}.title{font-size:36px}.date{font-size:11px;right:16px}.moon{width:38px;height:38px}.moon:after{width:35px;height:35px}.card{padding:15px}.bars{grid-template-columns:38px 1fr 70px;font-size:11px}.name{font-size:20px}.action{padding:12px;font-size:13px}.action small{display:none}.scene p{font-size:13px}.nav{font-size:10px}.nav span{font-size:18px}}
+</style></head>
+<body>
+<div class="app">
+<header class="hero"><div class="title">问道</div><div class="tag">一念成仙 · 一念为凡</div><div class="date">天历三百年 · 秋</div><div class="moon"></div>
+<div class="mountains"><svg viewBox="0 0 800 100" preserveAspectRatio="none"><path d="M0 100L0 80 90 48 145 72 220 28 280 68 355 40 430 77 510 20 585 70 655 42 730 72 800 50 800 100Z" fill="#182b27"/><path d="M0 100L0 90 130 68 205 87 310 55 390 88 520 58 630 84 720 62 800 78 800 100Z" fill="#0b1917"/></svg></div></header>
+<main>
+<section class="card"><div class="who"><div><div class="name">秦无尘</div><div style="color:var(--muted);margin-top:6px">太清宗 · 内门弟子</div></div><div class="realm">金丹中期</div></div>
+<div class="bars"><span>修为</span><div class="bar"><i style="width:43%"></i></div><span>12860 / 30000</span><span>灵气</span><div class="bar"><i style="width:100%"></i></div><span>320 / 320</span><span>气血</span><div class="bar"><i style="width:100%"></i></div><span>240 / 240</span><span>心境</span><div class="bar"><i style="width:85%"></i></div><span>85 / 100</span></div></section>
+<section class="card scene"><h2>⌖　太清宗</h2><p>山门寂静，暮钟三响。<br>今日天色清朗，似乎并无大事。<br>你站在太清宗的山门前，远处钟声隐约传来。</p></section>
+<section class="actions"><button class="action">闭关修炼 <small>沉心静气，提升修为　›</small></button><button class="action">前往坊市 <small>购买物品，打听消息　›</small></button><button class="action">拜访师尊 <small>请教修行，领取任务　›</small></button><button class="action">随意走走 <small>四处游逛，或有奇遇　›</small></button></section>
+<div class="motto">人间有路，山外有仙。</div></main>
+<nav><button class="nav active"><span>⌂</span>主页</button><button class="nav"><span>♙</span>人物</button><button class="nav"><span>▣</span>储物</button><button class="nav"><span>◆</span>地图</button><button class="nav" id="settings"><span>⚙</span>设置</button></nav>
+</div><div class="update-toast" id="toast">正在检查更新…</div>
+<script>
+// 第一版仅搭建主页。按钮预留给后续功能。
+// 更新机制：页面每次打开都会自然获取仓库部署的新版本；
+// 后续接入 PWA/Service Worker 后，“设置 → 更新”将主动清缓存并拉取最新版。
+document.querySelectorAll('button').forEach(b=>b.addEventListener('click',e=>{if(b.id==='settings'){const t=document.getElementById('toast');t.textContent='设置页与更新按钮已预留';t.classList.add('show');setTimeout(()=>t.classList.remove('show'),1800)}}));
+</script></body></html>
