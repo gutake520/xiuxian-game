@@ -99,3 +99,12 @@
 .xg-moon-emoji{font-size:31px}
 #xg-fab{display:flex;align-items:center;justify-content:center}
 @media(max-width:600px){.xg-head-moon{font-size:40px;width:46px;height:46px}}
+
+/* character creation: free attribute allocation */
+.xg-points{margin:12px 0 8px;padding:8px 10px;border:1px solid #514a39;border-radius:7px;color:#bda371;text-align:center}
+.xg-points strong{color:#efd39a;font-size:18px}
+.xg-alloc{display:grid;gap:6px;margin:8px 0 10px}
+.xg-alloc>div{display:grid;grid-template-columns:1fr 34px 32px 34px;align-items:center;gap:5px;border-bottom:1px solid #34423b;padding:5px 0}
+.xg-alloc span{color:#ddd4c3}.xg-alloc span small{display:inline;margin-left:8px;color:#8f9b94;font-size:10px}
+.xg-alloc button{width:34px!important;height:30px;margin:0!important;padding:0!important;text-align:center!important;font-size:16px}
+.xg-alloc b{text-align:center;color:#e1c48d}
