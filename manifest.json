@@ -1,0 +1,11 @@
+{
+  "display_name": "问道 · 修真小界面",
+  "loading_order": 100,
+  "requires": [],
+  "optional": [],
+  "js": "index.js",
+  "css": "style.css",
+  "author": "gutake520",
+  "version": "0.1.0",
+  "homePage": "https://github.com/gutake520/xiuxian-game"
+}
