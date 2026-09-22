@@ -25,3 +25,15 @@
 #xg-settings-sheet.open,#xg-slots.open{position:absolute;inset:0;overflow:hidden;overscroll-behavior:none;touch-action:auto}
 #xg-onboard.open{overflow-y:auto;overscroll-behavior:contain}
 @media(max-width:600px){#xg-panel nav{margin:10px -15px -15px}}
+
+/* compact header/footer and make the moon the close control */
+.xg-head{min-height:118px}
+.xg-head b{font-size:36px}
+.xg-head small{margin-top:2px}
+.xg-head-moon{appearance:none;-webkit-appearance:none;border:0;padding:0;cursor:pointer;position:absolute;width:48px;height:48px;right:24px;top:36px;background:#efd39a;border-radius:50%;box-shadow:0 0 17px #d7b96f55}
+.xg-head-moon:after{content:"";position:absolute;width:44px;height:44px;left:-9px;top:-7px;border-radius:50%;background:#10231f}
+.xg-mountain{height:45px;bottom:0}
+#xg-panel nav{padding:5px 9px 3px;min-height:52px}
+#xg-panel nav button{padding:2px 0;line-height:1.05}
+#xg-panel nav small{margin-top:2px}
+@media(max-width:600px){.xg-head{min-height:102px}.xg-head b{font-size:30px}.xg-head-moon{width:40px;height:40px;right:18px;top:30px}.xg-head-moon:after{width:37px;height:37px;left:-8px;top:-6px}.xg-mountain{height:38px}#xg-panel nav{padding:4px 7px 2px;min-height:48px}}
