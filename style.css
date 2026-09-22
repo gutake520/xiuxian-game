@@ -12,3 +12,16 @@
 #xg-settings-sheet.open button,#xg-slots.open button{touch-action:manipulation}
 @media(max-width:380px){#xg-panel{width:calc(100vw - 18px);height:min(90dvh,760px);padding-left:12px;padding-right:12px}.xg-head b{font-size:clamp(27px,8vw,32px)}.xg-card{font-size:clamp(11px,3.2vw,13px)}}
 @media(orientation:landscape) and (max-height:600px){#xg-panel{width:min(72vw,620px);height:92dvh}.xg-head{min-height:92px}.xg-head b{font-size:28px}.xg-head-moon{top:40px}}
+
+/* fix overlay containment: settings/save sheets stay inside the game panel */
+#xg-panel{overflow:hidden;display:none;grid-template-rows:auto minmax(0,1fr) auto}
+#xg-panel.open{display:grid}
+#xg-content{min-height:0;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:#806b44 transparent;padding-right:2px}
+#xg-content::-webkit-scrollbar{width:5px}
+#xg-content::-webkit-scrollbar-track{background:transparent}
+#xg-content::-webkit-scrollbar-thumb{background:#806b44;border-radius:999px}
+#xg-panel nav{position:relative;bottom:auto;margin:12px -20px -20px}
+#xg-settings-sheet,#xg-slots,#xg-onboard{position:absolute;inset:0;box-sizing:border-box;z-index:20}
+#xg-settings-sheet.open,#xg-slots.open{position:absolute;inset:0;overflow:hidden;overscroll-behavior:none;touch-action:auto}
+#xg-onboard.open{overflow-y:auto;overscroll-behavior:contain}
+@media(max-width:600px){#xg-panel nav{margin:10px -15px -15px}}
