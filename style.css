@@ -61,3 +61,9 @@
 .xg-head-moon:after{background:#10231f!important;box-shadow:none!important}
 .xg-fab-moon:after{background:#0b1c19!important;box-shadow:none!important}
 #xg-fab{background:#0b1c19!important}
+
+/* crescent mask final fix */
+.xg-head-moon,.xg-fab-moon{isolation:isolate}
+.xg-head-moon:after{background:#0b211d!important;box-shadow:none!important}
+.xg-fab-moon:after{background:#0b1c19!important;box-shadow:none!important}
+#xg-fab .xg-fab-moon:after{background:#0b1c19!important}
