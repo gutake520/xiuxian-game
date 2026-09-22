@@ -27,9 +27,9 @@
 #xg-panel .xg-bag-grid em{font-style:normal;font-size:9px;color:#a8d5b2!important}
 #xg-panel .xg-bag-empty{color:#576d55!important;border-style:dashed;opacity:.6}
 #xg-panel .xg-number-grid{display:grid;grid-template-columns:repeat(var(--size),minmax(0,1fr));gap:6px;max-width:350px;margin:18px auto}
-#xg-panel .xg-number-grid button{aspect-ratio:1;min-height:38px;min-width:0;padding:0;font-size:24px;border-color:#658f72;background:#153d2e;color:#f1e3b7!important}
-#xg-panel .xg-number-grid button.fixed{background:#0b1d18;border-color:#344735;opacity:1;color:#879a83!important}
-#xg-panel .xg-number-grid button.selected{outline:2px solid #efd08c;background:#355439;outline-offset:0}
+#xg-panel .xg-number-grid button{position:static;inset:auto;transform:none;margin:0;width:100%;height:auto;aspect-ratio:1;min-height:38px;min-width:0;padding:0;font-size:24px;border-color:#658f72;background:#153d2e;color:#f1e3b7!important}
+#xg-panel .xg-number-grid button.xg-puzzle-given{background:#0b1d18;border-color:#344735;opacity:1;color:#879a83!important}
+#xg-panel .xg-number-grid button.xg-puzzle-selected{outline:2px solid #efd08c;background:#355439;outline-offset:0}
 #xg-panel .xg-number-pad{display:flex;gap:5px;flex-wrap:wrap;justify-content:center;margin:12px 0}
 #xg-panel .xg-number-pad button{min-width:34px;flex:1;padding:6px}
 #xg-panel .xg-practice-intro{padding:18px 0;border-top:1px solid #47583c;margin-top:16px}
