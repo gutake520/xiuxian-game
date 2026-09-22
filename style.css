@@ -56,3 +56,8 @@
  .xg-mountain{height:27px}
  #xg-panel nav{min-height:40px;padding:1px 7px 0;margin-bottom:-15px}
 }
+
+/* unify both crescent cutouts with their own surrounding background */
+.xg-head-moon:after{background:#10231f!important;box-shadow:none!important}
+.xg-fab-moon:after{background:#0b1c19!important;box-shadow:none!important}
+#xg-fab{background:#0b1c19!important}
