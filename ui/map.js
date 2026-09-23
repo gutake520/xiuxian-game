@@ -2,6 +2,7 @@ import {VISITING_SECTS,QI_MONSTERS,QI_PEAKS} from '../data/locations.js';
 import {showBattle} from './combat.js';
 import {ITEMS,SECT_PILLS,SECT_TALISMANS} from '../data/items.js';
 import {purchase} from '../systems/inventory.js';
+import {showShop,showSell} from './inventory.js';
 import {startQiExploration,QI_EXPLORATION_MS,QI_SCENES} from '../systems/exploration.js';
 import {localDay} from '../systems/cultivation.js';
 
@@ -16,14 +17,34 @@ export function createMapUI({getSave,activate,actions}){
   if(getSave().qiSecret)return renderSecret();
   activate('map');
   content().innerHTML=`<section class="xg-map-sheet">${heading('山河图','点一座山，走一段路。')}${peaks([
-   {name:'远山 · 待定',x:12,y:6,locked:true,size:.8},{name:'远山 · 待定',x:68,y:17,locked:true,size:.76},
+   {name:'坊市',id:'market',x:12,y:6,size:.8},{name:'黑市',id:'blackmarket',x:68,y:17,size:.76},
    {name:'远山 · 待定',x:36,y:37,locked:true,size:.85},{name:'九宗山门',id:'sects',x:8,y:69,size:1.08},
    {name:'炼气山',id:'monsters',x:64,y:62,size:1.04}
   ],'map')}</section>`;
   content().querySelector('[data-map="sects"]').onclick=renderSects;
   content().querySelector('[data-map="monsters"]').onclick=renderMonsters;
+  content().querySelector('[data-map="market"]').onclick=renderMarket;
+  content().querySelector('[data-map="blackmarket"]').onclick=renderBlackMarket;
  }
  function back(fn){content().querySelector('.xg-map-back').onclick=fn}
+ function renderMarket(){
+  activate('map');
+  content().innerHTML=`<section class="xg-map-sheet"><button class="xg-map-back" type="button">← 返回地图</button>${heading('坊市','买卖货物，整顿行囊。')}
+   <div class="xg-map-place xg-map-scene"><span class="xg-map-peak" aria-hidden="true"></span><strong>坊市商贩</strong><p>铁剑、布衣与通用典籍都在这里出售，也收购装备和材料。</p></div>
+   <div class="xg-feature-row xg-map-trade-actions"><button type="button" data-market-shop>购买商品</button><button type="button" data-market-gear>只看装备</button><button type="button" data-market-sell>出售物品</button></div></section>`;
+  back(render);
+  const api={getSave,actions,closeFeature:()=>document.getElementById('xg-feature-sheet')?.remove()};
+  const close=()=>{api.closeFeature();renderMarket()};
+  content().querySelector('[data-market-shop]').onclick=()=>showShop(api,false,close);
+  content().querySelector('[data-market-gear]').onclick=()=>showShop(api,true,close);
+  content().querySelector('[data-market-sell]').onclick=()=>showSell(api,close);
+ }
+ function renderBlackMarket(){
+  activate('map');
+  content().innerHTML=`<section class="xg-map-sheet"><button class="xg-map-back" type="button">← 返回地图</button>${heading('黑市','隐在山道尽头的交易处。')}
+   <div class="xg-card"><p>黑市尚未开放。</p></div></section>`;
+  back(render);
+ }
  function renderSects(){
   activate('map');
   const spots=[[3,3],[58,5],[30,18],[70,30],[8,36],[42,49],[2,65],[63,67],[28,78]];
