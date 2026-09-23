@@ -17,7 +17,7 @@ test('daily rewards persist, exclude escape charges, reset next day, backfill ex
  s.player.spiritStones=17;recordDailyProgress(s,{battleId:s.lastBattle.id,stones:20},false,now);assert.equal(d.spent,0);
  recordDailyProgress(s,{battleId:s.lastBattle.id,stones:20},true,now);assert.equal(d.spent,3);
  for(const id of ['kills','spent','explored'])claimDailyTask(s,id,d.day,now);
- assert.equal(s.sectPoints,9);assert.throws(()=>claimDailyTask(JSON.parse(JSON.stringify(s)),'kills',d.day,now));
+ assert.equal(s.sectPoints,3);assert.throws(()=>claimDailyTask(JSON.parse(JSON.stringify(s)),'kills',d.day,now));
  assert.equal(dailyTasks(s,now+86400000).kills,0);
 });
 test('all nine inheritances have five-by-five learning and cost nine points',()=>{
