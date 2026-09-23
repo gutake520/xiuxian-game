@@ -1,20 +1,21 @@
 #xg-panel .xg-map-sheet{padding:8px 2px 18px;color:#e9e1cf;font-size:13px}
 #xg-panel .xg-map-heading h2{color:#e9cc92;font-size:23px;margin:10px 4px 4px}
-#xg-panel .xg-map-heading p{color:#bbc7ba!important;margin:0 4px 16px;font-size:12px}
-#xg-panel .xg-map-path{height:20px;margin:0 12px 7px;border-top:1px solid #755f42;opacity:.7;display:flex;justify-content:space-around}
-#xg-panel .xg-map-path span{width:5px;height:5px;border-radius:50%;background:#d5bb84;transform:translateY(-3px)}
-#xg-panel .xg-map-place,#xg-panel .xg-map-visit{box-sizing:border-box;color:#e6decf!important;border:1px solid #64563e;border-radius:13px;background:#10221f;position:relative;overflow:hidden;font:inherit;text-align:left}
-#xg-panel .xg-map-place{display:flex;flex-direction:column;justify-content:flex-end;width:100%;min-height:102px;padding:14px 17px;margin:10px 0}
-#xg-panel .xg-map-place strong,#xg-panel .xg-map-visit strong{color:#e9cb91;font-size:17px;position:relative;z-index:1}
-#xg-panel .xg-map-place small,#xg-panel .xg-map-visit small{display:block;margin-top:5px;color:#c4cec1!important;font-size:11px;position:relative;z-index:1}
-#xg-panel .xg-map-peak{position:absolute;width:78%;height:85%;right:-5%;bottom:0;background:#29453e;clip-path:polygon(0 100%,26% 42%,42% 70%,62% 10%,100% 100%);opacity:.64;pointer-events:none}
-#xg-panel .xg-map-locked{opacity:.55}
+#xg-panel .xg-map-heading p{color:#bbc7ba!important;margin:0 4px 12px;font-size:12px}
 #xg-panel .xg-map-back{border:1px solid #716044;border-radius:8px;background:#152720;color:#eddaaf;padding:8px 12px;font:inherit}
-#xg-panel .xg-map-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
-#xg-panel .xg-map-visit{min-height:84px;padding:12px}
-#xg-panel .xg-map-visit .xg-map-peak{right:-25%;height:80%}
-#xg-panel .xg-map-visit strong{font-size:14px}
-#xg-panel .xg-map-scene{min-height:130px}
-#xg-panel .xg-map-scene p{position:relative;z-index:1;color:#e7e0d1!important;margin:8px 0 0}
+#xg-panel .xg-map-landscape{position:relative;min-height:440px;margin:8px 0 14px;border:1px solid #66583e;border-radius:14px;overflow:hidden;background:radial-gradient(ellipse at 67% 20%,#28433a 0,#162b25 42%,#0c1c19 82%)}
+#xg-panel .xg-map-landscape::before{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(150deg,transparent 49%,#a3946020 50%,transparent 51%),radial-gradient(ellipse at 40% 90%,#3b493544,transparent 65%)}
+#xg-panel .xg-map-hill{position:absolute;left:var(--hill-x);top:var(--hill-y);width:27%;height:20%;padding:0;border:0;background:transparent;color:#f0dba9!important;text-align:center;font:inherit;cursor:pointer;transform:scale(var(--hill-size));transform-origin:center;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:1px}
+#xg-panel .xg-map-label{position:relative;z-index:2;display:block;white-space:nowrap;font-size:12px;line-height:1.25;padding:3px 5px;border:1px solid #8b754a;border-radius:5px;background:#0a1b18e8;text-shadow:0 1px #000}
+#xg-panel .xg-map-summit{display:block;width:100%;height:70%;background:linear-gradient(128deg,#678071 0%,#35554a 40%,#1d3c35 41%,#132e2a 100%);clip-path:polygon(1% 100%,23% 69%,40% 30%,52% 52%,66% 10%,79% 50%,100% 100%);filter:drop-shadow(0 2px 2px #0008)}
+#xg-panel .xg-map-hill:not(:disabled):hover .xg-map-label,#xg-panel .xg-map-hill:not(:disabled):focus-visible .xg-map-label{border-color:#e7c887;background:#263c32}
+#xg-panel .xg-map-hill.xg-map-locked{opacity:.48;cursor:default}
+#xg-panel .xg-map-visit,#xg-panel .xg-map-encounter{min-height:500px}
+#xg-panel .xg-map-visit .xg-map-hill,#xg-panel .xg-map-encounter .xg-map-hill{width:29%;height:19%}
+#xg-panel .xg-map-visit .xg-map-label{font-size:13px}
+#xg-panel .xg-map-scene{position:relative;overflow:hidden;min-height:110px;padding:16px;border:1px solid #65563e;border-radius:12px;background:#10221f;margin:10px 0}
+#xg-panel .xg-map-scene strong,#xg-panel .xg-map-scene p{position:relative;z-index:1}
+#xg-panel .xg-map-scene strong{color:#e9cb91}
+#xg-panel .xg-map-scene p{color:#e7e0d1!important}
+#xg-panel .xg-map-scene .xg-map-peak{position:absolute;width:65%;height:90%;right:-4%;bottom:0;background:#29453e;clip-path:polygon(0 100%,26% 42%,42% 70%,62% 10%,100% 100%);opacity:.64}
 #xg-panel .xg-map-sheet .xg-card p{color:#e0e1d5!important;line-height:1.65}
 #xg-panel .xg-map-pending,#xg-panel .xg-map-monster small{display:block;color:#b6c4b7!important;font-size:11px;margin:10px 0 2px}
