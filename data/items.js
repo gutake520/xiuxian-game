@@ -16,7 +16,11 @@ export const ITEMS={
  'spirit-pill':{id:'spirit-pill',name:'回灵丹',price:5,kind:'pill',stackable:true,mp:6,glyph:'丹',description:'恢复 6 点法力。'},
  'mixed-pill':{id:'mixed-pill',name:'养元丹',price:3.5,kind:'pill',stackable:true,hp:7,mp:3,glyph:'丹',description:'恢复 7 点生命与 3 点法力。'},
  'qi-pill':{id:'qi-pill',name:'聚气丹',price:5,kind:'pill',stackable:true,glyph:'丹',description:'服用当天的挂机上限增加半小时；当天不可叠加。'},
+ 'attack-talisman':{id:'attack-talisman',name:'攻击符',price:2,kind:'talisman',stackable:true,glyph:'符',description:'战斗中额外造成 2 点伤害，每轮限一张。'},
+ 'guard-talisman':{id:'guard-talisman',name:'护身符',price:2,kind:'talisman',stackable:true,glyph:'符',description:'免疫下一次受到的伤害，每轮限一张。'},
+ 'binding-array':{id:'binding-array',name:'定身阵盘',price:3,kind:'array',stackable:true,glyph:'阵',description:'使小妖下一轮无法行动。'},
  'qi-manual':{id:'qi-manual',name:'引气诀',price:10,kind:'manual',methodId:'basic-qi-guide',glyph:'诀',description:'解开三阶数阵后学会，可设为主修。'}
 };
 export const SHOP_ITEMS=['iron-sword','cloth-robe','qi-manual'];
 export const SECT_PILLS=['small-heal-pill','spirit-pill','mixed-pill','qi-pill'];
+export const SECT_TALISMANS=['attack-talisman','guard-talisman'];

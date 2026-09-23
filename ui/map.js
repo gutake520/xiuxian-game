@@ -1,6 +1,6 @@
 import {VISITING_SECTS,QI_MONSTERS} from '../data/locations.js';
 import {showBattle} from './combat.js';
-import {ITEMS,SECT_PILLS} from '../data/items.js';
+import {ITEMS,SECT_PILLS,SECT_TALISMANS} from '../data/items.js';
 import {purchase} from '../systems/inventory.js';
 
 export function createMapUI({getSave,activate,actions}){
@@ -35,15 +35,20 @@ export function createMapUI({getSave,activate,actions}){
   activate('map');
   content().innerHTML=`<section class="xg-map-sheet"><button class="xg-map-back" type="button">← 返回九宗</button>${heading(sect.name,sect.service)}
    <div class="xg-map-place xg-map-scene"><span class="xg-map-peak" aria-hidden="true"></span><strong>${sect.npc}</strong><p>${sect.id==='tiangong'&&own?'“你也是天工阁的人？自己的装备，自己去修。”':`“来者是客，欢迎到${sect.name}坐坐。”`}</p></div>
-   <div class="xg-card"><h3>${sect.service}</h3><p>${sect.detail}</p>${id==='danxia'?SECT_PILLS.map(itemId=>`<button type="button" data-sect-buy="${itemId}">购买${ITEMS[itemId].name} · ${ITEMS[itemId].price} 灵石</button>`).join(''):'<small class="xg-map-pending">具体效果或费用待定，暂不扣除灵石。</small>'}</div><p role="status" aria-live="polite"></p>
+   <div class="xg-card"><h3>${sect.service}</h3><p>${sect.detail}</p>${(id==='danxia'?SECT_PILLS:id==='taixu'?SECT_TALISMANS:id==='xuanji'?['binding-array']:[]).map(itemId=>`<button type="button" data-sect-buy="${itemId}">购买${ITEMS[itemId].name} · ${ITEMS[itemId].price} 灵石</button>`).join('')}${id==='wanling'?`<button type="button" data-rent>租借灵兽 · 1 灵石（已有 ${getSave().petRentals||0} 份）</button>`:''}${['danxia','taixu','xuanji','wanling'].includes(id)?'':'<small class="xg-map-pending">具体效果或费用待定，暂不扣除灵石。</small>'}</div><p role="status" aria-live="polite"></p>
   </section>`;
   back(renderSects);
   const status=content().querySelector('[role=status]');
   content().querySelectorAll('[data-sect-buy]').forEach(button=>button.onclick=async()=>{
    button.disabled=true;
-   try{await actions.mutate(s=>purchase(s,button.dataset.sectBuy),{message:result=>result});status.textContent='丹药已收入储物。'}
+   try{await actions.mutate(s=>purchase(s,button.dataset.sectBuy),{message:result=>result});status.textContent='物品已收入储物。'}
    catch(error){status.textContent=error.message}finally{if(button.isConnected)button.disabled=false}
   });
+  const rent=content().querySelector('[data-rent]');if(rent)rent.onclick=async()=>{
+   rent.disabled=true;
+   try{await actions.mutate(s=>{if(s.player.spiritStones<1)throw new Error('灵石不足。');s.player.spiritStones=Math.round((s.player.spiritStones-1)*100)/100;s.petRentals=(s.petRentals||0)+1;return '租下一次灵兽出战。'},{message:result=>result});renderVisit(id)}
+   catch(error){status.textContent=error.message;rent.disabled=false}
+  };
  }
  function renderMonsters(){
   activate('map');
@@ -57,15 +62,16 @@ export function createMapUI({getSave,activate,actions}){
   if(getSave().battle)return battle();
   activate('map');
   content().innerHTML=`<section class="xg-map-sheet"><button class="xg-map-back" type="button">← 返回炼气山</button>${heading(`山头 ${number}`,'炼气一至三层 · 小妖出没')}
+   ${getSave().petRentals>0?`<fieldset class="xg-card"><legend>灵兽出战（余 ${getSave().petRentals} 次）</legend><label><input type="radio" name="xg-pet" value="" checked> 不出战</label><label><input type="radio" name="xg-pet" value="attack"> 追击：每次 +0.50 伤害</label><label><input type="radio" name="xg-pet" value="guard"> 守护：每次挡 0.30 伤害</label></fieldset>`:''}
    ${QI_MONSTERS.map(monster=>`<div class="xg-card xg-map-monster"><h3>${monster.name}</h3><p>生命 ${monster.hp} · 攻击 ${monster.attack} · 速度 ${monster.speed}</p><small>主要掉落：${monster.drop}</small><button type="button" data-foe="${monster.id}">迎战</button></div>`).join('')}
    <p class="xg-map-pending">胜利可获修为和战利品；退出战斗须支付代价。</p><p role="status" aria-live="polite"></p></section>`;
   back(renderMonsters);
   const status=content().querySelector('[role=status]');
   content().querySelectorAll('[data-foe]').forEach(button=>button.onclick=async()=>{
    content().querySelectorAll('[data-foe]').forEach(item=>item.disabled=true);
-   try{await actions.startBattle(button.dataset.foe);battle()}
+   try{const pet=content().querySelector('[name="xg-pet"]:checked')?.value||null;await actions.startBattle(button.dataset.foe,pet);battle()}
    catch(error){status.textContent=error.message;content().querySelectorAll('[data-foe]').forEach(item=>item.disabled=false)}
-  });
+ });
  }
  return {render};
 }

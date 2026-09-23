@@ -32,40 +32,68 @@ function finish(save,outcome,details={}){
  save.lastBattle={id:save.battle.id,monster:save.battle.name,outcome,round:save.battle.round,...details};save.battle=null;
  return save.lastBattle;
 }
-export function beginBattle(save,id){
+export function beginBattle(save,id,pet=null){
  if(save.battle)throw new Error('尚有未结束的战斗。');
  if(save.player.cultivation< -100)throw new Error('请先去修炼。');
  const tier=realmProgress(save.player).index;if(tier<0||tier>2)throw new Error('此处只开放炼气一至三层的小妖。');
  if(save.player.hp<=0)throw new Error('生命不足，无法迎战。');
  const monster=QI_MONSTERS.find(entry=>entry.id===id);if(!monster)throw new Error('小妖不存在。');
+ if(pet!==null){if(!['attack','guard'].includes(pet))throw new Error('灵兽类型无效。');if((save.petRentals||0)<1)throw new Error('尚未租借灵兽。');save.petRentals--}
  const maxHp=monster.hpMin+Math.floor(Math.random()*(monster.hpMax-monster.hpMin+1));
- save.battle={id:crypto.randomUUID(),monsterId:id,name:monster.name,maxHp,hp:maxHp,attack:monster.attack,speed:monster.speed,round:0,log:['狭路相逢，战斗开始。']};
+ save.battle={id:crypto.randomUUID(),monsterId:id,name:monster.name,maxHp,hp:maxHp,attack:monster.attack,speed:monster.speed,round:0,pet,guard:false,bindRound:0,talismansUsed:0,talismanRound:0,freeArrayUsed:false,log:['狭路相逢，战斗开始。']};
  return save.battle;
 }
 export function playRound(save,action='attack',now=Date.now()){
  const battle=save.battle;if(!battle)throw new Error('没有正在进行的战斗。');
- if(!['attack','skip'].includes(action))throw new Error('当前只能普攻或跳过回合。');
+ if(!['attack','skip','array'].includes(action))throw new Error('请选择有效的战斗行动。');
+ if(action==='array'){
+  const own=save.player.sect==='玄机门'&&!battle.freeArrayUsed;
+  if(own)battle.freeArrayUsed=true;
+  else consumeItem(save,'binding-array');
+  battle.bindRound=battle.round+2;
+ }
  const stats=equipmentStats(save),messages=[],playerFirst=stats.speed>=battle.speed;
  let dealt=0,taken=0;
  const playerTurn=()=>{
   if(action==='skip'){messages.push('你选择跳过本轮。');return}
+  if(action==='array'){messages.push('阵盘发动，小妖下一轮无法行动。');return}
   const crit=Math.random()<stats.critRate/100;
   dealt=round2(Math.max(1,stats.attack*(crit?1.5:1)));
   battle.hp=round2(Math.max(0,battle.hp-dealt));messages.push(`你${crit?'暴击，':''}造成 ${dealt.toFixed(2)} 伤害。`);
  };
  const enemyTurn=()=>{
+  if(battle.bindRound===battle.round+1){messages.push('小妖被阵盘困住，无法行动。');return}
   if(Math.random()<stats.dodgeRate/100){messages.push('你闪开了小妖的攻击。');return}
-  taken=round2(Math.max(1,battle.attack-stats.defense));save.player.hp=round2(Math.max(0,save.player.hp-taken));
+  if(battle.guard){battle.guard=false;messages.push('护身符抵挡了这次伤害。');return}
+  taken=round2(Math.max(0,Math.max(1,battle.attack-stats.defense)-(battle.pet==='guard'?.3:0)));save.player.hp=round2(Math.max(0,save.player.hp-taken));
   messages.push(`你受到 ${taken.toFixed(2)} 伤害。`);
  };
- if(playerFirst){playerTurn();if(battle.hp>0)enemyTurn()}
- else{enemyTurn();if(save.player.hp>0)playerTurn()}
+ const playerAction=()=>{playerTurn();if(battle.pet==='attack'&&battle.hp>0){battle.hp=round2(Math.max(0,battle.hp-.5));messages.push('灵兽追加 0.50 伤害。')}};
+ if(playerFirst){playerAction();if(battle.hp>0)enemyTurn()}
+ else{enemyTurn();if(save.player.hp>0)playerAction()}
  battle.round++;
  if(battle.hp<=0){const result=awardVictory(save,QI_MONSTERS.find(entry=>entry.id===battle.monsterId),now);finish(save,'victory',result);messages.push(`胜利！修为 +${result.xp}，${result.rewards.join('、')}。`)}
  else if(save.player.hp<=0){save.player.cultivation=round2(save.player.cultivation-50);save.player.hp=5;finish(save,'defeat');messages.push('战败：修为 −50，生命恢复至 5；无战利品。')}
  else{battle.log=[...battle.log,...messages].slice(-10)}
  if(save.lastBattle?.outcome&& !save.battle)save.lastBattle.log=messages;
  return {messages,dealt,taken,result:save.lastBattle?.id===battle.id?save.lastBattle:null};
+}
+function consumeItem(save,id){
+ const entry=save.inventory.find(item=>item.itemId===id);
+ if(!entry)throw new Error('储物中没有对应道具。');
+ if(entry.quantity>1)entry.quantity--;else save.inventory=save.inventory.filter(item=>item!==entry);
+}
+export function useBattleTalisman(save,id){
+ const battle=save.battle;if(!battle)throw new Error('没有正在进行的战斗。');
+ if(!['attack-talisman','guard-talisman'].includes(id))throw new Error('符箓不存在。');
+ if(battle.talismansUsed>=2)throw new Error('每场最多使用两张符箓。');
+ if(battle.talismanRound===battle.round+1)throw new Error('本轮已经使用过符箓。');
+ consumeItem(save,id);battle.talismansUsed++;battle.talismanRound=battle.round+1;
+ const message=id==='attack-talisman'?'攻击符额外造成 2.00 伤害。':'护身符准备抵挡下一次伤害。';
+ if(id==='attack-talisman')battle.hp=round2(Math.max(0,battle.hp-2));else battle.guard=true;
+ battle.log=[...battle.log,message].slice(-10);
+ if(battle.hp<=0){const reward=awardVictory(save,QI_MONSTERS.find(monster=>monster.id===battle.monsterId),Date.now());finish(save,'victory',reward);save.lastBattle.log=[message,`胜利！修为 +${reward.xp}，${reward.rewards.join('、')}。`]}
+ return message;
 }
 export function fleeBattle(save){
  if(!save.battle)throw new Error('没有正在进行的战斗。');

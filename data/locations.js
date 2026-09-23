@@ -4,10 +4,10 @@ export const VISITING_SECTS = [
  {id:'danxia',name:'丹霞谷',service:'购买丹药',detail:'小还丹 5 灵石（恢复 12 HP）、回灵丹 5 灵石（恢复 6 MP）、养元丹 3.5 灵石（恢复 7 HP、3 MP）、聚气丹 5 灵石（当天挂机上限增加半小时）。',npc:'药师'},
  {id:'qinglan',name:'青岚谷',service:'医修治疗',detail:'医修可立即疗伤；恢复量与费用待定。',npc:'医修'},
  {id:'hehuan',name:'合欢宗',service:'山门拜访',detail:'其他对外事务待定。',npc:'迎客弟子'},
- {id:'wanling',name:'万灵山',service:'租借灵兽',detail:'每次出战消耗一份租约，1 灵石一份；可预租多份，战斗前选择是否出战。战斗开放后可使用。',npc:'御兽师'},
+ {id:'wanling',name:'万灵山',service:'租借灵兽',detail:'1 灵石一份租约，战前选择追击或守护；出战消耗一份。',npc:'御兽师'},
  {id:'lingxiao',name:'凌霄剑宗',service:'山门拜访',detail:'其他对外事务待定。',npc:'守山弟子'},
- {id:'xuanji',name:'玄机门',service:'购买阵盘',detail:'阵盘可在战斗中用于控制；效果、售价待定。本宗弟子每场可使用一枚自制阵盘。',npc:'阵师'},
- {id:'taixu',name:'太虚符宗',service:'购买符箓',detail:'符箓效果与售价待定。',npc:'符师'},
+ {id:'xuanji',name:'玄机门',service:'购买阵盘',detail:'定身阵盘使对手下一轮无法行动；本宗弟子每场可免费使用一次。',npc:'阵师'},
+ {id:'taixu',name:'太虚符宗',service:'购买符箓',detail:'攻击符额外造成 2 点伤害；护身符免疫下一次伤害。每场最多使用两张。',npc:'符师'},
  {id:'zhenyue',name:'镇岳宗',service:'静室打坐',detail:'花灵石等待恢复生命，期间不能进行其他行动；费用、恢复量与等待时间待定。',npc:'静室管事'}
 ];
 
