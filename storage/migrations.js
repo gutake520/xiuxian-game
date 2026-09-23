@@ -5,13 +5,17 @@ import {initialCombat} from '../data/initial-combat.js';
 export function migrateSave(save,now=Date.now()){
  if(!save?.player)throw new Error('存档缺少人物信息。');
  const p=save.player;
+ let initial=null;
+ if(p.spiritRoot){
+  // Some older saves included the category prefix in the root's display name.
+  const rootName=String(p.spiritRoot).trim().replace(/^变异/,'');
+  try{initial=initialCombat(rootName)}catch{console.warn('[xiuxian-game] 未识别旧灵根，保留原始人物数值：',p.spiritRoot)}
+ }
  // Early saves used 100 HP/MP as placeholders; convert once from the original root.
- if(!p.combat&&p.spiritRoot){
-  const initial=initialCombat(p.spiritRoot);
+ if(!p.combat&&initial){
   p.combat=initial;
   p.hp=initial.hp;p.mp=initial.mp;p.spirit=initial.mp;
- }else if(p.combat&&p.spiritRoot){
-  const initial=initialCombat(p.spiritRoot);
+ }else if(p.combat&&initial){
   for(const [key,value] of Object.entries(initial))if(!Number.isFinite(p.combat[key]))p.combat[key]=value;
   if(!Number.isFinite(p.hp))p.hp=p.combat.hp;
   if(!Number.isFinite(p.mp))p.mp=p.combat.mp;
