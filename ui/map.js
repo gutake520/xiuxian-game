@@ -1,5 +1,7 @@
 import {VISITING_SECTS,QI_MONSTERS} from '../data/locations.js';
 import {showBattle} from './combat.js';
+import {ITEMS,SECT_PILLS} from '../data/items.js';
+import {purchase} from '../systems/inventory.js';
 
 export function createMapUI({getSave,activate,actions}){
  const content=()=>document.getElementById('xg-content');
@@ -33,9 +35,15 @@ export function createMapUI({getSave,activate,actions}){
   activate('map');
   content().innerHTML=`<section class="xg-map-sheet"><button class="xg-map-back" type="button">← 返回九宗</button>${heading(sect.name,sect.service)}
    <div class="xg-map-place xg-map-scene"><span class="xg-map-peak" aria-hidden="true"></span><strong>${sect.npc}</strong><p>${sect.id==='tiangong'&&own?'“你也是天工阁的人？自己的装备，自己去修。”':`“来者是客，欢迎到${sect.name}坐坐。”`}</p></div>
-   <div class="xg-card"><h3>${sect.service}</h3><p>${sect.detail}</p><small class="xg-map-pending">具体操作将在对应物品与战斗功能开放后接入。</small></div>
+   <div class="xg-card"><h3>${sect.service}</h3><p>${sect.detail}</p>${id==='danxia'?SECT_PILLS.map(itemId=>`<button type="button" data-sect-buy="${itemId}">购买${ITEMS[itemId].name} · ${ITEMS[itemId].price} 灵石</button>`).join(''):'<small class="xg-map-pending">具体效果或费用待定，暂不扣除灵石。</small>'}</div><p role="status" aria-live="polite"></p>
   </section>`;
   back(renderSects);
+  const status=content().querySelector('[role=status]');
+  content().querySelectorAll('[data-sect-buy]').forEach(button=>button.onclick=async()=>{
+   button.disabled=true;
+   try{await actions.mutate(s=>purchase(s,button.dataset.sectBuy),{message:result=>result});status.textContent='丹药已收入储物。'}
+   catch(error){status.textContent=error.message}finally{if(button.isConnected)button.disabled=false}
+  });
  }
  function renderMonsters(){
   activate('map');

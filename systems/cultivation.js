@@ -11,7 +11,8 @@ export function settleIdle(save,now=Date.now()){
   const day=localDay(start);if(idle.day!==day){idle.day=day;idle.usedMs=0}
   const end=Math.min(now,nextMidnight(start));
   if(rate>0&&realmProgress(save.player).index>=0&&!realmProgress(save.player).complete){
-   const counted=Math.min(end-start,Math.max(0,IDLE_LIMIT_MS-idle.usedMs));
+   const dailyLimit=IDLE_LIMIT_MS+(save.qiPillDay===day?30*60*1000:0);
+   const counted=Math.min(end-start,Math.max(0,dailyLimit-idle.usedMs));
    idle.usedMs+=counted;earned+=counted/60000*rate;
   }
   start=end;

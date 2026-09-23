@@ -12,6 +12,11 @@ export const ITEMS={
  'spirit-herb':{id:'spirit-herb',name:'回灵草',kind:'material',stackable:true,glyph:'草',description:'炼丹材料。'},
  'qi-herb':{id:'qi-herb',name:'聚气草',kind:'material',stackable:true,glyph:'草',description:'炼丹材料。'},
  'ore':{id:'ore',name:'矿石',kind:'material',stackable:true,glyph:'矿',description:'炼器材料。'},
+ 'small-heal-pill':{id:'small-heal-pill',name:'小还丹',price:5,kind:'pill',stackable:true,hp:12,glyph:'丹',description:'恢复 12 点生命。'},
+ 'spirit-pill':{id:'spirit-pill',name:'回灵丹',price:5,kind:'pill',stackable:true,mp:6,glyph:'丹',description:'恢复 6 点法力。'},
+ 'mixed-pill':{id:'mixed-pill',name:'养元丹',price:3.5,kind:'pill',stackable:true,hp:7,mp:3,glyph:'丹',description:'恢复 7 点生命与 3 点法力。'},
+ 'qi-pill':{id:'qi-pill',name:'聚气丹',price:5,kind:'pill',stackable:true,glyph:'丹',description:'服用当天的挂机上限增加半小时；当天不可叠加。'},
  'qi-manual':{id:'qi-manual',name:'引气诀',price:10,kind:'manual',methodId:'basic-qi-guide',glyph:'诀',description:'解开三阶数阵后学会，可设为主修。'}
 };
 export const SHOP_ITEMS=['iron-sword','cloth-robe','qi-manual'];
+export const SECT_PILLS=['small-heal-pill','spirit-pill','mixed-pill','qi-pill'];

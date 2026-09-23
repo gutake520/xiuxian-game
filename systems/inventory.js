@@ -1,5 +1,6 @@
 import {ITEMS} from '../data/items.js';
 import {DURABILITY_MAX,TEMP_LOOT_MS} from '../data/balance.js';
+import {localDay} from './cultivation.js';
 export function hasManual(save,id='basic-qi-guide'){return save.inventory.some(entry=>ITEMS[entry.itemId]?.methodId===id)}
 export function ownsTechnique(save,id){return save.techniques.mastered.includes(id)||hasManual(save,id)}
 export function addItem(save,id,quantity=1){
@@ -48,4 +49,39 @@ export function awardItem(save,id,quantity=1,now=Date.now()){
 export function claimLoot(save,id,now=Date.now()){
  expireLoot(save,now);const index=save.temporaryLoot.findIndex(entry=>entry.id===id);if(index<0)throw new Error('战利品已过期或已领取。');
  const entry=save.temporaryLoot[index];addItem(save,entry.itemId,entry.quantity);save.temporaryLoot.splice(index,1);
+}
+export function equipmentSalePrice(item){return ['iron-sword','cloth-robe'].includes(item?.id)?2:['wild-sword','wild-robe'].includes(item?.id)?2.5:3}
+export function sellEquipment(save,uid){
+ const entry=save.inventory.find(entry=>entry.uid===uid),item=ITEMS[entry?.itemId];
+ if(!entry||item?.kind!=='equipment')throw new Error('只能出售装备。');
+ if(entry.durability!==DURABILITY_MAX)throw new Error('耐久未满，不能出售；可以丢弃或以后修补。');
+ if(save.battle)throw new Error('战斗中不能出售。');
+ if(save.equipment[item.slot]===uid)equipItem(save,uid);
+ const price=equipmentSalePrice(item);
+ save.inventory=save.inventory.filter(item=>item.uid!==uid);
+ save.player.spiritStones=Math.round((save.player.spiritStones+price)*100)/100;
+ return `出售${item.name}，获得 ${price} 灵石。`;
+}
+export function discardEquipment(save,uid){
+ const entry=save.inventory.find(entry=>entry.uid===uid),item=ITEMS[entry?.itemId];
+ if(!entry||item?.kind!=='equipment')throw new Error('只能丢弃装备。');
+ if(save.battle)throw new Error('战斗中不能丢弃。');
+ if(save.equipment[item.slot]===uid)equipItem(save,uid);
+ save.inventory=save.inventory.filter(item=>item.uid!==uid);
+ return `丢弃${item.name}。`;
+}
+export function usePill(save,uid,now=Date.now()){
+ const entry=save.inventory.find(entry=>entry.uid===uid),item=ITEMS[entry?.itemId];
+ if(!entry||item?.kind!=='pill')throw new Error('丹药不存在。');
+ const p=save.player,stats=equipmentStats(save);
+ if(item.id==='qi-pill'){
+  if(save.qiPillDay===localDay(now))throw new Error('今天已经服用过聚气丹。');
+  save.qiPillDay=localDay(now);
+ }else{
+  const hp=Math.min(stats.maxHp,Math.round((p.hp+(item.hp||0))*100)/100),mp=Math.min(stats.maxMp,Math.round((p.mp+(item.mp||0))*100)/100);
+  if(hp===p.hp&&mp===p.mp)throw new Error('生命与法力已满，无需服药。');
+  p.hp=hp;p.mp=mp;
+ }
+ if(entry.quantity>1)entry.quantity--;else save.inventory=save.inventory.filter(e=>e.uid!==uid);
+ return `服用${item.name}。`;
 }

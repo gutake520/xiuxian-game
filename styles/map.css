@@ -21,6 +21,7 @@
 #xg-panel .xg-map-pending,#xg-panel .xg-map-monster small{display:block;color:#b6c4b7!important;font-size:11px;margin:10px 0 2px}
 #xg-panel .xg-map-monster button,#xg-panel .xg-battle-sheet button{border:1px solid #866f47;border-radius:7px;background:#1a3028;color:#eddbb5;padding:8px 12px;font:inherit}
 #xg-panel .xg-map-monster button{margin-top:10px}
+#xg-panel .xg-map-scene+.xg-card button{display:block;width:100%;margin:8px 0;border:1px solid #866f47;border-radius:7px;background:#193129;color:#eddbb5;padding:8px;font:inherit;text-align:left}
 #xg-panel .xg-battle-sheet h2{color:#e9cc92}
 #xg-panel .xg-battle-bars{display:grid;grid-template-columns:1fr 1fr;gap:9px}
 #xg-panel .xg-battle-bars div{border:1px solid #69593f;border-radius:8px;padding:11px;background:#112820}

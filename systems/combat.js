@@ -15,8 +15,8 @@ function awardVictory(save,monster,now){
  const other=pick(monster.resource==='stones'?['herbs','ore']:monster.resource==='herbs'?['stones','ore']:['stones','herbs']);
  if(other==='stones'){save.player.spiritStones=round2(save.player.spiritStones+1);rewards.push('灵石×1')}
  else grant(save,other==='herbs'?pick(herbs):'ore',1,rewards,now);
- for(const [id,chance] of [['wild-shoes',.1],['wild-sword',.05],['wild-robe',.05]])if(Math.random()<chance)grant(save,id,1,rewards,now);
- if(Math.random()<.05)grant(save,pick(['hp-charm','mp-charm','crit-charm','dodge-charm']),1,rewards,now);
+ for(const [id,chance] of [['wild-shoes',.08],['wild-sword',.04],['wild-robe',.04]])if(Math.random()<chance)grant(save,id,1,rewards,now);
+ if(Math.random()<.04)grant(save,pick(['hp-charm','mp-charm','crit-charm','dodge-charm']),1,rewards,now);
  const xp=addCultivation(save,COMBAT_REWARD_XP);
  return {rewards,xp};
 }
