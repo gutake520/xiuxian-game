@@ -36,10 +36,10 @@ function finish(save,outcome,details={}){
 export function beginBattle(save,id,pet=null){
  if(save.battle)throw new Error('尚有未结束的战斗。');
  if(save.player.cultivation< -100)throw new Error('请先去修炼。');
- const tier=realmProgress(save.player).index;if(tier<0||tier>5)throw new Error('此处只开放炼气一至六层的小妖。');
+ const tier=realmProgress(save.player).index;if(tier<0)throw new Error('当前境界暂未开放此处战斗。');
  if(save.player.hp<=0)throw new Error('生命不足，无法迎战。');
  const monster=QI_MONSTERS.find(entry=>entry.id===id);if(!monster)throw new Error('小妖不存在。');
- if(tier<(monster.minTier??0)||tier>(monster.maxTier??2))throw new Error('小妖已随境界变化，请重新进入山头。');
+ if(tier<(monster.minTier??0))throw new Error('此小妖需炼气四层解锁。');
  if(pet!==null){if(!['attack','guard'].includes(pet))throw new Error('灵兽类型无效。');if((save.petRentals||0)<1)throw new Error('尚未租借灵兽。');save.petRentals--}
  const maxHp=monster.hpMin+Math.floor(Math.random()*(monster.hpMax-monster.hpMin+1));
  save.battle={id:crypto.randomUUID(),monsterId:id,name:monster.name,maxHp,hp:maxHp,attack:monster.attack,speed:monster.speed,round:0,pet,guard:false,bindRounds:[],arrayRound:0,talismansUsed:0,talismanRound:0,freeArrayUsed:false,skillReady:{},log:['狭路相逢，战斗开始。']};
