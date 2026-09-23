@@ -19,8 +19,8 @@ export function claimDailyTask(save,id,day,now=Date.now()){
  if(day!==daily.day)throw new Error('日课已更新，请重新打开。');
  if(!task||daily[id]<task.target)throw new Error('尚未完成日课。');
  if(daily.claimed.includes(id))throw new Error('这项奖励已领取。');
- daily.claimed.push(id);save.sectPoints=(save.sectPoints||0)+3;
- return `${task.name}完成，宗门积分 +3。`;
+ daily.claimed.push(id);save.sectPoints=(save.sectPoints||0)+1;
+ return `${task.name}完成，宗门积分 +1。`;
 }
 export function redeemInheritance(save,id){
  const method=TECHNIQUES[id];
