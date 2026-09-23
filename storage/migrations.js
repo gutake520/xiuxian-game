@@ -1,5 +1,5 @@
 import {INITIAL_STONES,INITIAL_BAG_SIZE} from '../data/balance.js';
-import {QI_REQUIREMENTS,realmProgress,addCultivation} from '../data/realms.js';
+import {QI_REQUIREMENTS,realmProgress,addCultivation,applyRealmHp} from '../data/realms.js';
 import {localDay} from '../systems/cultivation.js';
 import {initialCombat} from '../data/initial-combat.js';
 import {ITEMS} from '../data/items.js';
@@ -47,5 +47,6 @@ export function migrateSave(save,now=Date.now()){
  if(!Number.isFinite(save.idle.usedMs))save.idle.usedMs=0;
  if(!save.idle.day)save.idle.day=localDay(now);
  const progress=realmProgress(p);if(progress.index>=0){p.cultivationRequired=QI_REQUIREMENTS[progress.index]??null;if(progress.required&&p.cultivation>=progress.required){const xp=p.cultivation;p.cultivation=0;addCultivation(save,xp)}}
+ applyRealmHp(save);
  save.version=6;return save;
 }

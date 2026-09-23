@@ -1,6 +1,7 @@
 import {ITEMS} from '../data/items.js';
 import {DURABILITY_MAX,TEMP_LOOT_MS} from '../data/balance.js';
 import {localDay} from './cultivation.js';
+import {realmHpBonus} from '../data/realms.js';
 export function hasManual(save,id='basic-qi-guide'){return save.inventory.some(entry=>ITEMS[entry.itemId]?.methodId===id)}
 export function ownsTechnique(save,id){return save.techniques.mastered.includes(id)||hasManual(save,id)}
 export function addItem(save,id,quantity=1){
@@ -31,7 +32,7 @@ export function equipItem(save,uid){
 }
 export function equipmentName(save,slot){const entry=save.inventory.find(e=>e.uid===save.equipment?.[slot]),item=ITEMS[entry?.itemId];return item?`${item.name} ${entry.durability??DURABILITY_MAX}/${DURABILITY_MAX}${entry.durability<=0?'（损坏）':''}`:'未装备'}
 export function equipmentStats(save){
- const stats={attack:save.player.combat?.attack||0,defense:save.player.combat?.defense||0,speed:save.player.combat?.speed||0,critRate:save.player.combat?.critRate||0,dodgeRate:save.player.combat?.dodgeRate||0,maxHp:save.player.combat?.hp||save.player.hp||20,maxMp:save.player.combat?.mp||save.player.mp||10};
+ const stats={attack:save.player.combat?.attack||0,defense:save.player.combat?.defense||0,speed:save.player.combat?.speed||0,critRate:save.player.combat?.critRate||0,dodgeRate:save.player.combat?.dodgeRate||0,maxHp:(save.player.combat?.hp||save.player.hp||20)+realmHpBonus(save.player),maxMp:save.player.combat?.mp||save.player.mp||10};
  for(const uid of Object.values(save.equipment||{})){
   const entry=save.inventory.find(entry=>entry.uid===uid),item=ITEMS[entry?.itemId];if(!item||item.kind!=='equipment'||(entry.durability??DURABILITY_MAX)<=0)continue;
   for(const key of ['attack','defense','speed','critRate','dodgeRate'])stats[key]+=item[key]||0;
@@ -51,6 +52,18 @@ export function claimLoot(save,id,now=Date.now()){
  const entry=save.temporaryLoot[index];addItem(save,entry.itemId,entry.quantity);save.temporaryLoot.splice(index,1);
 }
 export function equipmentSalePrice(item){return ['iron-sword','cloth-robe'].includes(item?.id)?2:['wild-sword','wild-robe'].includes(item?.id)?2.5:3}
+export const MATERIAL_SALE_PRICE=.8;
+export function sellMaterial(save,uid,quantity){
+ const entry=save.inventory.find(item=>item.uid===uid),item=ITEMS[entry?.itemId];
+ if(!entry||item?.kind!=='material')throw new Error('只能出售矿石或药草。');
+ if(!Number.isSafeInteger(quantity)||quantity<1||quantity>(entry.quantity||1))throw new Error('出售数量无效。');
+ if(save.battle)throw new Error('战斗中不能出售物品。');
+ const price=Math.round(quantity*MATERIAL_SALE_PRICE*100)/100;
+ if(quantity===entry.quantity)save.inventory=save.inventory.filter(candidate=>candidate!==entry);
+ else entry.quantity-=quantity;
+ save.player.spiritStones=Math.round((save.player.spiritStones+price)*100)/100;
+ return `出售${item.name}×${quantity}，获得 ${price} 灵石。`;
+}
 export function sellEquipment(save,uid){
  const entry=save.inventory.find(entry=>entry.uid===uid),item=ITEMS[entry?.itemId];
  if(!entry||item?.kind!=='equipment')throw new Error('只能出售装备。');

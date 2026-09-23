@@ -6,6 +6,13 @@ export function realmProgress(player) {
  const required=QI_REQUIREMENTS[index]??null;
  return {index,required,next:QI_REALMS[index+1]??null,complete:index===10,current:Number(player.cultivation)||0};
 }
+// 炼气一至五层：每升一层增加 1 点生命上限。五层之后暂不继续增加。
+export function realmHpBonus(player){return Math.max(0,Math.min(4,realmProgress(player).index))}
+export function applyRealmHp(save){
+ const bonus=realmHpBonus(save.player),applied=Number.isSafeInteger(save.realmHpBonusApplied)?save.realmHpBonusApplied:0;
+ if(bonus>applied&&Number.isFinite(save.player.hp))save.player.hp=Math.round((save.player.hp+bonus-applied)*100)/100;
+ save.realmHpBonusApplied=bonus;
+}
 export function addCultivation(save,amount) {
  let {index}=realmProgress(save.player);if(index<0||index>=10||!Number.isFinite(amount)||amount<=0)return 0;
  let value=(Number(save.player.cultivation)||0)+amount,used=amount;
@@ -13,5 +20,6 @@ export function addCultivation(save,amount) {
  if(index===10){used-=value;value=0}
  save.player.realm=QI_REALMS[index];save.player.cultivation=Math.round(value*100)/100;
  save.player.cultivationRequired=QI_REQUIREMENTS[index]??null;
+ applyRealmHp(save);
  return Math.max(0,Math.round(used*100)/100);
 }
