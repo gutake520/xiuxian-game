@@ -209,14 +209,51 @@ function renderSectIntro(sect){
   try{await game.mutate(next=>{next.sectProgress.introPending=false});renderSectHall(sect)}catch(error){console.error('[xiuxian-game]',error);document.getElementById('xg-sect-error').textContent='保存未完成，请重试。';button.disabled=false}
  };sheet.scrollTop=0;
 }
+const SECT_MANUALS=[['strengthen-manual','strengthen-attack'],['wall-manual','iron-wall'],['gamble-manual','gamble-strike']];
+const SECT_ROOMS={danxia:'炼丹房',tiangong:'锻兵室',wanling:'灵兽苑',taixu:'符箓室',xuanji:'阵盘室'};
+function sectHeader(sect,back){return `<div class="xg-sect-heading"><h2>${sect.name}</h2><button type="button" id="xg-sect-back">${back}</button></div>`}
 function renderSectHall(sect){
  const sheet=sectOverlay(),eligible=sectEligibility(currentSave.player,sect);
- sheet.innerHTML=`<div class="xg-sect-heading"><h2>${sect.name}</h2><button type="button" id="xg-sect-back">返回人物</button></div><p class="xg-sect-hint">${sect.feature}</p><div class="xg-card"><strong>${eligible.specialty?'特色传承资格已满足':'当前仅可学习通用功法'}</strong><p class="xg-sect-hint">宗门积分 ${currentSave.sectPoints||0} · 《引气诀》可在人物页参悟</p></div><div class="xg-card"><h3>通用战斗功法</h3><p>每部典籍 15 灵石，参悟后可装备。</p>${[['strengthen-manual','强化普通'],['wall-manual','铜墙铁壁'],['gamble-manual','我赌一把']].map(([id,name])=>`<button type="button" data-sect-manual="${id}" ${ownsTechnique(currentSave,{'strengthen-manual':'strengthen-attack','wall-manual':'iron-wall','gamble-manual':'gamble-strike'}[id])?'disabled':''}>${name} · ${ownsTechnique(currentSave,{'strengthen-manual':'strengthen-attack','wall-manual':'iron-wall','gamble-manual':'gamble-strike'}[id])?'已拥有':'15 灵石'}</button>`).join('')}</div>${sect.id==='danxia'?`<div class="xg-card"><h3>神药谱 · 五阶数阵</h3><p>特殊传承需宗门积分；宗门任务暂未开放。</p>${eligible.specialty?currentSave.techniques?.mastered?.includes('divine-pharmacopoeia')?`<p>已学会炼丹</p>${Object.entries(PILL_RECIPES).map(([id,recipe])=>`<button type="button" data-brew="${id}">炼制${escapeHTML({'small-heal-pill':'小还丹','spirit-pill':'回灵丹','mixed-pill':'养元丹','qi-pill':'聚气丹'}[id])} · ${Object.entries(recipe).map(([herb,count])=>`${escapeHTML({'healing-herb':'回血草','spirit-herb':'回灵草','qi-herb':'聚气草'}[herb])}×${count}`).join('、')}</button>`).join('')}`:currentSave.techniques?.sectManuals?.includes('divine-pharmacopoeia')?'<button type="button" id="xg-study-pharmacopoeia">参悟神药谱</button>':`<button type="button" id="xg-buy-pharmacopoeia" ${(currentSave.sectPoints||0)<1?'disabled':''}>兑换典籍 · 1 积分（暂定）</button>`:'<p>当前不满足丹霞谷专精条件，无法学习。</p>'}</div>`:''}<div class="xg-sect-facilities">${['日课堂','藏书阁','宗门大比','师尊授业','门派商店'].map(name=>`<button type="button" disabled>${name}<small>尚未开放</small></button>`).join('')}</div><p id="xg-sect-status" role="status"></p><details class="xg-sect-rules"><summary>离宗与情缘须知</summary><p>离宗后，本宗专属功法与物品停止生效，专属功法自动卸下；已学记录保留，通用物品不受影响。</p><p>主动解除道侣关系须支付灵石。离开合欢宗时，至多保留一位道侣，其余关系须先结清费用。灵石不足时不能办理。</p><p>费用及重返宗门规则待定，退出、更换道侣暂未开放。</p></details>`;
- sheet.querySelectorAll('[data-sect-manual]').forEach(button=>button.onclick=async()=>{button.disabled=true;try{await game.mutate(s=>purchase(s,button.dataset.sectManual,true),{message:result=>result});renderSectHall(sect)}catch(error){sheet.querySelector('#xg-sect-status').textContent=error.message;button.disabled=false}});
- sheet.querySelectorAll('[data-brew]').forEach(button=>button.onclick=async()=>{button.disabled=true;try{const {result}=await game.mutate(s=>brewPill(s,button.dataset.brew),{message:result=>result});renderSectHall(sect);sheet.querySelector('#xg-sect-status').textContent=result}catch(error){sheet.querySelector('#xg-sect-status').textContent=error.message;button.disabled=false}});
- sheet.querySelector('#xg-buy-pharmacopoeia')?.addEventListener('click',async event=>{event.currentTarget.disabled=true;try{await game.mutate(s=>{if(s.player.sect!=='丹霞谷'||!sectEligibility(s.player,sect).specialty||s.sectPoints<1)throw new Error('宗门积分不足或不符合传承条件。');s.sectPoints--;s.techniques.sectManuals.push('divine-pharmacopoeia')},{message:'兑换《神药谱》。'});renderSectHall(sect)}catch(error){sheet.querySelector('#xg-sect-status').textContent=error.message;event.currentTarget.disabled=false}});
+ sheet.innerHTML=`${sectHeader(sect,'返回人物')}<p class="xg-sect-hint">${sect.feature}</p><div class="xg-card"><strong>${eligible.specialty?'特色传承资格已满足':'当前仅可学习通用功法'}</strong><p class="xg-sect-hint">宗门积分 ${currentSave.sectPoints||0} · 《引气诀》可在人物页参悟</p></div><div class="xg-sect-facilities"><button type="button" data-sect-shop>门派商店<small>通用战斗功法</small></button>${SECT_ROOMS[sect.id]?`<button type="button" data-sect-room>${SECT_ROOMS[sect.id]}<small>${eligible.specialty?'进入':'专精条件未满足'}</small></button>`:''}${['日课堂','藏书阁','宗门大比','师尊授业'].map(name=>`<button type="button" disabled>${name}<small>尚未开放</small></button>`).join('')}</div><details class="xg-sect-rules"><summary>离宗与情缘须知</summary><p>离宗后，本宗专属功法与物品停止生效，专属功法自动卸下；已学记录保留，通用物品不受影响。</p><p>主动解除道侣关系须支付灵石。离开合欢宗时，至多保留一位道侣，其余关系须先结清费用。灵石不足时不能办理。</p><p>费用及重返宗门规则待定，退出、更换道侣暂未开放。</p></details>`;
+ sheet.querySelector('#xg-sect-back').onclick=closeSect;
+ sheet.querySelector('[data-sect-shop]').onclick=()=>renderSectShop(sect);
+ sheet.querySelector('[data-sect-room]')?.addEventListener('click',()=>renderSectRoom(sect));
+ sheet.scrollTop=0;
+}
+function renderSectShop(sect){
+ const sheet=sectOverlay();
+ sheet.innerHTML=`${sectHeader(sect,'返回宗门')}<div class="xg-card"><h3>门派商店</h3><p>通用战斗功法典籍，每部 15 灵石。参悟后可在人物页装备。</p>${SECT_MANUALS.map(([itemId,methodId])=>{const owned=ownsTechnique(currentSave,methodId);return `<button type="button" data-sect-manual="${itemId}" ${owned?'disabled':''}>${escapeHTML(TECHNIQUES[methodId].name)} · ${owned?'已拥有':'15 灵石'}</button>`}).join('')}</div><p id="xg-sect-status" role="status"></p>`;
+ sheet.querySelector('#xg-sect-back').onclick=()=>renderSectHall(sect);
+ sheet.querySelectorAll('[data-sect-manual]').forEach(button=>button.onclick=async()=>{
+  button.disabled=true;
+  try{const {result}=await game.mutate(s=>purchase(s,button.dataset.sectManual,true),{message:result=>result});renderSectShop(sect);sheet.querySelector('#xg-sect-status').textContent=result}
+  catch(error){sheet.querySelector('#xg-sect-status').textContent=error.message;button.disabled=false}
+ });
+ sheet.scrollTop=0;
+}
+function renderSectRoom(sect){
+ const sheet=sectOverlay(),eligible=sectEligibility(currentSave.player,sect),learned=currentSave.techniques?.mastered?.includes('divine-pharmacopoeia');
+ let body='<p>具体制作方式尚未确定，暂不消耗材料。</p>';
+ if(sect.id==='danxia'){
+  body=`<p>在此参悟《神药谱》，学会后才能炼制丹药。</p>${eligible.specialty?learned?`<p>已学会炼丹</p>${Object.entries(PILL_RECIPES).map(([id,recipe])=>`<button type="button" data-brew="${id}">炼制${escapeHTML({'small-heal-pill':'小还丹','spirit-pill':'回灵丹','mixed-pill':'养元丹','qi-pill':'聚气丹'}[id])} · ${Object.entries(recipe).map(([herb,count])=>`${escapeHTML({'healing-herb':'回血草','spirit-herb':'回灵草','qi-herb':'聚气草'}[herb])}×${count}`).join('、')}</button>`).join('')}`:currentSave.techniques?.sectManuals?.includes('divine-pharmacopoeia')?'<button type="button" id="xg-study-pharmacopoeia">参悟神药谱 · 五阶数阵</button>':`<p>特殊传承需宗门积分；宗门任务暂未开放。</p><button type="button" id="xg-buy-pharmacopoeia" ${(currentSave.sectPoints||0)<1?'disabled':''}>兑换典籍 · 1 积分（暂定）</button>`:'<p>不满足本宗专精条件，暂不能学习炼丹传承。</p>'}`;
+ }else if(sect.id==='tiangong')body='<p>锻造与自行修补装备的配方尚未确定，暂不消耗矿石和灵石。</p>';
+ else if(sect.id==='wanling')body='<p>这里可以照料自己的灵兽。喂养会使用药草，灵兽获取方式、每次食量及效果尚待确定。</p>';
+ else if(sect.id==='taixu')body='<p>攻击符与护身符计划各用一份药草、一份矿石制作；制符传承尚未开放。</p>';
+ else if(sect.id==='xuanji')body='<p>阵盘用于需要提前准备的战斗。两种阵盘的具体效果和制作费用尚待确定，矿石需求暂定 18 份。</p>';
+ sheet.innerHTML=`${sectHeader(sect,'返回宗门')}<div class="xg-card"><h3>${SECT_ROOMS[sect.id]}</h3>${body}</div><p id="xg-sect-status" role="status"></p>`;
+ sheet.querySelector('#xg-sect-back').onclick=()=>renderSectHall(sect);
+ sheet.querySelectorAll('[data-brew]').forEach(button=>button.onclick=async()=>{
+  button.disabled=true;
+  try{const {result}=await game.mutate(s=>brewPill(s,button.dataset.brew),{message:result=>result});renderSectRoom(sect);sheet.querySelector('#xg-sect-status').textContent=result}
+  catch(error){sheet.querySelector('#xg-sect-status').textContent=error.message;button.disabled=false}
+ });
+ sheet.querySelector('#xg-buy-pharmacopoeia')?.addEventListener('click',async event=>{
+  event.currentTarget.disabled=true;
+  try{await game.mutate(s=>{if(s.player.sect!=='丹霞谷'||!sectEligibility(s.player,sect).specialty||s.sectPoints<1)throw new Error('宗门积分不足或不符合传承条件。');s.sectPoints--;s.techniques.sectManuals.push('divine-pharmacopoeia')},{message:'兑换《神药谱》。'});renderSectRoom(sect)}
+  catch(error){sheet.querySelector('#xg-sect-status').textContent=error.message;event.currentTarget.disabled=false}
+ });
  sheet.querySelector('#xg-study-pharmacopoeia')?.addEventListener('click',()=>{sheet.classList.remove('open');featureUI.library()});
- document.getElementById('xg-sect-back').onclick=closeSect;sheet.scrollTop=0;
+ sheet.scrollTop=0;
 }
 
 function showPrologue(){let pending;try{pending=JSON.parse(localStorage.getItem(rollKey(currentSlot))||'null')}catch{}
