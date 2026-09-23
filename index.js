@@ -213,7 +213,7 @@ function renderSectIntro(sect){
 }
 const sectAPI={getSave:()=>currentSave,actions:game};
 const closeSectFeature=sect=>()=>{document.getElementById('xg-feature-sheet')?.remove();renderSectHall(sect)};
-const SECT_MANUALS=[['strengthen-manual','strengthen-attack'],['wall-manual','iron-wall'],['gamble-manual','gamble-strike'],['steal-manual','empty-hands'],['breath-manual','catch-breath'],['charged-manual','charged-strike']];
+const SECT_MANUALS=[['strengthen-manual','strengthen-attack'],['wall-manual','iron-wall'],['gamble-manual','gamble-strike'],['steal-manual','empty-hands'],['breath-manual','catch-breath'],['charged-manual','charged-strike'],['only-once-manual','only-once']];
 const SECT_ROOMS={danxia:'炼丹房',tiangong:'锻兵室',wanling:'灵兽苑',taixu:'符箓室',xuanji:'阵盘室'};
 function sectHeader(sect,back){return `<div class="xg-sect-heading"><h2>${sect.name}</h2><button type="button" id="xg-sect-back">${back}</button></div>`}
 function renderSectHall(sect){

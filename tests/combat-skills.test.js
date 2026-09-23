@@ -36,3 +36,10 @@ test('later qi stages grant root-dependent combat stats and old saves gain one M
  assert.equal(equipmentStats(many).attack,4);assert.equal(equipmentStats(many).defense,3.2);
  applyRealmHp(single);assert.equal(single.player.mp,11);
 });
+test('once per battle critical focus costs two MP and persists through reload',()=>{
+ const s=battle(make());s.techniques.mastered.push('only-once');s.techniques.combat=['only-once'];s.player.combat.critRate=5;
+ const first=playRound(s,'only-once');assert.equal(first.dealt,0);assert.equal(s.player.mp,8);
+ const resumed=JSON.parse(JSON.stringify(s));assert.equal(resumed.battle.criticalFocus,true);
+ assert.throws(()=>playRound(resumed,'only-once'),/已使用过/);assert.equal(resumed.player.mp,8);
+ const random=Math.random;try{Math.random=()=>.1;const hit=playRound(resumed,'attack');assert.equal(hit.dealt,4.5)}finally{Math.random=random}
+});
