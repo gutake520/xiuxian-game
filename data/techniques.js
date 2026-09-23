@@ -20,6 +20,7 @@ export const TECHNIQUES={
 };
 for(const method of Object.values(TECHNIQUES))if(method.type==='combat'&&!method.passive&&method.mpCost===undefined)method.mpCost=1;
 export const PUZZLE_SIZES={初级:3,普通:3,中级:4,高级:5,特殊:5};
+export const UPGRADEABLE_TECHNIQUES=['only-once','empty-hands','gamble-strike'];
 export function hintAllowance(spirit){return Number(spirit)>=10?2:Number(spirit)>=5?1:0}
 
 export function techniqueEligible(player,method){

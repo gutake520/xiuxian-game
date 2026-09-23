@@ -3,6 +3,8 @@ import assert from 'node:assert/strict';
 import {beginBattle,playRound} from '../systems/combat.js';
 import {equipmentStats} from '../systems/inventory.js';
 import {applyRealmHp} from '../data/realms.js';
+import {purchase} from '../systems/inventory.js';
+import {startUpgrade,completeLearning} from '../systems/techniques.js';
 function make(speed=5){return {player:{realm:'炼气四层',sect:'镇岳宗',spiritRoot:'土灵根',stats:{根骨:8},cultivation:0,spiritStones:0,hp:20,mp:10,combat:{hp:30,mp:10,attack:3,defense:3,speed,critRate:0,dodgeRate:0}},inventory:[],equipment:{},techniques:{mastered:['only-one','empty-hands','resentment'],combat:['only-one','empty-hands','resentment']},bagCapacity:20,realmHpBonusApplied:3}}
 function battle(s,id='fierce'){beginBattle(s,id);s.battle.hp=100;s.battle.attack=5;return s}
 test('first strike caps damage while reflection uses pre-defense damage',()=>{const s=battle(make());const r=playRound(s,'only-one');assert.equal(r.dealt,1);assert.equal(r.taken,1);assert.equal(s.battle.hp,98.5);const t=battle(make(0));assert.equal(playRound(t,'only-one').taken,2);assert.equal(t.battle.hp,98.5)});
@@ -42,4 +44,28 @@ test('once per battle critical focus costs two MP and persists through reload',(
  const resumed=JSON.parse(JSON.stringify(s));assert.equal(resumed.battle.criticalFocus,true);
  assert.throws(()=>playRound(resumed,'only-once'),/已使用过/);assert.equal(resumed.player.mp,8);
  const random=Math.random;try{Math.random=()=>.1;const hit=playRound(resumed,'attack');assert.equal(hit.dealt,4.5)}finally{Math.random=random}
+});
+test('sect exclusive manuals cost 25, mastery requires fifty casts and one paid puzzle',()=>{
+ const s=make();s.player.spiritStones=70;s.techniques.mastered.push('only-once');s.techniques.combat=['only-once'];
+ assert.throws(()=>purchase(s,'gamble-manual'),/仅在宗门/);
+ purchase(s,'gamble-manual',true);assert.equal(s.player.spiritStones,45);
+ assert.throws(()=>startUpgrade(s,'only-once'),/50 次/);
+ s.techniques.usage={'only-once':49};beginBattle(s,'fierce');s.battle.hp=100;
+ playRound(s,'only-once');assert.equal(s.techniques.usage['only-once'],50);
+ assert.throws(()=>startUpgrade(s,'only-once'),/战斗中/);
+ s.battle=null;const puzzle=startUpgrade(s,'only-once');assert.equal(puzzle.size,4);assert.equal(s.player.spiritStones,25);
+ assert.equal(startUpgrade(s,'only-once'),puzzle);assert.equal(s.player.spiritStones,25);
+ puzzle.cells=[...puzzle.solution];completeLearning(s,'upgrade:only-once');assert.ok(s.techniques.upgraded.includes('only-once'));
+ beginBattle(s,'fierce');s.battle.hp=100;playRound(s,'only-once');assert.equal(s.player.mp,5);
+});
+test('upgraded theft and gamble use two MP and upgraded combat values',()=>{
+ const original=Math.random;
+ try{
+  Math.random=()=>.1;
+  const s=battle(make());s.techniques.upgraded=['empty-hands','gamble-strike'];s.techniques.mastered.push('gamble-strike');
+  s.techniques.combat=['empty-hands','gamble-strike'];s.player.hp=10;s.battle.hp=100;
+  assert.equal(playRound(s,'empty-hands').dealt,8);assert.equal(s.player.mp,8);assert.equal(s.player.hp,13);
+  const t=battle(make());t.techniques.upgraded=['gamble-strike'];t.techniques.mastered.push('gamble-strike');t.techniques.combat=['gamble-strike'];
+  assert.equal(playRound(t,'gamble-strike').dealt,4.8);assert.equal(t.player.mp,8);
+ }finally{Math.random=original}
 });

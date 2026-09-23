@@ -1,7 +1,7 @@
 import {ITEMS} from '../data/items.js';
-import {TECHNIQUES,PUZZLE_SIZES,hintAllowance,techniqueEligible} from '../data/techniques.js';
+import {TECHNIQUES,PUZZLE_SIZES,UPGRADEABLE_TECHNIQUES,hintAllowance,techniqueEligible} from '../data/techniques.js';
 import {hasManual} from './inventory.js';
-const canStudy=(save,id)=>techniqueEligible(save.player,TECHNIQUES[id])&&(hasManual(save,id)||save.techniques.sectManuals?.includes(id));
+const canStudy=(save,id)=>id.startsWith('upgrade:')?UPGRADEABLE_TECHNIQUES.includes(id.slice(8))&&save.techniques.mastered.includes(id.slice(8))&&Boolean(save.techniques.puzzles?.[id])&&!save.techniques.upgraded?.includes(id.slice(8)):techniqueEligible(save.player,TECHNIQUES[id])&&(hasManual(save,id)||save.techniques.sectManuals?.includes(id));
 const shuffle=values=>{for(let i=values.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[values[i],values[j]]=[values[j],values[i]]}return values};
 export function countSolutions(input,size,limit=2){
  const cells=[...input];let count=0;
@@ -28,6 +28,19 @@ export function startLearning(save,id){
  if(save.techniques.mastered.includes(id))throw new Error('已经学会这部功法。');
  return save.techniques.puzzles[id]??=createPuzzle(PUZZLE_SIZES[method.rank]||method.size,save.player.stats?.神识);
 }
+export function startUpgrade(save,id){
+ if(!UPGRADEABLE_TECHNIQUES.includes(id)||!save.techniques.mastered.includes(id))throw new Error('须先学会对应功法。');
+ if(save.battle)throw new Error('战斗中不能精进功法。');
+ if(save.techniques.upgraded?.includes(id))throw new Error('这门功法已经精进。');
+ const key='upgrade:'+id;
+ save.techniques.puzzles??={};
+ if(save.techniques.puzzles[key])return save.techniques.puzzles[key];
+ if((save.techniques.usage?.[id]||0)<50)throw new Error('使用次数不足 50 次。');
+ if(save.player.spiritStones<20)throw new Error('灵石不足。');
+ const puzzle=createPuzzle(4,save.player.stats?.神识);
+ save.player.spiritStones=Math.round((save.player.spiritStones-20)*100)/100;
+ return save.techniques.puzzles[key]=puzzle;
+}
 export function writePuzzleCell(save,id,index,value){
  const puzzle=save.techniques.puzzles[id];if(!puzzle||!canStudy(save,id))throw new Error('学习记录不存在。');
  if(!Number.isInteger(index)||index<0||index>=puzzle.cells.length||puzzle.givens[index])throw new Error('这一格不可修改。');
@@ -40,8 +53,9 @@ export function useHint(save,id){
  puzzle.cells[index]=puzzle.solution[index];puzzle.givens[index]=puzzle.solution[index];puzzle.hintsUsed++;return index;
 }
 export function completeLearning(save,id){
- const puzzle=save.techniques.puzzles[id];if(!puzzle||save.techniques.mastered.includes(id)||!canStudy(save,id))throw new Error('当前无法结算学习。');
+ const puzzle=save.techniques.puzzles[id],upgrade=id.startsWith('upgrade:');if(!puzzle||!upgrade&&save.techniques.mastered.includes(id)||!canStudy(save,id))throw new Error('当前无法结算学习。');
  if(puzzle.cells.some((v,i)=>v!==puzzle.solution[i]))throw new Error('数阵尚未解开，请检查每一行、每一列。');
+ if(upgrade){save.techniques.upgraded??=[];save.techniques.upgraded.push(id.slice(8));delete save.techniques.puzzles[id];return}
  save.techniques.mastered.push(id);
  if(id==='beast-keeper')save.spiritBeast??={name:'伴生灵兽',stage:'炼气'};
  const at=save.inventory.findIndex(entry=>ITEMS[entry.itemId]?.methodId===id);if(at>=0)save.inventory.splice(at,1);

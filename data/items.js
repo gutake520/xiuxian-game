@@ -29,6 +29,6 @@ export const ITEMS={
  'only-once-manual':{id:'only-once-manual',name:'只此一次！',price:20,kind:'manual',methodId:'only-once',glyph:'诀',description:'普通战斗功法，参悟后可装备；每场施展一次，暴击率增加 15 个百分点。'},
  'gamble-manual':{id:'gamble-manual',name:'我赌一把',price:20,kind:'manual',methodId:'gamble-strike',glyph:'诀',description:'普通战斗功法，参悟后可以装备。'}
 };
-export const SHOP_ITEMS=['iron-sword','cloth-robe','qi-manual','strengthen-manual','wall-manual','gamble-manual','steal-manual','breath-manual','charged-manual','only-once-manual'];
+export const SHOP_ITEMS=['iron-sword','cloth-robe','qi-manual','strengthen-manual','wall-manual','breath-manual','charged-manual'];
 export const SECT_PILLS=['small-heal-pill','spirit-pill','mixed-pill','qi-pill'];
 export const SECT_TALISMANS=['attack-talisman','guard-talisman'];

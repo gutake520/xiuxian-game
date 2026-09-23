@@ -228,7 +228,7 @@ function renderSectHall(sect){
 }
 function renderSectShop(sect){
  const sheet=sectOverlay();
- sheet.innerHTML=`${sectHeader(sect,'返回宗门')}<div class="xg-card"><h3>门派商店</h3><p>通用战斗功法典籍，每部 15 灵石。参悟后可在人物页装备。</p>${SECT_MANUALS.map(([itemId,methodId])=>{const owned=ownsTechnique(currentSave,methodId);return `<button type="button" data-sect-manual="${itemId}" ${owned?'disabled':''}>${escapeHTML(TECHNIQUES[methodId].name)} · ${owned?'已拥有':'15 灵石'}</button>`}).join('')}</div><p id="xg-sect-status" role="status"></p>`;
+ sheet.innerHTML=`${sectHeader(sect,'返回宗门')}<div class="xg-card"><h3>门派商店</h3><p>通用典籍 15 灵石，可精进的三部典籍 25 灵石。参悟后可在人物页装备。</p>${SECT_MANUALS.map(([itemId,methodId])=>{const owned=ownsTechnique(currentSave,methodId),price=['gamble-manual','steal-manual','only-once-manual'].includes(itemId)?25:15;return `<button type="button" data-sect-manual="${itemId}" ${owned?'disabled':''}>${escapeHTML(TECHNIQUES[methodId].name)} · ${owned?'已拥有':price+' 灵石'}</button>`}).join('')}</div><p id="xg-sect-status" role="status"></p>`;
  sheet.querySelector('#xg-sect-back').onclick=()=>renderSectHall(sect);
  sheet.querySelectorAll('[data-sect-manual]').forEach(button=>button.onclick=async()=>{
   button.disabled=true;

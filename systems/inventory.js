@@ -14,10 +14,12 @@ export function addItem(save,id,quantity=1){
 }
 export function purchase(save,id,sectDiscount=false){
  const item=ITEMS[id];if(!item)throw new Error('商品不存在。');
+ const sectOnly=['gamble-manual','steal-manual','only-once-manual'];
+ if(sectOnly.includes(id)&&!sectDiscount)throw new Error('这部功法仅在宗门商店出售。');
  if(id==='one-manual'&&sectDiscount)throw new Error('这部功法只在黑市出售。');
  if(sectDiscount&&(!['strengthen-manual','wall-manual','gamble-manual','steal-manual','breath-manual','charged-manual','only-once-manual'].includes(id)||!save.player.sect||save.player.sect==='无门无派'))throw new Error('仅宗门弟子可购买这部典籍。');
  if(item.kind==='manual'&&ownsTechnique(save,item.methodId))throw new Error('已经拥有这部功法，无需重复购买。');
- const price=sectDiscount?15:item.price;
+ const price=sectDiscount?(sectOnly.includes(id)?25:15):item.price;
  if(save.player.spiritStones<price)throw new Error('灵石不足。');
  addItem(save,id);save.player.spiritStones=Math.round((save.player.spiritStones-price)*100)/100;
  return `购得${item.name}，花费 ${price} 灵石。`;
