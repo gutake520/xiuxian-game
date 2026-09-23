@@ -16,3 +16,12 @@ export const QI_MONSTERS = [
  {id:'fierce',name:'凶攻型小妖',hp:'10～12',hpMin:10,hpMax:12,attack:4,speed:1,drop:'草药 2～3',resource:'herbs'},
  {id:'swift',name:'迅捷型小妖',hp:'12～14',hpMin:12,hpMax:14,attack:3,speed:3,drop:'矿石 2～3',resource:'ore'}
 ];
+
+export const QI_PEAKS = [
+ {id:'stone-ridge',name:'石脊岭',kind:'monster',monsterId:'tough',x:6,y:5,size:.77},
+ {id:'thorn-slope',name:'赤荆坡',kind:'monster',monsterId:'fierce',x:57,y:4,size:.76},
+ {id:'wind-cliff',name:'风鸣崖',kind:'monster',monsterId:'swift',x:27,y:29,size:.79},
+ {id:'pine-summit',name:'松隐峰',kind:'npc',npc:'沈砚',description:'一位暂居山中的游方剑客。',x:68,y:37,size:.76},
+ {id:'spring-hill',name:'听泉岭',kind:'npc',npc:'云枝',description:'在山间采药的年轻药师。',x:5,y:61,size:.77},
+ {id:'star-realm',name:'星落秘境',kind:'secret',x:58,y:70,size:.82}
+];

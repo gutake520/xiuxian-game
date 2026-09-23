@@ -1,7 +1,9 @@
-import {VISITING_SECTS,QI_MONSTERS} from '../data/locations.js';
+import {VISITING_SECTS,QI_MONSTERS,QI_PEAKS} from '../data/locations.js';
 import {showBattle} from './combat.js';
 import {ITEMS,SECT_PILLS,SECT_TALISMANS} from '../data/items.js';
 import {purchase} from '../systems/inventory.js';
+import {startQiExploration,QI_EXPLORATION_MS,QI_SCENES} from '../systems/exploration.js';
+import {localDay} from '../systems/cultivation.js';
 
 export function createMapUI({getSave,activate,actions}){
  const content=()=>document.getElementById('xg-content');
@@ -11,6 +13,7 @@ export function createMapUI({getSave,activate,actions}){
  function render(){
   if(!getSave())return;
   if(getSave().battle)return battle();
+  if(getSave().qiSecret)return renderSecret();
   activate('map');
   content().innerHTML=`<section class="xg-map-sheet">${heading('山河图','点一座山，走一段路。')}${peaks([
    {name:'远山 · 待定',x:12,y:6,locked:true,size:.8},{name:'远山 · 待定',x:68,y:17,locked:true,size:.76},
@@ -52,26 +55,68 @@ export function createMapUI({getSave,activate,actions}){
  }
  function renderMonsters(){
   activate('map');
-  const spots=[[9,4],[58,2],[31,19],[75,29],[4,38],[44,47],[15,68],[66,72]];
-  content().innerHTML=`<section class="xg-map-sheet"><button class="xg-map-back" type="button">← 返回地图</button>${heading('炼气山','山头各异，遭遇分布待定。')}
-   ${peaks(spots.map(([x,y],i)=>({name:`山头 ${i+1}`,id:String(i+1),x,y,size:.77})), 'encounter')}</section>`;
+  content().innerHTML=`<section class="xg-map-sheet"><button class="xg-map-back" type="button">← 返回地图</button>${heading('炼气山','妖影、故人和秘境，都藏在山中。')}
+   ${peaks(QI_PEAKS, 'encounter')}</section>`;
   content().querySelectorAll('[data-encounter]').forEach(button=>button.onclick=()=>renderEncounter(button.dataset.encounter));
   back(render);
  }
- function renderEncounter(number){
+ function renderEncounter(id){
   if(getSave().battle)return battle();
+  const peak=QI_PEAKS.find(item=>item.id===id);if(!peak)return renderMonsters();
+  if(peak.kind==='npc')return renderNpc(peak);
+  if(peak.kind==='secret')return renderSecret();
+  const monster=QI_MONSTERS.find(item=>item.id===peak.monsterId);if(!monster)return renderMonsters();
   activate('map');
-  content().innerHTML=`<section class="xg-map-sheet"><button class="xg-map-back" type="button">← 返回炼气山</button>${heading(`山头 ${number}`,'炼气一至三层 · 小妖出没')}
+  content().innerHTML=`<section class="xg-map-sheet"><button class="xg-map-back" type="button">← 返回炼气山</button>${heading(peak.name,'炼气一至三层 · 小妖出没')}
    ${getSave().petRentals>0?`<fieldset class="xg-card"><legend>灵兽出战（余 ${getSave().petRentals} 次）</legend><label><input type="radio" name="xg-pet" value="" checked> 不出战</label><label><input type="radio" name="xg-pet" value="attack"> 追击：每次 +0.50 伤害</label><label><input type="radio" name="xg-pet" value="guard"> 守护：每次挡 0.30 伤害</label></fieldset>`:''}
-   ${QI_MONSTERS.map(monster=>`<div class="xg-card xg-map-monster"><h3>${monster.name}</h3><p>生命 ${monster.hp} · 攻击 ${monster.attack} · 速度 ${monster.speed}</p><small>主要掉落：${monster.drop}</small><button type="button" data-foe="${monster.id}">迎战</button></div>`).join('')}
+   <div class="xg-card xg-map-monster"><h3>${monster.name}</h3><p>生命 ${monster.hp} · 攻击 ${monster.attack} · 速度 ${monster.speed}</p><small>主要掉落：${monster.drop}</small><button type="button" data-foe="${monster.id}">迎战</button></div>
    <p class="xg-map-pending">胜利可获修为和战利品；退出战斗须支付代价。</p><p role="status" aria-live="polite"></p></section>`;
   back(renderMonsters);
   const status=content().querySelector('[role=status]');
   content().querySelectorAll('[data-foe]').forEach(button=>button.onclick=async()=>{
    content().querySelectorAll('[data-foe]').forEach(item=>item.disabled=true);
-   try{const pet=content().querySelector('[name="xg-pet"]:checked')?.value||null;await actions.startBattle(button.dataset.foe,pet);battle()}
+   try{const pet=content().querySelector('[name="xg-pet"]:checked')?.value||null;await actions.startBattle(monster.id,pet);battle()}
    catch(error){status.textContent=error.message;content().querySelectorAll('[data-foe]').forEach(item=>item.disabled=false)}
  });
+ }
+ function renderNpc(peak){
+  activate('map');const met=!!getSave().flags?.metQiNpcs?.[peak.id];
+  content().innerHTML=`<section class="xg-map-sheet"><button class="xg-map-back" type="button">← 返回炼气山</button>${heading(peak.name,'山中来客')}
+   <div class="xg-map-place xg-map-scene"><span class="xg-map-peak" aria-hidden="true"></span><strong>${peak.npc}</strong><p>${peak.description}</p></div>
+   <div class="xg-card xg-map-monster"><p>${met?'对方已经记得你。':'你们尚未正式结识。'}</p><button type="button" data-meet>${met?'交谈':'上前结识'}</button><small>赠礼、好感与结缘方式待后续设定。</small></div><p role="status" aria-live="polite"></p></section>`;
+  back(renderMonsters);const button=content().querySelector('[data-meet]'),status=content().querySelector('[role=status]');
+  button.onclick=async()=>{
+   if(met){status.textContent=`${peak.npc}与你聊了几句，稍后再来。`;return}
+   button.disabled=true;
+   try{await actions.mutate(save=>{save.flags??={};save.flags.metQiNpcs??={};save.flags.metQiNpcs[peak.id]=true},{message:`在${peak.name}结识了${peak.npc}。`});renderNpc(peak)}
+   catch(error){status.textContent=error.message;button.disabled=false}
+  };
+ }
+ function renderSecret(){
+  activate('map');
+  const save=getSave(),pending=save.qiSecret,visited=save.qiSecretDay===localDay(Date.now());
+  content().innerHTML=`<section class="xg-map-sheet">${pending?'':'<button class="xg-map-back" type="button">← 返回炼气山</button>'}${heading('星落秘境',pending?'探索中 · 请在此等候三分钟':'每天可探索一次 · 门票 1 灵石')}
+   ${pending?`<div class="xg-card xg-secret-wait"><h3>秘境深处</h3><p data-secret-scene></p><div class="xg-progress"><i data-secret-progress></i></div><strong data-secret-clock>03:00</strong><p>探索中无法进行其他游戏操作。关闭面板后，进度仍会保留。</p><button type="button" data-finish hidden>领取探索所得</button></div>`:`<div class="xg-card xg-map-monster"><p>90%：1 灵石、1 矿石、1 药草；9%：1 灵石及 1 份矿石或药草；1%：2 灵石、2 矿石、2 药草。</p><button type="button" data-explore ${visited?'disabled':''}>${visited?'今日已探索':'探索秘境'}</button></div>${visited&&save.lastQiExploration?.result?`<div class="xg-card"><p>${save.lastQiExploration.result}</p></div>`:''}`}
+   <p role="status" aria-live="polite"></p></section>`;
+  if(!pending){
+   back(renderMonsters);const button=content().querySelector('[data-explore]'),status=content().querySelector('[role=status]');
+   button.onclick=async()=>{button.disabled=true;try{await actions.mutate(s=>startQiExploration(s),{message:result=>result});renderSecret()}catch(error){status.textContent=error.message;button.disabled=false}};
+   return;
+  }
+  const slot=save.slot,scene=content().querySelector('[data-secret-scene]'),clock=content().querySelector('[data-secret-clock]'),progress=content().querySelector('[data-secret-progress]'),status=content().querySelector('[role=status]'),finishButton=content().querySelector('[data-finish]');
+  let finishing=false,failed=false;
+  const finish=async()=>{if(finishing||!getSave()?.qiSecret)return;finishing=true;finishButton.disabled=true;try{await actions.finishExploration();clearInterval(timer);renderSecret()}catch(error){failed=true;status.textContent=error.message;finishButton.hidden=false;finishButton.disabled=false;finishing=false}};
+  finishButton.onclick=finish;
+  const tick=()=>{
+   if(!scene.isConnected||getSave()?.slot!==slot){clearInterval(timer);return}
+   const elapsed=Math.max(0,Date.now()-pending.startedAt),remaining=Math.max(0,Math.ceil((pending.endsAt-Date.now())/1000)),index=Math.min(2,Math.floor(elapsed/60000));
+   scene.textContent=QI_SCENES[pending.scenes[index]]||'你继续在秘境中前行。';
+   clock.textContent=`${String(Math.floor(remaining/60)).padStart(2,'0')}:${String(remaining%60).padStart(2,'0')}`;
+   progress.style.width=`${Math.min(100,elapsed/QI_EXPLORATION_MS*100)}%`;
+   if(!remaining&&!failed)finish();
+   if(!remaining&&failed)finishButton.hidden=false;
+  };
+  const timer=setInterval(tick,1000);tick();
  }
  return {render};
 }
