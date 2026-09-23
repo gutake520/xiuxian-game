@@ -1,0 +1,20 @@
+#xg-panel .xg-map-sheet{padding:8px 2px 18px;color:#e9e1cf;font-size:13px}
+#xg-panel .xg-map-heading h2{color:#e9cc92;font-size:23px;margin:10px 4px 4px}
+#xg-panel .xg-map-heading p{color:#bbc7ba!important;margin:0 4px 16px;font-size:12px}
+#xg-panel .xg-map-path{height:20px;margin:0 12px 7px;border-top:1px solid #755f42;opacity:.7;display:flex;justify-content:space-around}
+#xg-panel .xg-map-path span{width:5px;height:5px;border-radius:50%;background:#d5bb84;transform:translateY(-3px)}
+#xg-panel .xg-map-place,#xg-panel .xg-map-visit{box-sizing:border-box;color:#e6decf!important;border:1px solid #64563e;border-radius:13px;background:#10221f;position:relative;overflow:hidden;font:inherit;text-align:left}
+#xg-panel .xg-map-place{display:flex;flex-direction:column;justify-content:flex-end;width:100%;min-height:102px;padding:14px 17px;margin:10px 0}
+#xg-panel .xg-map-place strong,#xg-panel .xg-map-visit strong{color:#e9cb91;font-size:17px;position:relative;z-index:1}
+#xg-panel .xg-map-place small,#xg-panel .xg-map-visit small{display:block;margin-top:5px;color:#c4cec1!important;font-size:11px;position:relative;z-index:1}
+#xg-panel .xg-map-peak{position:absolute;width:78%;height:85%;right:-5%;bottom:0;background:#29453e;clip-path:polygon(0 100%,26% 42%,42% 70%,62% 10%,100% 100%);opacity:.64;pointer-events:none}
+#xg-panel .xg-map-locked{opacity:.55}
+#xg-panel .xg-map-back{border:1px solid #716044;border-radius:8px;background:#152720;color:#eddaaf;padding:8px 12px;font:inherit}
+#xg-panel .xg-map-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+#xg-panel .xg-map-visit{min-height:84px;padding:12px}
+#xg-panel .xg-map-visit .xg-map-peak{right:-25%;height:80%}
+#xg-panel .xg-map-visit strong{font-size:14px}
+#xg-panel .xg-map-scene{min-height:130px}
+#xg-panel .xg-map-scene p{position:relative;z-index:1;color:#e7e0d1!important;margin:8px 0 0}
+#xg-panel .xg-map-sheet .xg-card p{color:#e0e1d5!important;line-height:1.65}
+#xg-panel .xg-map-pending,#xg-panel .xg-map-monster small{display:block;color:#b6c4b7!important;font-size:11px;margin:10px 0 2px}
