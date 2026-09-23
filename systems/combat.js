@@ -69,7 +69,7 @@ export function playRound(save,action='attack',now=Date.now()){
   if(battle.bindRounds?.includes(battle.round+1)){messages.push('小妖被阵盘困住，无法行动。');return}
   if(Math.random()<stats.dodgeRate/100){messages.push('你闪开了小妖的攻击。');return}
   if(battle.guard){battle.guard=false;messages.push('护身符抵挡了这次伤害。');return}
-  taken=round2(Math.max(0,Math.max(1,battle.attack-stats.defense*(guarded?1.5:1))-(battle.pet==='guard'?.3:0)));save.player.hp=round2(Math.max(0,save.player.hp-taken));
+  taken=round2(Math.max(0,Math.max(1,battle.attack-stats.defense-(guarded?1:0))-(battle.pet==='guard'?.3:0)));save.player.hp=round2(Math.max(0,save.player.hp-taken));
   messages.push(`你受到 ${taken.toFixed(2)} 伤害。`);
  };
  const playerAction=()=>{playerTurn();if(battle.pet==='attack'&&battle.hp>0){battle.hp=round2(Math.max(0,battle.hp-.5));messages.push('灵兽追加 0.50 伤害。')}};
