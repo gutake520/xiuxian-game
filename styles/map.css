@@ -26,8 +26,16 @@
 #xg-panel .xg-battle-bars{display:grid;grid-template-columns:1fr 1fr;gap:9px}
 #xg-panel .xg-battle-bars div{border:1px solid #69593f;border-radius:8px;padding:11px;background:#112820}
 #xg-panel .xg-battle-bars strong{display:block;color:#f2daa9;white-space:nowrap}
-#xg-panel .xg-battle-log{min-height:94px}
+#xg-panel .xg-battle-log{min-height:56px}
 #xg-panel .xg-battle-log p{margin:4px 0}
-#xg-panel .xg-battle-actions{display:flex;gap:8px;flex-wrap:wrap}
-#xg-panel .xg-battle-actions button{flex:1;min-width:80px}
+#xg-panel .xg-battle-action-panel{margin-top:16px;padding:14px;border:1px solid #554c3a;border-radius:12px;background:#0c1c19cc}
+#xg-panel .xg-battle-action-panel h3{font-size:15px;color:#e9cc92;margin:0 0 12px}
+#xg-panel .xg-battle-main-actions,#xg-panel .xg-battle-talisman-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+#xg-panel .xg-battle-action-panel button{min-width:0;min-height:40px;white-space:normal;line-height:1.35}
+#xg-panel .xg-battle-main-actions [data-fight=attack]{background:#294237;border-color:#bd9f64}
+#xg-panel .xg-battle-talisman{border-top:1px solid #514a39;margin-top:14px;padding-top:12px}
+#xg-panel .xg-battle-subheading{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:9px;color:#e9cc92}
+#xg-panel .xg-battle-subheading small{font-size:11px;color:#aeb9ab}
+#xg-panel .xg-battle-flee{display:block;width:100%;margin-top:14px;background:transparent!important;border-color:#514a39!important;color:#adb6aa!important}
+#xg-panel .xg-battle-action-panel button:disabled{opacity:.45}
 #xg-panel .xg-battle-sheet [role=status]{color:#ffca91}
