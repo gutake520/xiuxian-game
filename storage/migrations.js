@@ -1,9 +1,21 @@
 import {INITIAL_STONES,INITIAL_BAG_SIZE} from '../data/balance.js';
 import {QI_REQUIREMENTS,realmProgress,addCultivation} from '../data/realms.js';
 import {localDay} from '../systems/cultivation.js';
+import {initialCombat} from '../data/initial-combat.js';
 export function migrateSave(save,now=Date.now()){
  if(!save?.player)throw new Error('存档缺少人物信息。');
  const p=save.player;
+ // Early saves used 100 HP/MP as placeholders; convert once from the original root.
+ if(!p.combat&&p.spiritRoot){
+  const initial=initialCombat(p.spiritRoot);
+  p.combat=initial;
+  p.hp=initial.hp;p.mp=initial.mp;p.spirit=initial.mp;
+ }else if(p.combat&&p.spiritRoot){
+  const initial=initialCombat(p.spiritRoot);
+  for(const [key,value] of Object.entries(initial))if(!Number.isFinite(p.combat[key]))p.combat[key]=value;
+  if(!Number.isFinite(p.hp))p.hp=p.combat.hp;
+  if(!Number.isFinite(p.mp))p.mp=p.combat.mp;
+ }
  if(!Number.isFinite(p.spiritStones))p.spiritStones=INITIAL_STONES;
  save.inventory=Array.isArray(save.inventory)?save.inventory:[];
  save.bagCapacity=Number.isSafeInteger(save.bagCapacity)?Math.max(INITIAL_BAG_SIZE,save.bagCapacity):INITIAL_BAG_SIZE;
@@ -23,5 +35,5 @@ export function migrateSave(save,now=Date.now()){
  if(!Number.isFinite(save.idle.usedMs))save.idle.usedMs=0;
  if(!save.idle.day)save.idle.day=localDay(now);
  const progress=realmProgress(p);if(progress.index>=0){p.cultivationRequired=QI_REQUIREMENTS[progress.index]??null;if(progress.required&&p.cultivation>=progress.required){const xp=p.cultivation;p.cultivation=0;addCultivation(save,xp)}}
- save.version=4;return save;
+ save.version=5;return save;
 }

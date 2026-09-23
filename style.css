@@ -149,7 +149,6 @@
 #xg-panel .xg-aptitude-grid small{grid-column:1/-1}
 #xg-panel .xg-aptitude-grid strong{font-size:19px;color:#ead09c!important}
 #xg-panel .xg-combat-grid .xg-value-cell{border-bottom:1px solid #344237;padding-bottom:9px}
-#xg-panel .xg-resist-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px;text-align:center}
 #xg-panel .xg-sheet-note{display:block;margin-top:14px}
 #xg-panel .xg-equipment-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
 #xg-panel .xg-equipment-grid .xg-value-cell{background:#06131080;border:1px solid #344237;border-radius:8px;padding:12px 4px;text-align:center;font-size:12px}
@@ -198,7 +197,6 @@
 #xg-panel .xg-combat-grid .xg-value-cell{flex-direction:row;justify-content:space-between;align-items:center;gap:6px;padding:7px 0}
 #xg-panel .xg-combat-grid .xg-value-cell>span{font-size:11px}
 #xg-panel .xg-combat-grid .xg-value-cell>strong{font-size:13px}
-#xg-panel .xg-resist-grid .xg-value-cell{gap:2px;font-size:12px}
 #xg-panel .xg-info-grid{gap:8px 12px}
 #xg-panel .xg-root-detail{margin-top:10px;padding-top:8px}
 #xg-panel .xg-cultivation{margin-top:10px;padding:7px 10px}
