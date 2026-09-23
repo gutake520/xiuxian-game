@@ -107,7 +107,6 @@ function activatePage(page){
 }
 function sheetValue(value,suffix=''){return Number.isFinite(value)?escapeHTML(value)+suffix:'—'}
 function combatValue(value,suffix=''){return Number.isFinite(value)?Number(value).toFixed(2)+suffix:'—'}
-function chanceDescription(value){return !Number.isFinite(value)?'未详':value>=15?'较高':value>=10?'尚可':'平常'}
 function renderCharacter(){
  if(!currentSave){runAction(showSlots);return}
  activatePage('person');
@@ -124,7 +123,7 @@ function renderCharacter(){
  ${companionMarkup(p)}
  <div class="xg-card"><h3>资质</h3><div class="xg-aptitude-grid">${['悟性','根骨','神识','魅力','福缘'].map(k=>`<div><span>${k}</span><strong>${sheetValue(stats[k])}</strong></div>`).join('')}</div></div>
  <div class="xg-card"><h3>战斗属性</h3><div class="xg-combat-grid">${[
- ['生命 HP',`${combatValue(p.hp)} / ${combatValue(combat.maxHp)}`],['法力 MP',`${combatValue(p.mp)} / ${combatValue(combat.maxMp)}`],['攻击',combatValue(combat.attack)],['防御',combatValue(combat.defense)],['速度',combatValue(combat.speed)],['暴击倾向',chanceDescription(combat.critRate)],['闪避倾向',chanceDescription(combat.dodgeRate)]
+ ['生命 HP',`${combatValue(p.hp)} / ${combatValue(combat.maxHp)}`],['法力 MP',`${combatValue(p.mp)} / ${combatValue(combat.maxMp)}`],['攻击',combatValue(combat.attack)],['防御',combatValue(combat.defense)],['速度',combatValue(combat.speed)],['暴击率',combatValue(combat.critRate,'%')],['闪避率',combatValue(combat.dodgeRate,'%')]
  ].map(([label,value])=>cell(label,value)).join('')}</div>
  </div>
  <div class="xg-card"><h3>装备</h3><div class="xg-equipment-grid">${[['武器','weapon'],['防具','armor'],['鞋子','shoes'],['生命／法力饰品','accessoryVital'],['暴击／闪避饰品','accessoryFate']].map(([label,slot])=>cell(label,escapeHTML(equipmentName(currentSave,slot)))).join('')}</div>
