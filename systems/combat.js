@@ -3,7 +3,7 @@ import {ITEMS} from '../data/items.js';
 import {DURABILITY_MAX,COMBAT_REWARD_XP} from '../data/balance.js';
 import {equipmentStats,awardItem} from './inventory.js';
 import {addCultivation,realmProgress} from '../data/realms.js';
-import {TECHNIQUES} from '../data/techniques.js';
+import {TECHNIQUES,hasActiveTechnique} from '../data/techniques.js';
 
 export const round2=value=>Math.round((value+Number.EPSILON)*100)/100;
 const herbs=['healing-herb','spirit-herb','qi-herb'];
@@ -40,7 +40,7 @@ export function beginBattle(save,id,pet=null){
  if(save.player.hp<=0)throw new Error('生命不足，无法迎战。');
  const monster=QI_MONSTERS.find(entry=>entry.id===id);if(!monster)throw new Error('小妖不存在。');
  if(tier<(monster.minTier??0))throw new Error('此小妖需炼气四层解锁。');
- if(pet!==null){if(!['attack','guard'].includes(pet))throw new Error('灵兽类型无效。');if((save.petRentals||0)<1)throw new Error('尚未租借灵兽。');save.petRentals--}
+ if(pet!==null){if(!['attack','guard'].includes(pet))throw new Error('灵兽类型无效。');if(!(save.spiritBeast&&hasActiveTechnique(save,'beast-keeper'))){if((save.petRentals||0)<1)throw new Error('尚未租借灵兽。');save.petRentals--}}
  const maxHp=monster.hpMin+Math.floor(Math.random()*(monster.hpMax-monster.hpMin+1));
  save.battle={id:crypto.randomUUID(),monsterId:id,name:monster.name,maxHp,hp:maxHp,attack:monster.attack,speed:monster.speed,round:0,pet,guard:false,bindRounds:[],arrayRound:0,talismansUsed:0,talismanRound:0,freeArrayUsed:false,skillReady:{},log:['狭路相逢，战斗开始。']};
  return save.battle;
@@ -49,21 +49,24 @@ export function playRound(save,action='attack',now=Date.now()){
  const battle=save.battle;if(!battle)throw new Error('没有正在进行的战斗。');
  const skill=TECHNIQUES[action];
  if(!['attack','skip'].includes(action)&&skill?.type!=='combat')throw new Error('请选择可用的行动。');
- if(skill){if(!save.techniques?.mastered?.includes(action)||!save.techniques.combat?.includes(action))throw new Error('尚未装备这门功法。');if((battle.skillReady?.[action]||0)>battle.round+1)throw new Error('这门功法仍在冷却。')}
+ if(skill){if(skill.passive)throw new Error('被动功法无需主动施放。');if(!hasActiveTechnique(save,action))throw new Error('尚未装备这门功法。');if((battle.skillReady?.[action]||0)>battle.round+1)throw new Error('这门功法仍在冷却。')}
  const stats=equipmentStats(save),messages=[],playerFirst=stats.speed>=battle.speed;
  const guarded=action==='iron-wall';
  if(skill?.cooldown){battle.skillReady??={};battle.skillReady[action]=battle.round+skill.cooldown+2}
  let dealt=0,taken=0;
  const playerTurn=()=>{
   if(action==='skip'){messages.push('你选择跳过本轮。');return}
+  if(action==='healing-hands'){battle.regenRounds=3;messages.push('妙手回春生效，连续三轮恢复生命。');return}
   if(guarded){dealt=1;messages.push('铜墙铁壁护住周身，同时造成 1.00 伤害。')}
   else{
    const crit=Math.random()<stats.critRate/100;
-   const multiplier=action==='strengthen-attack'?1.1:action==='gamble-strike'?(Math.random()<.5?1.5:.8):1;
+   const multiplier=action==='one-sword'?1.3:action==='strengthen-attack'?1.1:action==='gamble-strike'?(Math.random()<.5?1.5:.8):1;
    dealt=round2(Math.max(1,stats.attack*(crit?1.5:1)*multiplier));
    messages.push(`${skill?skill.name+'：':''}你${crit?'暴击，':''}造成 ${dealt.toFixed(2)} 伤害。`);
   }
+  const actual=Math.min(battle.hp,dealt);
   battle.hp=round2(Math.max(0,battle.hp-dealt));
+  if(hasActiveTechnique(save,'life-steal')){const heal=round2(Math.min(stats.maxHp-save.player.hp,actual*.1));save.player.hp=round2(save.player.hp+heal);if(heal>0)messages.push(`吸取生命 ${heal.toFixed(2)}。`)}
  };
  const enemyTurn=()=>{
   if(battle.bindRounds?.includes(battle.round+1)){messages.push('小妖被阵盘困住，无法行动。');return}
@@ -71,10 +74,12 @@ export function playRound(save,action='attack',now=Date.now()){
   if(battle.guard){battle.guard=false;messages.push('护身符抵挡了这次伤害。');return}
   taken=round2(Math.max(0,Math.max(1,battle.attack-stats.defense-(guarded?1:0))-(battle.pet==='guard'?.3:0)));save.player.hp=round2(Math.max(0,save.player.hp-taken));
   messages.push(`你受到 ${taken.toFixed(2)} 伤害。`);
+  if(taken>0&&save.player.hp>0&&hasActiveTechnique(save,'resentment')){battle.hp=round2(Math.max(0,battle.hp-.5));messages.push('以怨报怨，反弹 0.50 伤害。')}
  };
  const playerAction=()=>{playerTurn();if(battle.pet==='attack'&&battle.hp>0){battle.hp=round2(Math.max(0,battle.hp-.5));messages.push('灵兽追加 0.50 伤害。')}};
  if(playerFirst){playerAction();if(battle.hp>0)enemyTurn()}
- else{enemyTurn();if(save.player.hp>0)playerAction()}
+ else{enemyTurn();if(save.player.hp>0&&battle.hp>0)playerAction()}
+ if(battle.regenRounds>0&&save.player.hp>0&&battle.hp>0){const heal=round2(Math.min(2,stats.maxHp-save.player.hp));save.player.hp=round2(save.player.hp+heal);battle.regenRounds--;messages.push(`妙手回春恢复 ${heal.toFixed(2)} 生命。`)}
  battle.round++;
  battle.bindRounds=(battle.bindRounds||[]).filter(round=>round>battle.round);
  if(battle.hp<=0){const result=awardVictory(save,QI_MONSTERS.find(entry=>entry.id===battle.monsterId),now);finish(save,'victory',result);messages.push(`胜利！修为 +${result.xp}，${result.rewards.join('、')}。`)}

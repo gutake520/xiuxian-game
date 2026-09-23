@@ -1,7 +1,7 @@
 import {ITEMS} from '../data/items.js';
-import {TECHNIQUES,PUZZLE_SIZES,hintAllowance} from '../data/techniques.js';
+import {TECHNIQUES,PUZZLE_SIZES,hintAllowance,techniqueEligible} from '../data/techniques.js';
 import {hasManual} from './inventory.js';
-const canStudy=(save,id)=>hasManual(save,id)||TECHNIQUES[id]?.sect==='丹霞谷'&&save.player.sect==='丹霞谷'&&save.techniques.sectManuals?.includes(id);
+const canStudy=(save,id)=>techniqueEligible(save.player,TECHNIQUES[id])&&(hasManual(save,id)||save.techniques.sectManuals?.includes(id));
 const shuffle=values=>{for(let i=values.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[values[i],values[j]]=[values[j],values[i]]}return values};
 export function countSolutions(input,size,limit=2){
  const cells=[...input];let count=0;
@@ -43,6 +43,7 @@ export function completeLearning(save,id){
  const puzzle=save.techniques.puzzles[id];if(!puzzle||save.techniques.mastered.includes(id)||!canStudy(save,id))throw new Error('当前无法结算学习。');
  if(puzzle.cells.some((v,i)=>v!==puzzle.solution[i]))throw new Error('数阵尚未解开，请检查每一行、每一列。');
  save.techniques.mastered.push(id);
+ if(id==='beast-keeper')save.spiritBeast??={name:'伴生灵兽',stage:'炼气'};
  const at=save.inventory.findIndex(entry=>ITEMS[entry.itemId]?.methodId===id);if(at>=0)save.inventory.splice(at,1);
  delete save.techniques.puzzles[id];
 }
@@ -51,7 +52,7 @@ export function setMainTechnique(save,id){
  save.techniques.main=id;
 }
 export function toggleCombatTechnique(save,id){
- const technique=TECHNIQUES[id];if(technique?.type!=='combat'||!save.techniques.mastered.includes(id))throw new Error('须先学会战斗功法。');
+ const technique=TECHNIQUES[id];if(technique?.type!=='combat'||!techniqueEligible(save.player,technique)||!save.techniques.mastered.includes(id))throw new Error('须先学会战斗功法。');
  if(save.battle)throw new Error('战斗中不能更换功法。');
  save.techniques.combat??=[];
  if(save.techniques.combat.includes(id))save.techniques.combat=save.techniques.combat.filter(value=>value!==id);

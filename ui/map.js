@@ -1,3 +1,4 @@
+import {hasActiveTechnique} from '../data/techniques.js';
 import {VISITING_SECTS,QI_MONSTERS,QI_PEAKS} from '../data/locations.js';
 import {realmProgress} from '../data/realms.js';
 import {showBattle} from './combat.js';
@@ -133,7 +134,7 @@ export function createMapUI({getSave,activate,actions}){
   const monsters=QI_MONSTERS.filter(item=>item.id===peak.monsterId||item.id===peak.monsterId+'-mid');if(!monsters.length)return renderMonsters();
   activate('map');
   content().innerHTML=`<section class="xg-map-sheet"><button class="xg-map-back" type="button">← 返回炼气山</button>${heading(peak.name,'选择挑战的小妖 · 已解锁的对手始终保留')}
-   ${getSave().petRentals>0?`<fieldset class="xg-card"><legend>灵兽出战（余 ${getSave().petRentals} 次）</legend><label><input type="radio" name="xg-pet" value="" checked> 不出战</label><label><input type="radio" name="xg-pet" value="attack"> 追击：每次 +0.50 伤害</label><label><input type="radio" name="xg-pet" value="guard"> 守护：每次挡 0.30 伤害</label></fieldset>`:''}
+   ${getSave().petRentals>0||getSave().spiritBeast&&hasActiveTechnique(getSave(),'beast-keeper')?`<fieldset class="xg-card"><legend>灵兽出战（${getSave().spiritBeast&&hasActiveTechnique(getSave(),'beast-keeper')?'自养灵兽 · 无需租约':'租约余 '+getSave().petRentals+' 次'}）</legend><label><input type="radio" name="xg-pet" value="" checked> 不出战</label><label><input type="radio" name="xg-pet" value="attack"> 追击：每次 +0.50 伤害</label><label><input type="radio" name="xg-pet" value="guard"> 守护：每次挡 0.30 伤害</label></fieldset>`:''}
    ${monsters.map(monster=>`<div class="xg-card xg-map-monster"><h3>${monster.name}</h3><p>生命 ${monster.hp} · 攻击 ${monster.attack} · 速度 ${monster.speed}</p><small>主要掉落：${monster.drop}</small><button type="button" data-foe="${monster.id}" data-min-tier="${monster.minTier??0}" ${tier<(monster.minTier??0)?'disabled':''}>${tier<(monster.minTier??0)?'炼气四层解锁':'迎战'}</button></div>`).join('')}
    <p class="xg-map-pending">胜利可获修为和战利品；退出战斗须支付代价。</p><p role="status" aria-live="polite"></p></section>`;
   back(renderMonsters);

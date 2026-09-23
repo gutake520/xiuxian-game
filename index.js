@@ -1,8 +1,10 @@
+import {showSectTasks,showSectInheritance,showSectWorkshop} from './ui/sect-progression.js';
+import {dailyTasks,DAILY_TASKS} from './systems/sect-progression.js';
 import {readSave,writeSave,updateSave,deleteSave} from './storage/saves.js';
 import {migrateSave} from './storage/migrations.js';
 import {createActions} from './core/actions.js';
 import {createFeatureUI,progressMarkup} from './ui/progression.js';
-import {equipmentName,equipmentStats,addItem,ownsTechnique,purchase,brewPill,PILL_RECIPES} from './systems/inventory.js';
+import {equipmentName,equipmentStats,addItem,ownsTechnique,purchase} from './systems/inventory.js';
 import {TECHNIQUES} from './data/techniques.js';
 import {initialCombat} from './data/initial-combat.js';
 import {createMapUI} from './ui/map.js';
@@ -89,7 +91,7 @@ function renderHome(){
  <div class="xg-progress" ${known?`role="progressbar" aria-label="修为" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${progress}"`:'aria-label="突破所需修为尚未设定"'}><i style="width:${progress}%"></i></div>
  </div>
  <div class="xg-world-line"><span>⌖ ${escapeHTML(location)}</span><span>第 ${day} 日</span></div>
- <div class="xg-card xg-daily"><h3>宗门日课</h3><p>${inSect?'暂无可领取的日课。':'尚未入宗，暂无宗门日课。'}</p></div>
+ <div class="xg-card xg-daily"><h3>宗门日课</h3><p>${inSect?DAILY_TASKS.map(task=>`${task.name} ${dailyTasks(currentSave)[task.id]}/${task.target}${dailyTasks(currentSave).claimed.includes(task.id)?' · 已领取':''}`).join('<br>'):'尚未入宗，暂无宗门日课。'}</p></div>
  <div class="xg-location-actions">${actions.map(label=>`<button type="button" data-home-action>${label}</button>`).join('')}</div>
  <p id="xg-home-feedback" role="status" aria-live="polite"></p>
  <div class="xg-card xg-history"><div class="xg-history-heading"><h3>近日见闻</h3><small>最近十轮</small></div>
@@ -209,14 +211,18 @@ function renderSectIntro(sect){
   try{await game.mutate(next=>{next.sectProgress.introPending=false});renderSectHall(sect)}catch(error){console.error('[xiuxian-game]',error);document.getElementById('xg-sect-error').textContent='保存未完成，请重试。';button.disabled=false}
  };sheet.scrollTop=0;
 }
+const sectAPI={getSave:()=>currentSave,actions:game};
+const closeSectFeature=sect=>()=>{document.getElementById('xg-feature-sheet')?.remove();renderSectHall(sect)};
 const SECT_MANUALS=[['strengthen-manual','strengthen-attack'],['wall-manual','iron-wall'],['gamble-manual','gamble-strike']];
 const SECT_ROOMS={danxia:'炼丹房',tiangong:'锻兵室',wanling:'灵兽苑',taixu:'符箓室',xuanji:'阵盘室'};
 function sectHeader(sect,back){return `<div class="xg-sect-heading"><h2>${sect.name}</h2><button type="button" id="xg-sect-back">${back}</button></div>`}
 function renderSectHall(sect){
  const sheet=sectOverlay(),eligible=sectEligibility(currentSave.player,sect);
- sheet.innerHTML=`${sectHeader(sect,'返回人物')}<p class="xg-sect-hint">${sect.feature}</p><div class="xg-card"><strong>${eligible.specialty?'特色传承资格已满足':'当前仅可学习通用功法'}</strong><p class="xg-sect-hint">宗门积分 ${currentSave.sectPoints||0} · 《引气诀》可在人物页参悟</p></div><div class="xg-sect-facilities"><button type="button" data-sect-shop>门派商店<small>通用战斗功法</small></button>${SECT_ROOMS[sect.id]?`<button type="button" data-sect-room>${SECT_ROOMS[sect.id]}<small>${eligible.specialty?'进入':'专精条件未满足'}</small></button>`:''}${['日课堂','藏书阁','宗门大比','师尊授业'].map(name=>`<button type="button" disabled>${name}<small>尚未开放</small></button>`).join('')}</div><details class="xg-sect-rules"><summary>离宗与情缘须知</summary><p>离宗后，本宗专属功法与物品停止生效，专属功法自动卸下；已学记录保留，通用物品不受影响。</p><p>主动解除道侣关系须支付灵石。离开合欢宗时，至多保留一位道侣，其余关系须先结清费用。灵石不足时不能办理。</p><p>费用及重返宗门规则待定，退出、更换道侣暂未开放。</p></details>`;
+ sheet.innerHTML=`${sectHeader(sect,'返回人物')}<p class="xg-sect-hint">${sect.feature}</p><div class="xg-card"><strong>${eligible.specialty?'特色传承资格已满足':'当前仅可学习通用功法'}</strong><p class="xg-sect-hint">宗门积分 ${currentSave.sectPoints||0} · 《引气诀》可在人物页参悟</p></div><div class="xg-sect-facilities"><button type="button" data-sect-shop>门派商店<small>通用战斗功法</small></button>${SECT_ROOMS[sect.id]?`<button type="button" data-sect-room>${SECT_ROOMS[sect.id]}<small>${eligible.specialty?'进入':'专精条件未满足'}</small></button>`:''}<button type="button" data-sect-tasks>宗门日课<small>每日三项 · 共 9 积分</small></button><button type="button" data-sect-inheritance>宗门传承<small>核心功法 · 9 积分</small></button>${['藏书阁','宗门大比','师尊授业'].map(name=>`<button type="button" disabled>${name}<small>尚未开放</small></button>`).join('')}</div><details class="xg-sect-rules"><summary>离宗与情缘须知</summary><p>离宗后，本宗专属功法与物品停止生效，专属功法自动卸下；已学记录保留，通用物品不受影响。</p><p>主动解除道侣关系须支付灵石。离开合欢宗时，至多保留一位道侣，其余关系须先结清费用。灵石不足时不能办理。</p><p>费用及重返宗门规则待定，退出、更换道侣暂未开放。</p></details>`;
  sheet.querySelector('#xg-sect-back').onclick=closeSect;
  sheet.querySelector('[data-sect-shop]').onclick=()=>renderSectShop(sect);
+ sheet.querySelector('[data-sect-tasks]').onclick=()=>showSectTasks(sectAPI,closeSectFeature(sect));
+ sheet.querySelector('[data-sect-inheritance]').onclick=()=>showSectInheritance(sectAPI,closeSectFeature(sect));
  sheet.querySelector('[data-sect-room]')?.addEventListener('click',()=>renderSectRoom(sect));
  sheet.scrollTop=0;
 }
@@ -231,30 +237,7 @@ function renderSectShop(sect){
  });
  sheet.scrollTop=0;
 }
-function renderSectRoom(sect){
- const sheet=sectOverlay(),eligible=sectEligibility(currentSave.player,sect),learned=currentSave.techniques?.mastered?.includes('divine-pharmacopoeia');
- let body='<p>具体制作方式尚未确定，暂不消耗材料。</p>';
- if(sect.id==='danxia'){
-  body=`<p>在此参悟《神药谱》，学会后才能炼制丹药。</p>${eligible.specialty?learned?`<p>已学会炼丹</p>${Object.entries(PILL_RECIPES).map(([id,recipe])=>`<button type="button" data-brew="${id}">炼制${escapeHTML({'small-heal-pill':'小还丹','spirit-pill':'回灵丹','mixed-pill':'养元丹','qi-pill':'聚气丹'}[id])} · ${Object.entries(recipe).map(([herb,count])=>`${escapeHTML({'healing-herb':'回血草','spirit-herb':'回灵草','qi-herb':'聚气草'}[herb])}×${count}`).join('、')}</button>`).join('')}`:currentSave.techniques?.sectManuals?.includes('divine-pharmacopoeia')?'<button type="button" id="xg-study-pharmacopoeia">参悟神药谱 · 五阶数阵</button>':`<p>特殊传承需宗门积分；宗门任务暂未开放。</p><button type="button" id="xg-buy-pharmacopoeia" ${(currentSave.sectPoints||0)<1?'disabled':''}>兑换典籍 · 1 积分（暂定）</button>`:'<p>不满足本宗专精条件，暂不能学习炼丹传承。</p>'}`;
- }else if(sect.id==='tiangong')body='<p>锻造与自行修补装备的配方尚未确定，暂不消耗矿石和灵石。</p>';
- else if(sect.id==='wanling')body='<p>这里可以照料自己的灵兽。喂养会使用药草，灵兽获取方式、每次食量及效果尚待确定。</p>';
- else if(sect.id==='taixu')body='<p>攻击符与护身符计划各用一份药草、一份矿石制作；制符传承尚未开放。</p>';
- else if(sect.id==='xuanji')body='<p>阵盘用于需要提前准备的战斗。两种阵盘的具体效果和制作费用尚待确定，矿石需求暂定 18 份。</p>';
- sheet.innerHTML=`${sectHeader(sect,'返回宗门')}<div class="xg-card"><h3>${SECT_ROOMS[sect.id]}</h3>${body}</div><p id="xg-sect-status" role="status"></p>`;
- sheet.querySelector('#xg-sect-back').onclick=()=>renderSectHall(sect);
- sheet.querySelectorAll('[data-brew]').forEach(button=>button.onclick=async()=>{
-  button.disabled=true;
-  try{const {result}=await game.mutate(s=>brewPill(s,button.dataset.brew),{message:result=>result});renderSectRoom(sect);sheet.querySelector('#xg-sect-status').textContent=result}
-  catch(error){sheet.querySelector('#xg-sect-status').textContent=error.message;button.disabled=false}
- });
- sheet.querySelector('#xg-buy-pharmacopoeia')?.addEventListener('click',async event=>{
-  event.currentTarget.disabled=true;
-  try{await game.mutate(s=>{if(s.player.sect!=='丹霞谷'||!sectEligibility(s.player,sect).specialty||s.sectPoints<1)throw new Error('宗门积分不足或不符合传承条件。');s.sectPoints--;s.techniques.sectManuals.push('divine-pharmacopoeia')},{message:'兑换《神药谱》。'});renderSectRoom(sect)}
-  catch(error){sheet.querySelector('#xg-sect-status').textContent=error.message;event.currentTarget.disabled=false}
- });
- sheet.querySelector('#xg-study-pharmacopoeia')?.addEventListener('click',()=>{sheet.classList.remove('open');featureUI.library()});
- sheet.scrollTop=0;
-}
+function renderSectRoom(sect){showSectWorkshop(sectAPI,sect.id,closeSectFeature(sect))}
 
 function showPrologue(){let pending;try{pending=JSON.parse(localStorage.getItem(rollKey(currentSlot))||'null')}catch{}
  let root=roots.find(candidate=>candidate.name===pending?.root),rolls=Number.isSafeInteger(pending?.rolls)&&pending.rolls>=1&&pending.rolls<=3?pending.rolls:1,alloc=emptyAllocation();

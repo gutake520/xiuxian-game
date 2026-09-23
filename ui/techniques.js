@@ -4,7 +4,7 @@ import {hasManual} from '../systems/inventory.js';
 import {createSheet,escapeHTML,buttonTask} from './shared.js';
 export function techniqueLibrary(api,onClose){
  const sheet=createSheet('功法典籍',onClose),body=sheet.querySelector('[data-body]'),message=sheet.querySelector('[role=status]');
- const save=api.getSave();const methods=Object.values(TECHNIQUES).filter(m=>hasManual(save,m.id)||save.techniques.mastered.includes(m.id)||m.sect==='丹霞谷'&&save.player.sect==='丹霞谷'&&save.techniques.sectManuals?.includes(m.id));
+ const save=api.getSave();const methods=Object.values(TECHNIQUES).filter(m=>hasManual(save,m.id)||save.techniques.mastered.includes(m.id)||m.sect&&save.player.sect===m.sect&&save.techniques.sectManuals?.includes(m.id));
  body.innerHTML=methods.length?methods.map(m=>{const learned=save.techniques.mastered.includes(m.id),main=save.techniques.main===m.id,equipped=save.techniques.combat?.includes(m.id);return `<article class="xg-feature-card"><h3>${m.name}<small>${learned?'已学会':'待参悟'}${main?' · 主修':''}${equipped?' · 已装备':''}</small></h3><p>${m.description}</p><button type="button" data-method="${m.id}" data-learned="${learned}">${learned?m.type==='combat'?(equipped?'卸下战斗功法':'装备战斗功法'):m.type==='craft'?'已学会':main?'卸下主修':'设为主修':'参悟数阵'}</button></article>`}).join(''):'<p>尚无典籍。可在坊市购买，或拜入宗门领取。</p>';
  body.querySelectorAll('[data-method]').forEach(button=>button.onclick=()=>buttonTask(button,async()=>{
   const id=button.dataset.method;
@@ -23,6 +23,6 @@ export function learningPuzzle(api,id,onClose,selected=-1){
  body.querySelector('[data-hint]').onclick=()=>edit(async()=>{const response=await api.actions.mutate(s=>useHint(s,id));selected=response.result});
  body.querySelector('[data-submit]').onclick=()=>edit(async()=>{
   await api.actions.mutate(s=>completeLearning(s,id),{message:'解开数阵，学会《'+TECHNIQUES[id].name+'》。'});
-  if(!sheet.isConnected)return;onClose();document.querySelector('#xg-feature-sheet [role=status]').textContent=TECHNIQUES[id].type==='craft'?'已学会，可以炼制丹药。':TECHNIQUES[id].type==='combat'?'已学会，可以在典籍中装备。':'已学会！设为主修后开始挂机积累。';
+  if(!sheet.isConnected)return;onClose();document.querySelector('#xg-feature-sheet [role=status]').textContent=TECHNIQUES[id].type==='craft'?'已学会，可前往宗门专属房间使用。':TECHNIQUES[id].type==='combat'?'已学会，可以在典籍中装备。':'已学会！设为主修后开始挂机积累。';
  });
 }

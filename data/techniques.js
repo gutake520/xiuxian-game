@@ -3,7 +3,24 @@ export const TECHNIQUES={
  'strengthen-attack':{id:'strengthen-attack',name:'强化普通',rank:'普通',type:'combat',cooldown:2,description:'本次攻击造成攻击力 1.1 倍的伤害，再结算防御；冷却两轮。'},
  'iron-wall':{id:'iron-wall',name:'铜墙铁壁',rank:'普通',type:'combat',description:'本轮防御额外增加 1 点，同时造成 1 点伤害。'},
  'gamble-strike':{id:'gamble-strike',name:'我赌一把',rank:'普通',type:'combat',cooldown:5,description:'本次攻击各有 50% 概率造成 1.5 倍或 0.8 倍伤害；冷却五轮。'},
- 'divine-pharmacopoeia':{id:'divine-pharmacopoeia',name:'神药谱',rank:'特殊',type:'craft',sect:'丹霞谷',description:'丹霞谷炼丹传承。参悟五阶数阵后，便可用药草炼制丹药。'}
+ 'divine-pharmacopoeia':{id:'divine-pharmacopoeia',name:'神药谱',rank:'特殊',type:'craft',sect:'丹霞谷',roots:['火','木'],description:'丹霞谷炼丹传承。参悟五阶数阵后，便可用药草炼制丹药。'},
+ 'mending':{id:'mending',name:'缝缝补补又三年',rank:'特殊',type:'craft',sect:'天工阁',roots:['金','火'],description:'学会后解锁自行修补装备；修补材料规则待定。'},
+ 'beast-keeper':{id:'beast-keeper',name:'铲屎官手册',rank:'特殊',type:'craft',sect:'万灵山',roots:['木','土','风'],description:'学会后赠送一只炼气灵兽，可选择追击或守护出战；喂养细则待定。'},
+ 'fairy-painting':{id:'fairy-painting',name:'画中仙',rank:'特殊',type:'craft',sect:'太虚符宗',allStats:[['神识',6],['悟性',7]],description:'解锁制符：一份药草、一份矿石制成一张攻击符或护身符。'},
+ 'planting-flags':{id:'planting-flags',name:'我在插旗，勿扰',rank:'特殊',type:'craft',sect:'玄机门',roots:['冰'],stat:['神识',8],description:'解锁阵盘制作：18 份矿石制成定身阵盘；第二种阵盘待定。'},
+ 'life-steal':{id:'life-steal',name:'你的就是我的',rank:'特殊',type:'combat',passive:true,sect:'合欢宗',stat:['魅力',8],description:'装备后，角色攻击造成的实际伤害有 10% 转为生命。不计算溢出伤害、灵兽和道具。'},
+ 'resentment':{id:'resentment',name:'以怨报怨',rank:'特殊',type:'combat',passive:true,sect:'镇岳宗',roots:['雷','土'],stat:['根骨',8],description:'装备后，每次受伤且存活时反弹 0.5 点伤害；闪避与完全免伤不触发。'},
+ 'one-sword':{id:'one-sword',name:'我有一剑',rank:'特殊',type:'combat',cooldown:2,sect:'凌霄剑宗',roots:['金','雷','冰'],description:'本次攻击造成 1.3 倍伤害，冷却两轮。'},
+ 'healing-hands':{id:'healing-hands',name:'妙手回春',rank:'特殊',type:'combat',cooldown:5,sect:'青岚谷',roots:['木','水'],description:'占一次行动，当轮结束起每轮恢复 2 点生命，持续三轮，冷却五轮；战斗结束即停止。'}
 };
 export const PUZZLE_SIZES={初级:3,普通:3,中级:4,高级:5,特殊:5};
 export function hintAllowance(spirit){return Number(spirit)>=10?2:Number(spirit)>=5?1:0}
+
+export function techniqueEligible(player,method){
+ if(!method)return false;
+ if(!method.sect)return true;
+ if(player.sect!==method.sect)return false;
+ const enough=([key,min])=>Number(player.stats?.[key])>=min;
+ return method.allStats?method.allStats.every(enough):Boolean(method.roots?.some(root=>String(player.spiritRoot||'').includes(root))||(method.stat&&enough(method.stat)));
+}
+export function hasActiveTechnique(save,id){return Boolean(save.techniques?.mastered?.includes(id)&&techniqueEligible(save.player,TECHNIQUES[id])&&(TECHNIQUES[id].type==='craft'||save.techniques?.combat?.includes(id)))}
