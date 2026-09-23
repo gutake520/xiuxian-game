@@ -17,8 +17,8 @@
 #xg-panel .xg-feature-row>button{flex:1}
 #xg-panel .xg-feature-card{border:1px solid #4b583f;border-radius:11px;padding:14px;margin:10px 0;background:#09201799}
 #xg-panel .xg-feature-card h3 small{display:block;margin-top:3px}
-#xg-panel #xg-feature-sheet [data-body]>button+button{margin-top:12px}
-#xg-panel .xg-feature-card button+button{margin:10px 0 0 8px}
+#xg-panel #xg-feature-sheet [data-body]>button{display:block;margin:14px 0 0}
+#xg-panel .xg-feature-card button+button{margin-left:14px}
 #xg-panel .xg-feature-message{min-height:0;color:#f2cda4!important;font-size:12px;overflow-wrap:anywhere}
 #xg-panel .xg-feature-message:empty{display:none}
 #xg-panel .xg-bag-caption{display:flex;justify-content:space-between;gap:8px;margin:12px 0;font-size:12px}

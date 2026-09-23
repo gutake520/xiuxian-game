@@ -53,6 +53,18 @@ export function claimLoot(save,id,now=Date.now()){
 }
 export function equipmentSalePrice(item){return ['iron-sword','cloth-robe'].includes(item?.id)?2:['wild-sword','wild-robe'].includes(item?.id)?2.5:3}
 export const MATERIAL_SALE_PRICE=.8;
+export function pillSalePrice(item){return Math.round((item?.price||0)*50)/100}
+export function sellPill(save,uid,quantity){
+ const entry=save.inventory.find(item=>item.uid===uid),item=ITEMS[entry?.itemId];
+ if(!entry||item?.kind!=='pill'||!Number.isFinite(item.price))throw new Error('只能出售丹药。');
+ if(!Number.isSafeInteger(quantity)||quantity<1||quantity>(entry.quantity||1))throw new Error('出售数量无效。');
+ if(save.battle)throw new Error('战斗中不能出售物品。');
+ const total=Math.round(quantity*pillSalePrice(item)*100)/100;
+ if(quantity===(entry.quantity||1))save.inventory=save.inventory.filter(candidate=>candidate!==entry);
+ else entry.quantity-=quantity;
+ save.player.spiritStones=Math.round((save.player.spiritStones+total)*100)/100;
+ return `出售${item.name}×${quantity}，获得 ${total} 灵石。`;
+}
 export function sellMaterial(save,uid,quantity){
  const entry=save.inventory.find(item=>item.uid===uid),item=ITEMS[entry?.itemId];
  if(!entry||item?.kind!=='material')throw new Error('只能出售矿石或药草。');
