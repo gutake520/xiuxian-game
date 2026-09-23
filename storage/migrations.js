@@ -4,6 +4,7 @@ import {QI_REQUIREMENTS,realmProgress,addCultivation,applyRealmHp} from '../data
 import {localDay} from '../systems/cultivation.js';
 import {initialCombat} from '../data/initial-combat.js';
 import {ITEMS} from '../data/items.js';
+import {QI_MONSTERS} from '../data/locations.js';
 import {DURABILITY_MAX} from '../data/balance.js';
 import {expireLoot} from '../systems/inventory.js';
 export function migrateSave(save,now=Date.now()){
@@ -32,7 +33,7 @@ export function migrateSave(save,now=Date.now()){
  for(const entry of save.inventory)if(ITEMS[entry.itemId]?.kind==='equipment'&&!Number.isFinite(entry.durability))entry.durability=DURABILITY_MAX;
  expireLoot(save,now);
  save.petRentals=Number.isSafeInteger(save.petRentals)?Math.max(0,save.petRentals):0;
- if(save.battle){save.battle.talismansUsed??=0;save.battle.talismanRound??=0;save.battle.bindRounds??=save.battle.bindRound?[save.battle.bindRound]:[];save.battle.arrayRound??=0;save.battle.freeArrayUsed??=false;save.battle.guard??=false;save.battle.pet??=null}
+ if(save.battle){save.battle.talismansUsed??=0;save.battle.talismanRound??=0;save.battle.bindRounds??=save.battle.bindRound?[save.battle.bindRound]:[];save.battle.arrayRound??=0;save.battle.freeArrayUsed??=false;save.battle.guard??=false;save.battle.pet??=null;save.battle.mp??=Math.max(0,(QI_MONSTERS.find(monster=>monster.id===save.battle.monsterId)?.mp||0)-(save.battle.enemySkillReady?1:0))}
  save.techniques??={mastered:[],main:null,puzzles:{}};
  save.techniques.mastered??=[];save.techniques.puzzles??={};
  save.techniques.combat=Array.isArray(save.techniques.combat)?save.techniques.combat.filter(id=>TECHNIQUES[id]?.type==='combat'&&techniqueEligible(p,TECHNIQUES[id])&&save.techniques.mastered.includes(id)).slice(0,2):[];

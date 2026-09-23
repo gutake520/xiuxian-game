@@ -48,8 +48,10 @@ export function createMapUI({getSave,activate,actions}){
  function renderBlackMarket(){
   activate('map');
   content().innerHTML=`<section class="xg-map-sheet"><button class="xg-map-back" type="button">← 返回地图</button>${heading('黑市','隐在山道尽头的交易处。')}
-   <div class="xg-card"><p>黑市尚未开放。</p></div></section>`;
+   <div class="xg-card"><h3>隐秘典籍</h3><p>这里有一 · 66 灵石 · 五阶数阵</p><button type="button" data-black-buy ${getSave().techniques.mastered.includes('only-one')||getSave().inventory.some(item=>item.itemId==='one-manual')?'disabled':''}>购买典籍</button></div><p role="status"></p></section>`;
   back(render);
+  const button=content().querySelector('[data-black-buy]');
+  button.onclick=async()=>{button.disabled=true;try{const {result}=await actions.mutate(s=>purchase(s,'one-manual'),{message:result=>result});renderBlackMarket();content().querySelector('[role=status]').textContent=result}catch(error){content().querySelector('[role=status]').textContent=error.message;button.disabled=false}};
  }
  function renderSects(){
   activate('map');

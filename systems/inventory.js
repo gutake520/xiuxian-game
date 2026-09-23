@@ -1,7 +1,7 @@
 import {ITEMS} from '../data/items.js';
 import {DURABILITY_MAX,TEMP_LOOT_MS} from '../data/balance.js';
 import {localDay} from './cultivation.js';
-import {realmHpBonus} from '../data/realms.js';
+import {realmHpBonus,realmBattleBonus} from '../data/realms.js';
 export function hasManual(save,id='basic-qi-guide'){return save.inventory.some(entry=>ITEMS[entry.itemId]?.methodId===id)}
 export function ownsTechnique(save,id){return save.techniques.mastered.includes(id)||hasManual(save,id)}
 export function addItem(save,id,quantity=1){
@@ -14,7 +14,8 @@ export function addItem(save,id,quantity=1){
 }
 export function purchase(save,id,sectDiscount=false){
  const item=ITEMS[id];if(!item)throw new Error('商品不存在。');
- if(sectDiscount&&(!['strengthen-manual','wall-manual','gamble-manual','one-manual','steal-manual'].includes(id)||!save.player.sect||save.player.sect==='无门无派'))throw new Error('仅宗门弟子可购买这部典籍。');
+ if(id==='one-manual'&&sectDiscount)throw new Error('这部功法只在黑市出售。');
+ if(sectDiscount&&(!['strengthen-manual','wall-manual','gamble-manual','steal-manual','breath-manual','charged-manual'].includes(id)||!save.player.sect||save.player.sect==='无门无派'))throw new Error('仅宗门弟子可购买这部典籍。');
  if(item.kind==='manual'&&ownsTechnique(save,item.methodId))throw new Error('已经拥有这部功法，无需重复购买。');
  const price=sectDiscount?15:item.price;
  if(save.player.spiritStones<price)throw new Error('灵石不足。');
@@ -34,7 +35,8 @@ export function equipItem(save,uid){
 }
 export function equipmentName(save,slot){const entry=save.inventory.find(e=>e.uid===save.equipment?.[slot]),item=ITEMS[entry?.itemId];return item?`${item.name} ${entry.durability??DURABILITY_MAX}/${DURABILITY_MAX}${entry.durability<=0?'（损坏）':''}`:'未装备'}
 export function equipmentStats(save){
- const stats={attack:save.player.combat?.attack||0,defense:save.player.combat?.defense||0,speed:save.player.combat?.speed||0,critRate:save.player.combat?.critRate||0,dodgeRate:save.player.combat?.dodgeRate||0,maxHp:(save.player.combat?.hp||save.player.hp||20)+realmHpBonus(save.player),maxMp:save.player.combat?.mp||save.player.mp||10};
+ const bonus=realmBattleBonus(save.player);
+ const stats={attack:(save.player.combat?.attack||0)+bonus.attack,defense:(save.player.combat?.defense||0)+bonus.defense,speed:save.player.combat?.speed||0,critRate:(save.player.combat?.critRate||0)+bonus.critRate,dodgeRate:(save.player.combat?.dodgeRate||0)+bonus.dodgeRate,maxHp:(save.player.combat?.hp||save.player.hp||20)+realmHpBonus(save.player),maxMp:(save.player.combat?.mp||save.player.mp||10)+bonus.mp};
  for(const uid of Object.values(save.equipment||{})){
   const entry=save.inventory.find(entry=>entry.uid===uid),item=ITEMS[entry?.itemId];if(!item||item.kind!=='equipment'||(entry.durability??DURABILITY_MAX)<=0)continue;
   for(const key of ['attack','defense','speed','critRate','dodgeRate'])stats[key]+=item[key]||0;
