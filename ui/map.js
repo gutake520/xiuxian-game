@@ -159,7 +159,7 @@ export function createMapUI({getSave,activate,actions}){
   activate('map');
   const save=getSave(),pending=save.qiSecret,visited=save.qiSecretDay===localDay(Date.now());
   content().innerHTML=`<section class="xg-map-sheet">${pending?'':'<button class="xg-map-back" type="button">← 返回炼气山</button>'}${heading('星落秘境',pending?'探索中 · 请在此等候三分钟':'每天可探索一次 · 门票 1 灵石')}
-   ${pending?`<div class="xg-card xg-secret-wait"><h3>秘境深处</h3><p data-secret-scene></p><div class="xg-progress"><i data-secret-progress></i></div><strong data-secret-clock>03:00</strong><p>探索中无法进行其他游戏操作。关闭面板后，进度仍会保留。</p><button type="button" data-finish hidden>领取探索所得</button></div>`:`<div class="xg-card xg-map-monster"><p>90%：1 灵石、1 矿石、1 药草；9%：1 灵石及 1 份矿石或药草；1%：2 灵石、2 矿石、2 药草。</p><button type="button" data-explore ${visited?'disabled':''}>${visited?'今日已探索':'探索秘境'}</button></div>${visited&&save.lastQiExploration?.result?`<div class="xg-card"><p>${save.lastQiExploration.result}</p></div>`:''}`}
+   ${pending?`<div class="xg-card xg-secret-wait"><h3>秘境深处</h3><p data-secret-scene></p><div class="xg-progress"><i data-secret-progress></i></div><strong data-secret-clock>03:00</strong><p>探索中无法进行其他游戏操作。关闭面板后，进度仍会保留。</p><button type="button" data-finish hidden>领取探索所得</button></div>`:`<div class="xg-card xg-map-monster"><p>探索秘境有机会获得灵石、矿石和药草，偶尔还会有额外收获。</p><button type="button" data-explore ${visited?'disabled':''}>${visited?'今日已探索':'探索秘境'}</button></div>${visited&&save.lastQiExploration?.result?`<div class="xg-card"><p>${save.lastQiExploration.result}</p></div>`:''}`}
    <p role="status" aria-live="polite"></p></section>`;
   if(!pending){
    back(renderMonsters);const button=content().querySelector('[data-explore]'),status=content().querySelector('[role=status]');
