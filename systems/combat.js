@@ -57,7 +57,8 @@ export function playRound(save,action='attack',now=Date.now()){
  const playerTurn=()=>{
   if(action==='skip'){messages.push('你选择跳过本轮。');return}
   if(action==='healing-hands'){battle.regenRounds=3;messages.push('妙手回春生效，连续三轮恢复生命。');return}
-  if(guarded){dealt=1;messages.push('铜墙铁壁护住周身，同时造成 1.00 伤害。')}
+  if(action==='only-one'||action==='empty-hands'){dealt=action==='only-one'?1:2;messages.push(`${skill.name}造成 ${dealt.toFixed(2)} 伤害。`)}
+  else if(guarded){dealt=1;messages.push('铜墙铁壁护住周身，同时造成 1.00 伤害。')}
   else{
    const crit=Math.random()<stats.critRate/100;
    const multiplier=action==='one-sword'?1.3:action==='strengthen-attack'?1.1:action==='gamble-strike'?(Math.random()<.5?1.5:.8):1;
@@ -67,14 +68,21 @@ export function playRound(save,action='attack',now=Date.now()){
   const actual=Math.min(battle.hp,dealt);
   battle.hp=round2(Math.max(0,battle.hp-dealt));
   if(hasActiveTechnique(save,'life-steal')){const heal=round2(Math.min(stats.maxHp-save.player.hp,actual*.1));save.player.hp=round2(save.player.hp+heal);if(heal>0)messages.push(`吸取生命 ${heal.toFixed(2)}。`)}
+  if(action==='empty-hands'&&battle.hp>0&&Math.random()<.2){const stolen=round2(Math.min(2,battle.hp)),healed=round2(Math.min(stolen,stats.maxHp-save.player.hp));battle.hp=round2(battle.hp-stolen);save.player.hp=round2(save.player.hp+healed);dealt=round2(dealt+stolen);messages.push(`妙手空空抽取 ${stolen.toFixed(2)} 生命，恢复 ${healed.toFixed(2)}。`)}
  };
  const enemyTurn=()=>{
   if(battle.bindRounds?.includes(battle.round+1)){messages.push('小妖被阵盘困住，无法行动。');return}
+  const monster=QI_MONSTERS.find(entry=>entry.id===battle.monsterId);
+  const empowered=monster?.attackBoost&&(battle.enemySkillReady||0)<=battle.round+1;
+  const rawDamage=round2(battle.attack*(empowered?monster.attackBoost:1));
+  if(empowered){battle.enemySkillReady=battle.round+monster.boostCooldown+2;messages.push(`${battle.name}使出强化攻击。`)}
   if(Math.random()<stats.dodgeRate/100){messages.push('你闪开了小妖的攻击。');return}
   if(battle.guard){battle.guard=false;messages.push('护身符抵挡了这次伤害。');return}
-  taken=round2(Math.max(0,Math.max(1,battle.attack-stats.defense-(guarded?1:0))-(battle.pet==='guard'?.3:0)));save.player.hp=round2(Math.max(0,save.player.hp-taken));
+  const afterDefense=Math.max(1,rawDamage-stats.defense-(guarded?1:0));
+  const capped=action==='only-one'&&playerFirst?Math.min(1,afterDefense):afterDefense;
+  taken=round2(Math.max(0,capped-(battle.pet==='guard'?.3:0)));save.player.hp=round2(Math.max(0,save.player.hp-taken));
   messages.push(`你受到 ${taken.toFixed(2)} 伤害。`);
-  if(taken>0&&save.player.hp>0&&hasActiveTechnique(save,'resentment')){battle.hp=round2(Math.max(0,battle.hp-.5));messages.push('以怨报怨，反弹 0.50 伤害。')}
+  if(taken>0&&save.player.hp>0&&hasActiveTechnique(save,'resentment')){const reflected=round2(rawDamage*.1);battle.hp=round2(Math.max(0,battle.hp-reflected));messages.push(`以怨报怨，反弹 ${reflected.toFixed(2)} 伤害。`)}
  };
  const playerAction=()=>{playerTurn();if(battle.pet==='attack'&&battle.hp>0){battle.hp=round2(Math.max(0,battle.hp-.5));messages.push('灵兽追加 0.50 伤害。')}};
  if(playerFirst){playerAction();if(battle.hp>0)enemyTurn()}

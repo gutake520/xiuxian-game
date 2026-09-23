@@ -22,8 +22,10 @@ export const ITEMS={
  'qi-manual':{id:'qi-manual',name:'引气诀',price:10,kind:'manual',methodId:'basic-qi-guide',glyph:'诀',description:'解开三阶数阵后学会，可设为主修。'},
  'strengthen-manual':{id:'strengthen-manual',name:'强化普通',price:20,kind:'manual',methodId:'strengthen-attack',glyph:'诀',description:'普通战斗功法，参悟后可以装备。'},
  'wall-manual':{id:'wall-manual',name:'铜墙铁壁',price:20,kind:'manual',methodId:'iron-wall',glyph:'诀',description:'普通战斗功法，参悟后可以装备。'},
+ 'one-manual':{id:'one-manual',name:'这里有一',price:20,kind:'manual',methodId:'only-one',glyph:'诀',description:'高级通用战斗功法，参悟五阶数阵后可装备。'},
+ 'steal-manual':{id:'steal-manual',name:'妙手空空',price:20,kind:'manual',methodId:'empty-hands',glyph:'诀',description:'普通战斗功法，参悟后可装备。'},
  'gamble-manual':{id:'gamble-manual',name:'我赌一把',price:20,kind:'manual',methodId:'gamble-strike',glyph:'诀',description:'普通战斗功法，参悟后可以装备。'}
 };
-export const SHOP_ITEMS=['iron-sword','cloth-robe','qi-manual','strengthen-manual','wall-manual','gamble-manual'];
+export const SHOP_ITEMS=['iron-sword','cloth-robe','qi-manual','strengthen-manual','wall-manual','gamble-manual','one-manual','steal-manual'];
 export const SECT_PILLS=['small-heal-pill','spirit-pill','mixed-pill','qi-pill'];
 export const SECT_TALISMANS=['attack-talisman','guard-talisman'];

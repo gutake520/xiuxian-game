@@ -14,7 +14,7 @@ export function addItem(save,id,quantity=1){
 }
 export function purchase(save,id,sectDiscount=false){
  const item=ITEMS[id];if(!item)throw new Error('商品不存在。');
- if(sectDiscount&&(!['strengthen-manual','wall-manual','gamble-manual'].includes(id)||!save.player.sect||save.player.sect==='无门无派'))throw new Error('仅宗门弟子可购买这部典籍。');
+ if(sectDiscount&&(!['strengthen-manual','wall-manual','gamble-manual','one-manual','steal-manual'].includes(id)||!save.player.sect||save.player.sect==='无门无派'))throw new Error('仅宗门弟子可购买这部典籍。');
  if(item.kind==='manual'&&ownsTechnique(save,item.methodId))throw new Error('已经拥有这部功法，无需重复购买。');
  const price=sectDiscount?15:item.price;
  if(save.player.spiritStones<price)throw new Error('灵石不足。');

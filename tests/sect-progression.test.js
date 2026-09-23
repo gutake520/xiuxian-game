@@ -17,7 +17,7 @@ test('daily rewards persist, exclude escape charges, reset next day, backfill ex
  s.player.spiritStones=17;recordDailyProgress(s,{battleId:s.lastBattle.id,stones:20},false,now);assert.equal(d.spent,0);
  recordDailyProgress(s,{battleId:s.lastBattle.id,stones:20},true,now);assert.equal(d.spent,3);
  for(const id of ['kills','spent','explored'])claimDailyTask(s,id,d.day,now);
- assert.equal(s.sectPoints,3);assert.throws(()=>claimDailyTask(JSON.parse(JSON.stringify(s)),'kills',d.day,now));
+ assert.equal(s.sectPoints,9);assert.throws(()=>claimDailyTask(JSON.parse(JSON.stringify(s)),'kills',d.day,now));
  assert.equal(dailyTasks(s,now+86400000).kills,0);
 });
 test('all nine inheritances have five-by-five learning and cost nine points',()=>{
@@ -27,7 +27,7 @@ test('all nine inheritances have five-by-five learning and cost nine points',()=
 });
 test('passives and healing use equipment slots; lifesteal ignores overkill',()=>{
  const s=save('合欢宗');learn(s,'life-steal');toggleCombatTechnique(s,'life-steal');s.player.hp=10;beginBattle(s,'tough');s.battle.hp=1;playRound(s);assert.equal(s.player.hp,10.1);
- const t=save('镇岳宗');learn(t,'resentment');toggleCombatTechnique(t,'resentment');beginBattle(t,'tough');t.battle.hp=20;playRound(t,'skip');assert.equal(t.battle.hp,19.5);
+ const t=save('镇岳宗');learn(t,'resentment');toggleCombatTechnique(t,'resentment');beginBattle(t,'tough');t.battle.hp=20;playRound(t,'skip');assert.equal(t.battle.hp,19.8);
  const h=save('青岚谷','木灵根');learn(h,'healing-hands');toggleCombatTechnique(h,'healing-hands');h.player.hp=10;beginBattle(h,'tough');h.battle.hp=100;
  playRound(h,'healing-hands');assert.equal(h.player.hp,10.5);assert.equal(h.battle.regenRounds,2);assert.throws(()=>playRound(h,'healing-hands'));
  playRound(h,'skip');playRound(h,'skip');assert.equal(h.battle.regenRounds,0);assert.equal(h.player.hp,11.5);

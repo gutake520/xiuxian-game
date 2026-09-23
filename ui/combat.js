@@ -7,7 +7,7 @@ export function showBattle({getSave,actions,activate,onExit},endResult=null){
  const content=document.getElementById('xg-content');
  if(!battle){
   const result=endResult||save?.lastBattle;
-  content.innerHTML=`<section class="xg-map-sheet xg-battle-sheet"><h2>战斗结束</h2><p>${result?.outcome==='victory'?'击退小妖':result?.outcome==='defeat'?'你败下阵来':'已脱离战斗'}</p><div class="xg-card">${(result?.log||[]).map(line=>`<p>${escapeHTML(line)}</p>`).join('')}</div><button type="button" data-return>返回炼气山</button></section>`;
+  content.innerHTML=`<section class="xg-map-sheet xg-battle-sheet"><h2>战斗结束</h2><p>${result?.outcome==='victory'?'击退小妖':result?.outcome==='defeat'?'你败下阵来':'已脱离战斗'}</p><div class="xg-card">${(result?.log||[]).map(line=>`<p>${escapeHTML(line)}</p>`).join('')}</div><button type="button" data-return>返回丰原镇</button></section>`;
   content.querySelector('[data-return]').onclick=onExit;return;
  }
  const stats=equipmentStats(save);

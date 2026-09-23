@@ -25,7 +25,7 @@ export function createMapUI({getSave,activate,actions}){
   content().innerHTML=`<section class="xg-map-sheet">${heading('山河图','点一座山，走一段路。')}${peaks([
    {name:'坊市',id:'market',x:12,y:6,size:.8},{name:'黑市',id:'blackmarket',x:68,y:17,size:.76},
    {name:'远山 · 待定',x:36,y:37,locked:true,size:.85},{name:'九宗山门',id:'sects',x:8,y:69,size:1.08},
-   {name:'炼气山',id:'monsters',x:64,y:62,size:1.04}
+   {name:'丰原镇',id:'monsters',x:64,y:62,size:1.04}
   ],'map')}</section>`;
   content().querySelector('[data-map="sects"]').onclick=renderSects;
   content().querySelector('[data-map="monsters"]').onclick=renderMonsters;
@@ -120,7 +120,7 @@ export function createMapUI({getSave,activate,actions}){
  }
  function renderMonsters(){
   activate('map');
-  content().innerHTML=`<section class="xg-map-sheet"><button class="xg-map-back" type="button">← 返回地图</button>${heading('炼气山','妖影、故人和秘境，都藏在山中。')}
+  content().innerHTML=`<section class="xg-map-sheet"><button class="xg-map-back" type="button">← 返回地图</button>${heading('丰原镇','妖影、故人和秘境，都藏在山中。')}
    ${peaks(QI_PEAKS, 'encounter')}</section>`;
   content().querySelectorAll('[data-encounter]').forEach(button=>button.onclick=()=>renderEncounter(button.dataset.encounter));
   back(render);
@@ -133,7 +133,7 @@ export function createMapUI({getSave,activate,actions}){
   const tier=realmProgress(getSave().player).index;
   const monsters=QI_MONSTERS.filter(item=>item.id===peak.monsterId||item.id===peak.monsterId+'-mid');if(!monsters.length)return renderMonsters();
   activate('map');
-  content().innerHTML=`<section class="xg-map-sheet"><button class="xg-map-back" type="button">← 返回炼气山</button>${heading(peak.name,'选择挑战的小妖 · 已解锁的对手始终保留')}
+  content().innerHTML=`<section class="xg-map-sheet"><button class="xg-map-back" type="button">← 返回丰原镇</button>${heading(peak.name,'选择挑战的小妖 · 已解锁的对手始终保留')}
    ${getSave().petRentals>0||getSave().spiritBeast&&hasActiveTechnique(getSave(),'beast-keeper')?`<fieldset class="xg-card"><legend>灵兽出战（${getSave().spiritBeast&&hasActiveTechnique(getSave(),'beast-keeper')?'自养灵兽 · 无需租约':'租约余 '+getSave().petRentals+' 次'}）</legend><label><input type="radio" name="xg-pet" value="" checked> 不出战</label><label><input type="radio" name="xg-pet" value="attack"> 追击：每次 +0.50 伤害</label><label><input type="radio" name="xg-pet" value="guard"> 守护：每次挡 0.30 伤害</label></fieldset>`:''}
    ${monsters.map(monster=>`<div class="xg-card xg-map-monster"><h3>${monster.name}</h3><p>生命 ${monster.hp} · 攻击 ${monster.attack} · 速度 ${monster.speed}</p><small>主要掉落：${monster.drop}</small><button type="button" data-foe="${monster.id}" data-min-tier="${monster.minTier??0}" ${tier<(monster.minTier??0)?'disabled':''}>${tier<(monster.minTier??0)?'炼气四层解锁':'迎战'}</button></div>`).join('')}
    <p class="xg-map-pending">胜利可获修为和战利品；退出战斗须支付代价。</p><p role="status" aria-live="polite"></p></section>`;
@@ -147,7 +147,7 @@ export function createMapUI({getSave,activate,actions}){
  }
  function renderNpc(peak){
   activate('map');const met=!!getSave().flags?.metQiNpcs?.[peak.id];
-  content().innerHTML=`<section class="xg-map-sheet"><button class="xg-map-back" type="button">← 返回炼气山</button>${heading(peak.name,'山中来客')}
+  content().innerHTML=`<section class="xg-map-sheet"><button class="xg-map-back" type="button">← 返回丰原镇</button>${heading(peak.name,'山中来客')}
    <div class="xg-map-place xg-map-scene"><span class="xg-map-peak" aria-hidden="true"></span><strong>${peak.npc}</strong><p>${peak.description}</p></div>
    <div class="xg-card xg-map-monster"><p>${met?'对方已经记得你。':'你们尚未正式结识。'}</p><button type="button" data-meet>${met?'交谈':'上前结识'}</button><small>赠礼、好感与结缘方式待后续设定。</small></div><p role="status" aria-live="polite"></p></section>`;
   back(renderMonsters);const button=content().querySelector('[data-meet]'),status=content().querySelector('[role=status]');
@@ -161,7 +161,7 @@ export function createMapUI({getSave,activate,actions}){
  function renderSecret(){
   activate('map');
   const save=getSave(),pending=save.qiSecret,visited=save.qiSecretDay===localDay(Date.now());
-  content().innerHTML=`<section class="xg-map-sheet">${pending?'':'<button class="xg-map-back" type="button">← 返回炼气山</button>'}${heading('星落秘境',pending?'探索中 · 请在此等候三分钟':'每天可探索一次 · 门票 1 灵石')}
+  content().innerHTML=`<section class="xg-map-sheet">${pending?'':'<button class="xg-map-back" type="button">← 返回丰原镇</button>'}${heading('星落秘境',pending?'探索中 · 请在此等候三分钟':'每天可探索一次 · 门票 1 灵石')}
    ${pending?`<div class="xg-card xg-secret-wait"><h3>秘境深处</h3><p data-secret-scene></p><div class="xg-progress"><i data-secret-progress></i></div><strong data-secret-clock>03:00</strong><p>探索中无法进行其他游戏操作。关闭面板后，进度仍会保留。</p><button type="button" data-finish hidden>领取探索所得</button></div>`:`<div class="xg-card xg-map-monster"><p>探索秘境有机会获得灵石、矿石和药草，偶尔还会有额外收获。</p><button type="button" data-explore ${visited?'disabled':''}>${visited?'今日已探索':'探索秘境'}</button></div>${visited&&save.lastQiExploration?.result?`<div class="xg-card"><p>${save.lastQiExploration.result}</p></div>`:''}`}
    <p role="status" aria-live="polite"></p></section>`;
   if(!pending){
