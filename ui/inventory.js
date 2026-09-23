@@ -30,7 +30,15 @@ export function showSell(api,onClose=()=>{api.closeFeature();renderInventory(api
 function showItem(api,uid){
  const save=api.getSave(),entry=save.inventory.find(e=>e.uid===uid),item=ITEMS[entry?.itemId];if(!entry)return;
  const back=()=>{api.closeFeature();renderInventory(api)},sheet=createSheet(item?.name||entry.name||'旧物',back),body=sheet.querySelector('[data-body]'),message=sheet.querySelector('[role=status]');
- body.innerHTML=`<p>${escapeHTML(item?.description||'这件旧物已保留，暂不可使用。')}</p>${item?.kind==='equipment'?`<p>耐久 ${format(entry.durability)} / 20${entry.durability<=0?' · 已损坏，暂不能生效':''}</p>`:''}${item?.kind==='manual'?'<button type="button" data-use>阅读典籍</button>':item?.kind==='pill'?'<button type="button" data-use>服用</button>':item?.kind==='equipment'?`<button type="button" data-use>${Object.values(save.equipment).includes(uid)?'卸下装备':'装备'}</button><button type="button" data-discard>丢弃</button>`:''}`;
+ const stackPrice=item?.kind==='material'?MATERIAL_SALE_PRICE:item?.kind==='pill'?pillSalePrice(item):0;
+ const stackActions=stackPrice?`<button type="button" data-stack-sale>出售一份 · ${format(stackPrice)} 灵石</button>${(entry.quantity||1)>1?`<button type="button" data-stack-all>全部出售 · ${format((entry.quantity||1)*stackPrice)} 灵石</button>`:''}`:'';
+ body.innerHTML=`<p>${escapeHTML(item?.description||'这件旧物已保留，暂不可使用。')}</p>${item?.kind==='equipment'?`<p>耐久 ${format(entry.durability)} / 20${entry.durability<=0?' · 已损坏，暂不能生效':''}</p>`:''}${item?.kind==='manual'?'<button type="button" data-use>阅读典籍</button>':item?.kind==='pill'?'<button type="button" data-use>服用</button>':item?.kind==='equipment'?`<button type="button" data-use>${Object.values(save.equipment).includes(uid)?'卸下装备':'装备'}</button>${entry.durability===20?`<button type="button" data-sale>出售 · ${format(equipmentSalePrice(item))} 灵石</button>`:''}<button type="button" data-discard>丢弃</button>`:''}${stackActions}`;
  const button=body.querySelector('[data-use]');if(button)button.onclick=()=>buttonTask(button,async()=>{if(item.kind==='manual'){techniqueLibrary(api,back);return}if(item.kind==='pill')await api.actions.mutate(s=>usePill(s,uid),{message:result=>result});else await api.actions.mutate(s=>equipItem(s,uid));if(sheet.isConnected)back()},message);
+ body.querySelectorAll('[data-stack-sale],[data-stack-all]').forEach(button=>button.onclick=()=>buttonTask(button,async()=>{
+  const all=button.hasAttribute('data-stack-all'),quantity=all?(api.getSave().inventory.find(e=>e.uid===uid)?.quantity||1):1;
+  const {result}=await api.actions.mutate(s=>item.kind==='material'?sellMaterial(s,uid,quantity):sellPill(s,uid,quantity),{message:result=>result});
+  if(sheet.isConnected){back();document.querySelector('#xg-content [role=status]').textContent=result}
+ },message));
+ body.querySelector('[data-sale]')?.addEventListener('click',e=>buttonTask(e.currentTarget,async()=>{const {result}=await api.actions.mutate(s=>sellEquipment(s,uid),{message:result=>result});if(sheet.isConnected){back();document.querySelector('#xg-content [role=status]').textContent=result}},message));
  body.querySelector('[data-discard]')?.addEventListener('click',e=>buttonTask(e.currentTarget,async()=>{if(!confirm('丢弃这件装备？丢弃后无法找回。'))return;await api.actions.mutate(s=>discardEquipment(s,uid));if(sheet.isConnected)back()},message));
 }
