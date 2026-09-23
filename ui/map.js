@@ -1,4 +1,5 @@
 import {VISITING_SECTS,QI_MONSTERS,QI_PEAKS} from '../data/locations.js';
+import {realmProgress} from '../data/realms.js';
 import {showBattle} from './combat.js';
 import {ITEMS,SECT_PILLS,SECT_TALISMANS} from '../data/items.js';
 import {purchase} from '../systems/inventory.js';
@@ -128,9 +129,10 @@ export function createMapUI({getSave,activate,actions}){
   const peak=QI_PEAKS.find(item=>item.id===id);if(!peak)return renderMonsters();
   if(peak.kind==='npc')return renderNpc(peak);
   if(peak.kind==='secret')return renderSecret();
-  const monster=QI_MONSTERS.find(item=>item.id===peak.monsterId);if(!monster)return renderMonsters();
+  const middle=realmProgress(getSave().player).index>=3;
+  const monster=QI_MONSTERS.find(item=>item.id===peak.monsterId+(middle?'-mid':''));if(!monster)return renderMonsters();
   activate('map');
-  content().innerHTML=`<section class="xg-map-sheet"><button class="xg-map-back" type="button">← 返回炼气山</button>${heading(peak.name,'炼气一至三层 · 小妖出没')}
+  content().innerHTML=`<section class="xg-map-sheet"><button class="xg-map-back" type="button">← 返回炼气山</button>${heading(peak.name,middle?'炼气四至六层 · 小妖出没':'炼气一至三层 · 小妖出没')}
    ${getSave().petRentals>0?`<fieldset class="xg-card"><legend>灵兽出战（余 ${getSave().petRentals} 次）</legend><label><input type="radio" name="xg-pet" value="" checked> 不出战</label><label><input type="radio" name="xg-pet" value="attack"> 追击：每次 +0.50 伤害</label><label><input type="radio" name="xg-pet" value="guard"> 守护：每次挡 0.30 伤害</label></fieldset>`:''}
    <div class="xg-card xg-map-monster"><h3>${monster.name}</h3><p>生命 ${monster.hp} · 攻击 ${monster.attack} · 速度 ${monster.speed}</p><small>主要掉落：${monster.drop}</small><button type="button" data-foe="${monster.id}">迎战</button></div>
    <p class="xg-map-pending">胜利可获修为和战利品；退出战斗须支付代价。</p><p role="status" aria-live="polite"></p></section>`;
