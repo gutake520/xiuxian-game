@@ -4,7 +4,7 @@ import {equipmentStats} from './inventory.js';
 
 const round2=value=>Math.round((value+Number.EPSILON)*100)/100;
 export const REPAIR_PER_POINT=.2;
-export const HEAL_PRICE=4;
+export const HEAL_PRICE=5;
 export const HEAL_AMOUNT=12;
 export const MEDITATION_PRICE=2;
 export const MEDITATION_MS=3*60*1000;

@@ -12,12 +12,14 @@ export function addItem(save,id,quantity=1){
  if(save.inventory.length>=save.bagCapacity)throw new Error('储物格已满，暂时无法收下物品。');
  save.itemSerial=(save.itemSerial||0)+1;save.inventory.push({uid:'item-'+save.itemSerial,itemId:id,quantity,...(item.kind==='equipment'?{durability:DURABILITY_MAX}:{})});return true;
 }
-export function purchase(save,id){
+export function purchase(save,id,sectDiscount=false){
  const item=ITEMS[id];if(!item)throw new Error('商品不存在。');
+ if(sectDiscount&&(!['strengthen-manual','wall-manual','gamble-manual'].includes(id)||!save.player.sect||save.player.sect==='无门无派'))throw new Error('仅宗门弟子可购买这部典籍。');
  if(item.kind==='manual'&&ownsTechnique(save,item.methodId))throw new Error('已经拥有这部功法，无需重复购买。');
- if(save.player.spiritStones<item.price)throw new Error('灵石不足。');
- addItem(save,id);save.player.spiritStones=Math.round((save.player.spiritStones-item.price)*100)/100;
- return `购得${item.name}，花费 ${item.price} 灵石。`;
+ const price=sectDiscount?15:item.price;
+ if(save.player.spiritStones<price)throw new Error('灵石不足。');
+ addItem(save,id);save.player.spiritStones=Math.round((save.player.spiritStones-price)*100)/100;
+ return `购得${item.name}，花费 ${price} 灵石。`;
 }
 export function equipItem(save,uid){
  const entry=save.inventory.find(entry=>entry.uid===uid),item=ITEMS[entry?.itemId];
@@ -98,6 +100,8 @@ export function discardEquipment(save,uid){
 export function usePill(save,uid,now=Date.now()){
  const entry=save.inventory.find(entry=>entry.uid===uid),item=ITEMS[entry?.itemId];
  if(!entry||item?.kind!=='pill')throw new Error('丹药不存在。');
+ save.pillCooldowns??={};
+ if((save.pillCooldowns[item.id]||0)>now)throw new Error(`此丹药仍在冷却，还需 ${Math.ceil((save.pillCooldowns[item.id]-now)/1000)} 秒。`);
  const p=save.player,stats=equipmentStats(save);
  if(item.id==='qi-pill'){
   if(save.qiPillDay===localDay(now))throw new Error('今天已经服用过聚气丹。');
@@ -108,5 +112,25 @@ export function usePill(save,uid,now=Date.now()){
   p.hp=hp;p.mp=mp;
  }
  if(entry.quantity>1)entry.quantity--;else save.inventory=save.inventory.filter(e=>e.uid!==uid);
+ save.pillCooldowns[item.id]=now+3*60*1000;
  return `服用${item.name}。`;
+}
+export const PILL_RECIPES={
+ 'small-heal-pill':{'healing-herb':5},
+ 'spirit-pill':{'spirit-herb':5},
+ 'mixed-pill':{'healing-herb':2,'spirit-herb':1},
+ 'qi-pill':{'qi-herb':5}
+};
+export function brewPill(save,id){
+ if(save.player.sect!=='丹霞谷'||!save.techniques?.mastered?.includes('divine-pharmacopoeia'))throw new Error('须先学会丹霞谷《神药谱》。');
+ const recipe=PILL_RECIPES[id];if(!recipe)throw new Error('丹方不存在。');
+ for(const [material,amount] of Object.entries(recipe))if((save.inventory.find(item=>item.itemId===material)?.quantity||0)<amount)throw new Error('药草不足。');
+ const stack=save.inventory.some(entry=>entry.itemId===id);
+ const freed=Object.entries(recipe).filter(([material,amount])=>save.inventory.find(entry=>entry.itemId===material)?.quantity===amount).length;
+ if(!stack&&save.inventory.length-freed>=save.bagCapacity)throw new Error('储物格已满。');
+ for(const [material,amount] of Object.entries(recipe)){
+  const entry=save.inventory.find(item=>item.itemId===material);entry.quantity-=amount;
+  if(!entry.quantity)save.inventory=save.inventory.filter(item=>item!==entry);
+ }
+ addItem(save,id);return `炼成一枚${ITEMS[id].name}。`;
 }

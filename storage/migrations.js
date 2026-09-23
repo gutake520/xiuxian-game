@@ -34,6 +34,10 @@ export function migrateSave(save,now=Date.now()){
  if(save.battle){save.battle.talismansUsed??=0;save.battle.talismanRound??=0;save.battle.bindRounds??=save.battle.bindRound?[save.battle.bindRound]:[];save.battle.arrayRound??=0;save.battle.freeArrayUsed??=false;save.battle.guard??=false;save.battle.pet??=null}
  save.techniques??={mastered:[],main:null,puzzles:{}};
  save.techniques.mastered??=[];save.techniques.puzzles??={};
+ save.techniques.combat=Array.isArray(save.techniques.combat)?save.techniques.combat.filter(id=>['strengthen-attack','iron-wall','gamble-strike'].includes(id)&&save.techniques.mastered.includes(id)).slice(0,2):[];
+ save.techniques.sectManuals??=[];
+ save.sectPoints=Number.isFinite(save.sectPoints)?Math.max(0,save.sectPoints):0;
+ save.pillCooldowns??={};
  save.itemSerial=Math.max(save.itemSerial||0,save.inventory.length);
  for(const item of save.inventory){if(!item.uid)item.uid='legacy-'+(++save.itemSerial)}
  // Earlier "learnedMethods" only recorded the gift; no learning challenge existed.

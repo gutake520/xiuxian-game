@@ -3,6 +3,7 @@ import {ITEMS} from '../data/items.js';
 import {DURABILITY_MAX,COMBAT_REWARD_XP} from '../data/balance.js';
 import {equipmentStats,awardItem} from './inventory.js';
 import {addCultivation,realmProgress} from '../data/realms.js';
+import {TECHNIQUES} from '../data/techniques.js';
 
 export const round2=value=>Math.round((value+Number.EPSILON)*100)/100;
 const herbs=['healing-herb','spirit-herb','qi-herb'];
@@ -40,25 +41,34 @@ export function beginBattle(save,id,pet=null){
  const monster=QI_MONSTERS.find(entry=>entry.id===id);if(!monster)throw new Error('小妖不存在。');
  if(pet!==null){if(!['attack','guard'].includes(pet))throw new Error('灵兽类型无效。');if((save.petRentals||0)<1)throw new Error('尚未租借灵兽。');save.petRentals--}
  const maxHp=monster.hpMin+Math.floor(Math.random()*(monster.hpMax-monster.hpMin+1));
- save.battle={id:crypto.randomUUID(),monsterId:id,name:monster.name,maxHp,hp:maxHp,attack:monster.attack,speed:monster.speed,round:0,pet,guard:false,bindRounds:[],arrayRound:0,talismansUsed:0,talismanRound:0,freeArrayUsed:false,log:['狭路相逢，战斗开始。']};
+ save.battle={id:crypto.randomUUID(),monsterId:id,name:monster.name,maxHp,hp:maxHp,attack:monster.attack,speed:monster.speed,round:0,pet,guard:false,bindRounds:[],arrayRound:0,talismansUsed:0,talismanRound:0,freeArrayUsed:false,skillReady:{},log:['狭路相逢，战斗开始。']};
  return save.battle;
 }
 export function playRound(save,action='attack',now=Date.now()){
  const battle=save.battle;if(!battle)throw new Error('没有正在进行的战斗。');
- if(!['attack','skip'].includes(action))throw new Error('请选择普攻或跳过。');
+ const skill=TECHNIQUES[action];
+ if(!['attack','skip'].includes(action)&&skill?.type!=='combat')throw new Error('请选择可用的行动。');
+ if(skill){if(!save.techniques?.mastered?.includes(action)||!save.techniques.combat?.includes(action))throw new Error('尚未装备这门功法。');if((battle.skillReady?.[action]||0)>battle.round+1)throw new Error('这门功法仍在冷却。')}
  const stats=equipmentStats(save),messages=[],playerFirst=stats.speed>=battle.speed;
+ const guarded=action==='iron-wall';
+ if(skill?.cooldown){battle.skillReady??={};battle.skillReady[action]=battle.round+skill.cooldown+2}
  let dealt=0,taken=0;
  const playerTurn=()=>{
   if(action==='skip'){messages.push('你选择跳过本轮。');return}
-  const crit=Math.random()<stats.critRate/100;
-  dealt=round2(Math.max(1,stats.attack*(crit?1.5:1)));
-  battle.hp=round2(Math.max(0,battle.hp-dealt));messages.push(`你${crit?'暴击，':''}造成 ${dealt.toFixed(2)} 伤害。`);
+  if(guarded){dealt=1;messages.push('铜墙铁壁护住周身，同时造成 1.00 伤害。')}
+  else{
+   const crit=Math.random()<stats.critRate/100;
+   const multiplier=action==='strengthen-attack'?1.1:action==='gamble-strike'?(Math.random()<.5?1.5:.8):1;
+   dealt=round2(Math.max(1,stats.attack*(crit?1.5:1)*multiplier));
+   messages.push(`${skill?skill.name+'：':''}你${crit?'暴击，':''}造成 ${dealt.toFixed(2)} 伤害。`);
+  }
+  battle.hp=round2(Math.max(0,battle.hp-dealt));
  };
  const enemyTurn=()=>{
   if(battle.bindRounds?.includes(battle.round+1)){messages.push('小妖被阵盘困住，无法行动。');return}
   if(Math.random()<stats.dodgeRate/100){messages.push('你闪开了小妖的攻击。');return}
   if(battle.guard){battle.guard=false;messages.push('护身符抵挡了这次伤害。');return}
-  taken=round2(Math.max(0,Math.max(1,battle.attack-stats.defense)-(battle.pet==='guard'?.3:0)));save.player.hp=round2(Math.max(0,save.player.hp-taken));
+  taken=round2(Math.max(0,Math.max(1,battle.attack-stats.defense*(guarded?1.5:1))-(battle.pet==='guard'?.3:0)));save.player.hp=round2(Math.max(0,save.player.hp-taken));
   messages.push(`你受到 ${taken.toFixed(2)} 伤害。`);
  };
  const playerAction=()=>{playerTurn();if(battle.pet==='attack'&&battle.hp>0){battle.hp=round2(Math.max(0,battle.hp-.5));messages.push('灵兽追加 0.50 伤害。')}};
