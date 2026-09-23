@@ -18,7 +18,7 @@ export function settleIdle(save,now=Date.now()){
  }
  if(idle.day!==localDay(now)){idle.day=localDay(now);idle.usedMs=0}
  idle.lastAt=now;
- const actual=addCultivation(save,earned);idle.totalEarned=(idle.totalEarned||0)+actual;
+ const actual=addCultivation(save,earned);idle.totalEarned=Math.round(((idle.totalEarned||0)+actual)*100)/100;
  return actual;
 }
 export function paddleWidth(root){return Math.min(PRACTICE.maxPaddle,Math.max(PRACTICE.minPaddle,(Number(root)||0)*PRACTICE.paddlePerRoot))}

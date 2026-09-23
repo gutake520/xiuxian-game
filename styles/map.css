@@ -19,3 +19,14 @@
 #xg-panel .xg-map-scene .xg-map-peak{position:absolute;width:65%;height:90%;right:-4%;bottom:0;background:#29453e;clip-path:polygon(0 100%,26% 42%,42% 70%,62% 10%,100% 100%);opacity:.64}
 #xg-panel .xg-map-sheet .xg-card p{color:#e0e1d5!important;line-height:1.65}
 #xg-panel .xg-map-pending,#xg-panel .xg-map-monster small{display:block;color:#b6c4b7!important;font-size:11px;margin:10px 0 2px}
+#xg-panel .xg-map-monster button,#xg-panel .xg-battle-sheet button{border:1px solid #866f47;border-radius:7px;background:#1a3028;color:#eddbb5;padding:8px 12px;font:inherit}
+#xg-panel .xg-map-monster button{margin-top:10px}
+#xg-panel .xg-battle-sheet h2{color:#e9cc92}
+#xg-panel .xg-battle-bars{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+#xg-panel .xg-battle-bars div{border:1px solid #69593f;border-radius:8px;padding:11px;background:#112820}
+#xg-panel .xg-battle-bars strong{display:block;color:#f2daa9;white-space:nowrap}
+#xg-panel .xg-battle-log{min-height:94px}
+#xg-panel .xg-battle-log p{margin:4px 0}
+#xg-panel .xg-battle-actions{display:flex;gap:8px;flex-wrap:wrap}
+#xg-panel .xg-battle-actions button{flex:1;min-width:80px}
+#xg-panel .xg-battle-sheet [role=status]{color:#ffca91}

@@ -2,6 +2,9 @@ import {INITIAL_STONES,INITIAL_BAG_SIZE} from '../data/balance.js';
 import {QI_REQUIREMENTS,realmProgress,addCultivation} from '../data/realms.js';
 import {localDay} from '../systems/cultivation.js';
 import {initialCombat} from '../data/initial-combat.js';
+import {ITEMS} from '../data/items.js';
+import {DURABILITY_MAX} from '../data/balance.js';
+import {expireLoot} from '../systems/inventory.js';
 export function migrateSave(save,now=Date.now()){
  if(!save?.player)throw new Error('存档缺少人物信息。');
  const p=save.player;
@@ -24,6 +27,9 @@ export function migrateSave(save,now=Date.now()){
  save.inventory=Array.isArray(save.inventory)?save.inventory:[];
  save.bagCapacity=Number.isSafeInteger(save.bagCapacity)?Math.max(INITIAL_BAG_SIZE,save.bagCapacity):INITIAL_BAG_SIZE;
  save.equipment??={weapon:null,armor:null};
+ for(const slot of ['weapon','armor','shoes','accessoryVital','accessoryFate'])save.equipment[slot]??=null;
+ for(const entry of save.inventory)if(ITEMS[entry.itemId]?.kind==='equipment'&&!Number.isFinite(entry.durability))entry.durability=DURABILITY_MAX;
+ expireLoot(save,now);
  save.techniques??={mastered:[],main:null,puzzles:{}};
  save.techniques.mastered??=[];save.techniques.puzzles??={};
  save.itemSerial=Math.max(save.itemSerial||0,save.inventory.length);
@@ -39,5 +45,5 @@ export function migrateSave(save,now=Date.now()){
  if(!Number.isFinite(save.idle.usedMs))save.idle.usedMs=0;
  if(!save.idle.day)save.idle.day=localDay(now);
  const progress=realmProgress(p);if(progress.index>=0){p.cultivationRequired=QI_REQUIREMENTS[progress.index]??null;if(progress.required&&p.cultivation>=progress.required){const xp=p.cultivation;p.cultivation=0;addCultivation(save,xp)}}
- save.version=5;return save;
+ save.version=6;return save;
 }

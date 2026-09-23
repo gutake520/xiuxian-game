@@ -2,7 +2,7 @@ import {readSave,writeSave,updateSave,deleteSave} from './storage/saves.js';
 import {migrateSave} from './storage/migrations.js';
 import {createActions} from './core/actions.js';
 import {createFeatureUI,progressMarkup} from './ui/progression.js';
-import {equipmentName,addItem,ownsTechnique} from './systems/inventory.js';
+import {equipmentName,equipmentStats,addItem,ownsTechnique} from './systems/inventory.js';
 import {TECHNIQUES} from './data/techniques.js';
 import {initialCombat} from './data/initial-combat.js';
 import {createMapUI} from './ui/map.js';
@@ -14,7 +14,7 @@ async function dbPut(data){trimEventHistory(data);migrateSave(data);return write
 async function dbDelete(slot){return deleteSave(slot)}
 const game=createActions({getSave:()=>currentSave,setSave:save=>{currentSave=save;currentSlot=save.slot}});
 const featureUI=createFeatureUI({getSave:()=>currentSave,actions:game,activate:activatePage,character:renderCharacter});
-const mapUI=createMapUI({getSave:()=>currentSave,activate:activatePage});
+const mapUI=createMapUI({getSave:()=>currentSave,activate:activatePage,actions:game});
 async function runAction(action){try{return await action()}catch(error){console.error('[xiuxian-game]',error);alert('操作未完成，请重试。存档读取或写入失败。')}}
 function escapeHTML(value){return String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function clampFabPosition(left,top,width,height,viewportWidth,viewportHeight){return{left:Math.max(4,Math.min(viewportWidth-width-4,Number.isFinite(left)?left:viewportWidth-width-8)),top:Math.max(4,Math.min(viewportHeight-height-4,Number.isFinite(top)?top:viewportHeight/2-height/2))}}
@@ -48,7 +48,7 @@ const STAT_NAMES=['悟性','根骨','福缘','神识','魅力'], FREE_POINTS=30,
 function emptyAllocation(){return{悟性:0,根骨:0,福缘:0,神识:0,魅力:0}}
 function finalStats(root,alloc){const out={};for(const k of STAT_NAMES)out[k]=(alloc[k]||0)+(root.bonus[k]||0);return out}
 function rootDesc(root){const b=STAT_NAMES.filter(k=>root.bonus[k]).map(k=>k+(root.bonus[k]>0?'+':'')+root.bonus[k]).join(' · ');return root.name+'｜'+b}
-function newSave(name,gender,root,alloc){const stats=finalStats(root,alloc),combat=initialCombat(root.name);return{slot:currentSlot,version:5,createdAt:Date.now(),updatedAt:Date.now(),player:{name,gender,realm:'炼气一层',sect:'无门无派',cultivation:0,spirit:combat.mp,hp:combat.hp,mp:combat.mp,mind:60,combat,spiritRoot:root.name,rootType:root.type,rootDesc:rootDesc(root),aptitude:root.bonus,stats},story:{chapter:1,revenge:true,homeDestroyed:true},inventory:[],events:[],actionRound:0,world:{location:'荒山古道',day:1},flags:{}}}
+function newSave(name,gender,root,alloc){const stats=finalStats(root,alloc),combat=initialCombat(root.name);return{slot:currentSlot,version:6,createdAt:Date.now(),updatedAt:Date.now(),player:{name,gender,realm:'炼气一层',sect:'无门无派',cultivation:0,spirit:combat.mp,hp:combat.hp,mp:combat.mp,mind:60,combat,spiritRoot:root.name,rootType:root.type,rootDesc:rootDesc(root),aptitude:root.bonus,stats},story:{chapter:1,revenge:true,homeDestroyed:true},inventory:[],events:[],actionRound:0,world:{location:'荒山古道',day:1},flags:{}}}
 async function saveNow(){if(currentSave)await game.refresh()}
 // Only narrative history is capped. Inventory, quests and flags remain untouched.
 const EVENT_ROUND_LIMIT=10;
@@ -108,7 +108,7 @@ function combatValue(value,suffix=''){return Number.isFinite(value)?Number(value
 function renderCharacter(){
  if(!currentSave){runAction(showSlots);return}
  activatePage('person');
- const p=currentSave.player,stats=p.stats||{},combat=p.combat||{};
+ const p=currentSave.player,stats=p.stats||{},combat=equipmentStats(currentSave);
  const root=roots.find(root=>root.name===p.spiritRoot);
  const type={variant:'变异灵根',single:'单灵根',double:'双灵根',triple:'三灵根',quad:'四灵根',five:'五灵根'}[p.rootType||root?.type]||'未详';
  const cell=(label,value)=>`<div class="xg-value-cell"><span>${label}</span><strong>${value}</strong></div>`;
@@ -121,10 +121,10 @@ function renderCharacter(){
  ${companionMarkup(p)}
  <div class="xg-card"><h3>资质</h3><div class="xg-aptitude-grid">${['悟性','根骨','神识','魅力','福缘'].map(k=>`<div><span>${k}</span><strong>${sheetValue(stats[k])}</strong></div>`).join('')}</div></div>
  <div class="xg-card"><h3>战斗属性</h3><div class="xg-combat-grid">${[
- ['生命 HP',combat.hp??p.hp],['法力 MP',combat.mp??p.mp??p.spirit],['攻击',combat.attack],['防御',combat.defense],['速度',combat.speed],['暴击率',combat.critRate,'%'],['闪避率',combat.dodgeRate,'%']
- ].map(([label,value,suffix])=>cell(label,combatValue(value,suffix))).join('')}</div>
+ ['生命 HP',`${combatValue(p.hp)} / ${combatValue(combat.maxHp)}`],['法力 MP',`${combatValue(p.mp)} / ${combatValue(combat.maxMp)}`],['攻击',combatValue(combat.attack)],['防御',combatValue(combat.defense)],['速度',combatValue(combat.speed)],['暴击率',combatValue(combat.critRate,'%')],['闪避率',combatValue(combat.dodgeRate,'%')]
+ ].map(([label,value])=>cell(label,value)).join('')}</div>
  </div>
- <div class="xg-card"><h3>装备</h3><div class="xg-equipment-grid">${[['武器','weapon'],['防具','armor'],['饰品','accessory']].map(([label,slot])=>cell(label,escapeHTML(equipmentName(currentSave,slot)))).join('')}</div>
+ <div class="xg-card"><h3>装备</h3><div class="xg-equipment-grid">${[['武器','weapon'],['防具','armor'],['鞋子','shoes'],['生命／法力饰品','accessoryVital'],['暴击／闪避饰品','accessoryFate']].map(([label,slot])=>cell(label,escapeHTML(equipmentName(currentSave,slot)))).join('')}</div>
  <h4>修炼功法</h4><div class="xg-method-row"><span>主修</span><span>${escapeHTML(TECHNIQUES[currentSave.techniques?.main]?.name||'未装备')}</span></div><div class="xg-method-row"><span>辅修</span><span>未装备</span></div>
  <button type="button" id="xg-methods" class="xg-methods-button">查看功法典籍</button><h4>战斗功法</h4><p class="xg-empty-note">尚未装备战斗功法</p></div>
  <div class="xg-character-actions"><button type="button" id="xg-sect">门派</button><button type="button" id="xg-cultivate">修炼</button><button type="button" disabled>突破<small>尚未开放</small></button></div>

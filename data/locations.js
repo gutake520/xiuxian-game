@@ -12,7 +12,7 @@ export const VISITING_SECTS = [
 ];
 
 export const QI_MONSTERS = [
- {name:'厚血型小妖',hp:'16～20',attack:2,speed:1,drop:'灵石 2～3'},
- {name:'凶攻型小妖',hp:'10～12',attack:4,speed:1,drop:'草药 2～3'},
- {name:'迅捷型小妖',hp:'12～14',attack:3,speed:3,drop:'矿石 2～3'}
+ {id:'tough',name:'厚血型小妖',hp:'16～20',hpMin:16,hpMax:20,attack:2,speed:1,drop:'灵石 2～3',resource:'stones'},
+ {id:'fierce',name:'凶攻型小妖',hp:'10～12',hpMin:10,hpMax:12,attack:4,speed:1,drop:'草药 2～3',resource:'herbs'},
+ {id:'swift',name:'迅捷型小妖',hp:'12～14',hpMin:12,hpMax:14,attack:3,speed:3,drop:'矿石 2～3',resource:'ore'}
 ];

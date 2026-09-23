@@ -201,6 +201,7 @@
 #xg-panel .xg-root-detail{margin-top:10px;padding-top:8px}
 #xg-panel .xg-cultivation{margin-top:10px;padding:7px 10px}
 #xg-panel .xg-equipment-grid .xg-value-cell{padding:8px 4px}
+#xg-panel .xg-equipment-grid .xg-value-cell{overflow-wrap:anywhere}
 #xg-panel .xg-method-row{padding:6px 0;font-size:12px}
 
 /* Sect sheets are secondary pages above the character sheet. */

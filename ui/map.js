@@ -1,11 +1,14 @@
 import {VISITING_SECTS,QI_MONSTERS} from '../data/locations.js';
+import {showBattle} from './combat.js';
 
-export function createMapUI({getSave,activate}){
+export function createMapUI({getSave,activate,actions}){
  const content=()=>document.getElementById('xg-content');
+ const battle=outcome=>showBattle({getSave,activate,actions,onExit:renderMonsters},outcome);
  function heading(title,subtitle){return `<div class="xg-map-heading"><h2>${title}</h2><p>${subtitle}</p></div>`}
  const peaks=(locations,kind)=>`<div class="xg-map-landscape xg-map-${kind}">${locations.map((place,i)=>`<button type="button" class="xg-map-hill${place.locked?' xg-map-locked':''}" style="--hill-x:${place.x}%;--hill-y:${place.y}%;--hill-size:${place.size||1}" ${place.locked?'disabled':''} ${place.id?`data-${kind}="${place.id}"`:''}><span class="xg-map-label">${place.name}</span><span class="xg-map-summit" aria-hidden="true"></span></button>`).join('')}</div>`;
  function render(){
   if(!getSave())return;
+  if(getSave().battle)return battle();
   activate('map');
   content().innerHTML=`<section class="xg-map-sheet">${heading('山河图','点一座山，走一段路。')}${peaks([
    {name:'远山 · 待定',x:12,y:6,locked:true,size:.8},{name:'远山 · 待定',x:68,y:17,locked:true,size:.76},
@@ -43,11 +46,18 @@ export function createMapUI({getSave,activate}){
   back(render);
  }
  function renderEncounter(number){
+  if(getSave().battle)return battle();
   activate('map');
-  content().innerHTML=`<section class="xg-map-sheet"><button class="xg-map-back" type="button">← 返回炼气山</button>${heading(`山头 ${number}`,'炼气一至三层 · 战斗待开放')}
-   ${QI_MONSTERS.map(monster=>`<div class="xg-card xg-map-monster"><h3>${monster.name}</h3><p>生命 ${monster.hp} · 攻击 ${monster.attack} · 速度 ${monster.speed}</p><small>主要掉落：${monster.drop}</small></div>`).join('')}
-   <p class="xg-map-pending">战斗、修为奖励与附带掉落的概率待定。</p></section>`;
+  content().innerHTML=`<section class="xg-map-sheet"><button class="xg-map-back" type="button">← 返回炼气山</button>${heading(`山头 ${number}`,'炼气一至三层 · 小妖出没')}
+   ${QI_MONSTERS.map(monster=>`<div class="xg-card xg-map-monster"><h3>${monster.name}</h3><p>生命 ${monster.hp} · 攻击 ${monster.attack} · 速度 ${monster.speed}</p><small>主要掉落：${monster.drop}</small><button type="button" data-foe="${monster.id}">迎战</button></div>`).join('')}
+   <p class="xg-map-pending">胜利可获修为和战利品；退出战斗须支付代价。</p><p role="status" aria-live="polite"></p></section>`;
   back(renderMonsters);
+  const status=content().querySelector('[role=status]');
+  content().querySelectorAll('[data-foe]').forEach(button=>button.onclick=async()=>{
+   content().querySelectorAll('[data-foe]').forEach(item=>item.disabled=true);
+   try{await actions.startBattle(button.dataset.foe);battle()}
+   catch(error){status.textContent=error.message;content().querySelectorAll('[data-foe]').forEach(item=>item.disabled=false)}
+  });
  }
  return {render};
 }
