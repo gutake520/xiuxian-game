@@ -31,7 +31,7 @@ export function migrateSave(save,now=Date.now()){
  for(const entry of save.inventory)if(ITEMS[entry.itemId]?.kind==='equipment'&&!Number.isFinite(entry.durability))entry.durability=DURABILITY_MAX;
  expireLoot(save,now);
  save.petRentals=Number.isSafeInteger(save.petRentals)?Math.max(0,save.petRentals):0;
- if(save.battle){save.battle.talismansUsed??=0;save.battle.talismanRound??=0;save.battle.bindRound??=0;save.battle.freeArrayUsed??=false;save.battle.guard??=false;save.battle.pet??=null}
+ if(save.battle){save.battle.talismansUsed??=0;save.battle.talismanRound??=0;save.battle.bindRounds??=save.battle.bindRound?[save.battle.bindRound]:[];save.battle.arrayRound??=0;save.battle.freeArrayUsed??=false;save.battle.guard??=false;save.battle.pet??=null}
  save.techniques??={mastered:[],main:null,puzzles:{}};
  save.techniques.mastered??=[];save.techniques.puzzles??={};
  save.itemSerial=Math.max(save.itemSerial||0,save.inventory.length);

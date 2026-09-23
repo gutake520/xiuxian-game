@@ -3,7 +3,7 @@ import {migrateSave} from '../storage/migrations.js';
 import {settleIdle,practiceReward,idleRate} from '../systems/cultivation.js';
 import {realmProgress,addCultivation} from '../data/realms.js';
 import {appendEvent} from '../systems/events.js';
-import {beginBattle,playRound,fleeBattle,useBattleTalisman} from '../systems/combat.js';
+import {beginBattle,playRound,fleeBattle,useBattleTalisman,useBattleArray} from '../systems/combat.js';
 import {settleRecovery} from '../systems/recovery.js';
 import {finishQiExploration} from '../systems/exploration.js';
 import {finishMeditation} from '../systems/sect-services.js';
@@ -22,6 +22,7 @@ export function createActions({getSave,setSave}){
   finishMeditation:()=>mutate(s=>finishMeditation(s),{allowWait:true,allowDebt:true,message:result=>result}),
   startBattle:(id,pet)=>mutate(s=>beginBattle(s,id,pet)),
   battleTalisman:id=>mutate(s=>useBattleTalisman(s,id),{allowBattle:true}),
+  battleArray:()=>mutate(s=>useBattleArray(s),{allowBattle:true}),
   battleRound:action=>mutate(s=>playRound(s,action),{allowBattle:true,message:(result)=>result.result?`${result.result.monster}：${result.result.outcome==='victory'?'胜利': '战败'}。`:null}),
   flee:()=>mutate(s=>fleeBattle(s),{allowBattle:true,message:result=>`脱离${result.monster}的战斗，${result.cost}。`}),
   startPractice:()=>mutate(s=>{if(realmProgress(s.player).index<0||realmProgress(s.player).complete)throw new Error('当前境界暂不开放修炼。');const id=crypto.randomUUID();s.practiceSession={id,startedAt:Date.now(),hasMain:idleRate(s)>0};return id},{allowDebt:true}),
