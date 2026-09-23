@@ -7,7 +7,7 @@ import {learningPuzzle} from './techniques.js';
 import {createSheet,escapeHTML,buttonTask} from './shared.js';
 export function showSectTasks(api,onClose){
  const save=api.getSave(),daily=dailyTasks(save),sheet=createSheet('宗门日课',onClose),body=sheet.querySelector('[data-body]'),status=sheet.querySelector('[role=status]');
- body.innerHTML=`<p>每日三项，每项奖励 3 积分 · 当前积分 ${save.sectPoints||0}</p>${DAILY_TASKS.map(task=>`<article class="xg-feature-card"><h3>${task.name}</h3><p>${daily[task.id]} / ${task.target}</p><button type="button" data-claim="${task.id}" ${daily.claimed.includes(task.id)||daily[task.id]<task.target?'disabled':''}>${daily.claimed.includes(task.id)?'已领取':'领取 3 积分'}</button></article>`).join('')}<small>按本地日期更新。逃跑扣款不计入消费；奇遇、赠礼任务待对应功能开放。</small>`;
+ body.innerHTML=`<p>每日三项，每项奖励 1 积分 · 当前积分 ${save.sectPoints||0}</p>${DAILY_TASKS.map(task=>`<article class="xg-feature-card"><h3>${task.name}</h3><p>${daily[task.id]} / ${task.target}</p><button type="button" data-claim="${task.id}" ${daily.claimed.includes(task.id)||daily[task.id]<task.target?'disabled':''}>${daily.claimed.includes(task.id)?'已领取':'领取 1 积分'}</button></article>`).join('')}<small>按本地日期更新。逃跑扣款不计入消费；奇遇、赠礼任务待对应功能开放。</small>`;
  body.querySelectorAll('[data-claim]').forEach(button=>button.onclick=()=>buttonTask(button,async()=>{await api.actions.mutate(s=>claimDailyTask(s,button.dataset.claim,daily.day),{message:r=>r});showSectTasks(api,onClose)},status));
 }
 export function showSectInheritance(api,onClose){
