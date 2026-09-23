@@ -5,6 +5,9 @@ import {purchase} from '../systems/inventory.js';
 import {showShop,showSell} from './inventory.js';
 import {startQiExploration,QI_EXPLORATION_MS,QI_SCENES} from '../systems/exploration.js';
 import {localDay} from '../systems/cultivation.js';
+import {equipmentStats} from '../systems/inventory.js';
+import {repairPrice,repairEquipment,healAtSect,startMeditation,HEAL_PRICE,MEDITATION_PRICE,MEDITATION_MS} from '../systems/sect-services.js';
+import {escapeHTML,format} from './shared.js';
 
 export function createMapUI({getSave,activate,actions}){
  const content=()=>document.getElementById('xg-content');
@@ -15,6 +18,7 @@ export function createMapUI({getSave,activate,actions}){
   if(!getSave())return;
   if(getSave().battle)return battle();
   if(getSave().qiSecret)return renderSecret();
+  if(getSave().qiMeditation)return renderMeditation();
   activate('map');
   content().innerHTML=`<section class="xg-map-sheet">${heading('山河图','点一座山，走一段路。')}${peaks([
    {name:'坊市',id:'market',x:12,y:6,size:.8},{name:'黑市',id:'blackmarket',x:68,y:17,size:.76},
@@ -54,15 +58,34 @@ export function createMapUI({getSave,activate,actions}){
   content().querySelectorAll('[data-visit]').forEach(button=>button.onclick=()=>renderVisit(button.dataset.visit));
  }
  function renderVisit(id){
+  if(getSave()?.qiMeditation)return renderMeditation();
   const sect=VISITING_SECTS.find(item=>item.id===id);if(!sect)return renderSects();
   const own=getSave()?.player?.sect===sect.name;
+  const gear=getSave().inventory.filter(entry=>ITEMS[entry.itemId]?.kind==='equipment'&&repairPrice(entry)>0);
+  const damaged=getSave().player.hp<equipmentStats(getSave()).maxHp;
+  const serviceActions=id==='tiangong'?(own?'<small class="xg-map-pending">你是天工阁弟子，匠师不会替你修补。</small>':gear.length?gear.map(entry=>`<button type="button" data-repair="${escapeHTML(entry.uid)}">修补 ${escapeHTML(ITEMS[entry.itemId].name)} · ${format(entry.durability)} / 20 · ${format(repairPrice(entry))} 灵石</button>`).join(''):'<small class="xg-map-pending">没有需要修补的装备。</small>'):id==='qinglan'?`<button type="button" data-heal ${damaged?'':'disabled'}>立即疗伤 · ${HEAL_PRICE} 灵石${damaged?'':'（生命已满）'}</button>`:id==='zhenyue'?`<button type="button" data-meditate ${damaged?'':'disabled'}>进入静室 · ${MEDITATION_PRICE} 灵石${damaged?'':'（生命已满）'}</button>`:'';
   activate('map');
   content().innerHTML=`<section class="xg-map-sheet"><button class="xg-map-back" type="button">← 返回九宗</button>${heading(sect.name,sect.service)}
    <div class="xg-map-place xg-map-scene"><span class="xg-map-peak" aria-hidden="true"></span><strong>${sect.npc}</strong><p>${sect.id==='tiangong'&&own?'“你也是天工阁的人？自己的装备，自己去修。”':`“来者是客，欢迎到${sect.name}坐坐。”`}</p></div>
-   <div class="xg-card"><h3>${sect.service}</h3><p>${sect.detail}</p>${(id==='danxia'?SECT_PILLS:id==='taixu'?SECT_TALISMANS:id==='xuanji'?['binding-array']:[]).map(itemId=>`<button type="button" data-sect-buy="${itemId}">购买${ITEMS[itemId].name} · ${ITEMS[itemId].price} 灵石</button>`).join('')}${id==='wanling'?`<button type="button" data-rent>租借灵兽 · 1 灵石（已有 ${getSave().petRentals||0} 份）</button>`:''}${['danxia','taixu','xuanji','wanling'].includes(id)?'':'<small class="xg-map-pending">具体效果或费用待定，暂不扣除灵石。</small>'}</div><p role="status" aria-live="polite"></p>
+   <div class="xg-card"><h3>${sect.service}</h3><p>${sect.detail}</p>${serviceActions}${(id==='danxia'?SECT_PILLS:id==='taixu'?SECT_TALISMANS:id==='xuanji'?['binding-array']:[]).map(itemId=>`<button type="button" data-sect-buy="${itemId}">购买${ITEMS[itemId].name} · ${ITEMS[itemId].price} 灵石</button>`).join('')}${id==='wanling'?`<button type="button" data-rent>租借灵兽 · 1 灵石（已有 ${getSave().petRentals||0} 份）</button>`:''}${['danxia','taixu','xuanji','wanling','tiangong','qinglan','zhenyue'].includes(id)?'':'<small class="xg-map-pending">具体效果或费用待定，暂不扣除灵石。</small>'}</div><p role="status" aria-live="polite"></p>
   </section>`;
   back(renderSects);
   const status=content().querySelector('[role=status]');
+  content().querySelectorAll('[data-repair]').forEach(button=>button.onclick=async()=>{
+   button.disabled=true;
+   try{const {result}=await actions.mutate(s=>repairEquipment(s,button.dataset.repair),{message:result=>result});renderVisit(id);content().querySelector('[role=status]').textContent=result}
+   catch(error){status.textContent=error.message;button.disabled=false}
+  });
+  const heal=content().querySelector('[data-heal]');if(heal)heal.onclick=async()=>{
+   heal.disabled=true;
+   try{const {result}=await actions.mutate(s=>healAtSect(s),{message:result=>result});renderVisit(id);content().querySelector('[role=status]').textContent=result}
+   catch(error){status.textContent=error.message;heal.disabled=false}
+  };
+  const meditate=content().querySelector('[data-meditate]');if(meditate)meditate.onclick=async()=>{
+   meditate.disabled=true;
+   try{await actions.mutate(s=>startMeditation(s),{message:result=>result});renderMeditation()}
+   catch(error){status.textContent=error.message;meditate.disabled=false}
+  };
   content().querySelectorAll('[data-sect-buy]').forEach(button=>button.onclick=async()=>{
    button.disabled=true;
    try{await actions.mutate(s=>purchase(s,button.dataset.sectBuy),{message:result=>result});status.textContent='物品已收入储物。'}
@@ -73,6 +96,25 @@ export function createMapUI({getSave,activate,actions}){
    try{await actions.mutate(s=>{if(s.player.spiritStones<1)throw new Error('灵石不足。');s.player.spiritStones=Math.round((s.player.spiritStones-1)*100)/100;s.petRentals=(s.petRentals||0)+1;return '租下一次灵兽出战。'},{message:result=>result});renderVisit(id)}
    catch(error){status.textContent=error.message;rent.disabled=false}
   };
+ }
+ function renderMeditation(){
+  activate('map');
+  const pending=getSave().qiMeditation;
+  if(!pending)return renderVisit('zhenyue');
+  content().innerHTML=`<section class="xg-map-sheet"><div class="xg-card xg-secret-wait"><h3>镇岳宗 · 静室</h3><p>你盘膝静坐，缓缓调匀气息。三分钟结束后恢复至多 12 点生命。</p><div class="xg-progress"><i data-meditation-progress></i></div><strong data-meditation-clock>03:00</strong><p>静坐期间无法进行其他游戏操作。关闭面板后，进度仍会保留。</p><button type="button" data-finish-meditation hidden>结束静坐</button></div><p role="status" aria-live="polite"></p></section>`;
+  const slot=getSave().slot,clock=content().querySelector('[data-meditation-clock]'),progress=content().querySelector('[data-meditation-progress]'),status=content().querySelector('[role=status]'),button=content().querySelector('[data-finish-meditation]');
+  let finishing=false,failed=false;
+  const finish=async()=>{if(finishing||!getSave()?.qiMeditation)return;finishing=true;button.disabled=true;try{const {result}=await actions.finishMeditation();clearInterval(timer);renderVisit('zhenyue');content().querySelector('[role=status]').textContent=result}catch(error){failed=true;status.textContent=error.message;button.hidden=false;button.disabled=false;finishing=false}};
+  button.onclick=finish;
+  const tick=()=>{
+   if(!clock.isConnected||getSave()?.slot!==slot){clearInterval(timer);return}
+   const elapsed=Math.max(0,Date.now()-pending.startedAt),remaining=Math.max(0,Math.ceil((pending.endsAt-Date.now())/1000));
+   clock.textContent=`${String(Math.floor(remaining/60)).padStart(2,'0')}:${String(remaining%60).padStart(2,'0')}`;
+   progress.style.width=`${Math.min(100,elapsed/MEDITATION_MS*100)}%`;
+   if(!remaining&&!failed)finish();
+   if(!remaining&&failed)button.hidden=false;
+  };
+  const timer=setInterval(tick,1000);tick();
  }
  function renderMonsters(){
   activate('map');
