@@ -8,17 +8,15 @@ import {beginBattle,playRound} from '../systems/combat.js';
 import {migrateSave} from '../storage/migrations.js';
 function save(){return migrateSave({player:{name:'测试',realm:'炼气四层',sect:'无门无派',spiritRoot:'金水双灵根',cultivation:0,spiritStones:100,hp:23,mp:20,combat:{hp:20,mp:20,attack:3,defense:3,speed:5,critRate:0,dodgeRate:0}},inventory:[],techniques:{mastered:[],combat:[],puzzles:{}},bagCapacity:20,realmHpBonusApplied:3})}
 function random(value,fn){const old=Math.random;try{Math.random=()=>value;return fn()}finally{Math.random=old}}
-test('ten draws cost eighteen, pity persists and forced rewards reset it; replay does not charge',()=>{
+test('test-rate ten draws grant manuals, reset pity and replay does not charge',()=>{
  let s=save();s.blackMarket={pity:65};
  random(.4,()=>drawBlackMarket(s,10,'ten'));
- assert.equal(s.player.spiritStones,82);assert.equal(s.blackMarket.pity,9);assert.equal(s.inventory.find(e=>e.itemId==='one-manual').quantity,1);
+ assert.equal(s.player.spiritStones,82);assert.equal(s.blackMarket.pity,0);assert.equal(s.inventory.find(e=>e.itemId==='one-manual').quantity,10);assert.equal(s.blackMarket.lastDraw.manuals.length,10);
  s=JSON.parse(JSON.stringify(s));drawBlackMarket(s,10,'ten');assert.equal(s.player.spiritStones,82);
- random(.1,()=>drawBlackMarket(s,1,'next'));assert.equal(s.blackMarket.pity,10);assert.equal(s.player.spiritStones,80);
+ random(.1,()=>drawBlackMarket(s,1,'next'));assert.equal(s.blackMarket.pity,0);assert.equal(s.player.spiritStones,80);
 });
-test('draw category boundaries, duplicate manuals and temporary storage',()=>{
- for(const [roll,id] of [[0,'one-manual'],[.305,'burnt-talisman'],[.505,'calming-jade'],[.555,'ore'],[.7775,'qi-herb']]){
-  const s=save();random(roll,()=>drawBlackMarket(s,1,'a'));assert.equal(s.inventory[0].itemId,id);
- }
+test('test-rate single draw grants a manual, repeated copies stack, and full bags use temporary storage',()=>{
+ for(const roll of [0,.305,.505,.555,.7775]){const s=save();random(roll,()=>drawBlackMarket(s,1,'a'));assert.ok(['one-manual','reset-manual'].includes(s.inventory[0].itemId))}
  const s=save();s.techniques.mastered.push('only-one');random(0,()=>{drawBlackMarket(s,1,'a');drawBlackMarket(s,1,'b')});
  assert.equal(s.inventory[0].quantity,2);sellExtra(s,s.inventory[0].uid);assert.equal(s.player.spiritStones,116);
  s.bagCapacity=0;random(.6,()=>drawBlackMarket(s,1,'c',1000));assert.equal(s.temporaryLoot[0].expiresAt,1801000);

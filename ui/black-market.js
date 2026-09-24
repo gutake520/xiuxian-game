@@ -1,4 +1,5 @@
 import {drawBlackMarket} from '../systems/black-market.js';
+import {showManualReveal} from './black-market-reveal.js';
 import {escapeHTML,format} from './shared.js';
 export function showBlackMarket({getSave,actions,activate},onClose){
  activate('map');
@@ -10,7 +11,7 @@ export function showBlackMarket({getSave,actions,activate},onClose){
   if(busy)return;busy=true;
   const status=content.querySelector('[role=status]'),count=Number(button.dataset.draw),id=crypto.randomUUID();
   content.querySelectorAll('[data-draw]').forEach(b=>b.disabled=true);
-  try{await actions.mutate(s=>drawBlackMarket(s,count,id),{message:`在黑市开启 ${count} 只奇匣。`});showBlackMarket({getSave,actions,activate},onClose)}
+  try{await actions.mutate(s=>drawBlackMarket(s,count,id),{message:`在黑市开启 ${count} 只奇匣。`});showBlackMarket({getSave,actions,activate},onClose);const name=getSave().blackMarket?.lastDraw?.manuals?.[0];if(name)showManualReveal(document.getElementById('xg-content'),name)}
   catch(error){status.textContent=error.message;content.querySelectorAll('[data-draw]').forEach(b=>b.disabled=getSave().player.spiritStones<(Number(b.dataset.draw)===10?18:2));busy=false}
  });
 }
