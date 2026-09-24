@@ -85,8 +85,6 @@ function renderHome(){
  const requirement=p.cultivationRequired,known=Number.isFinite(requirement)&&requirement>0;
  const progress=known?Math.max(0,Math.min(100,(p.cultivation||0)/requirement*100)):0;
  const inSect=p.sect&&p.sect!=='无门无派';
- const atSect=inSect&&location===p.sect;
- const actions=atSect?['宗门走访','同门交谈','离开山门']:['四下探索','寻人交谈','前往别处'];
  const history=Array.isArray(currentSave.events)?currentSave.events:[];
  document.getElementById('xg-content').innerHTML=`<section class="xg-home-sheet">
  <div class="xg-card"><div class="xg-player"><div><strong>${escapeHTML(p.name)}</strong><small>${escapeHTML(p.gender||'未设')} · ${escapeHTML(p.sect||'无门无派')}</small></div><em>${escapeHTML(p.realm)}</em></div>
@@ -95,12 +93,9 @@ function renderHome(){
  </div>
  <div class="xg-world-line"><span>⌖ ${escapeHTML(location)}</span><span>第 ${day} 日</span></div>
  <div class="xg-card xg-daily"><h3>宗门日课</h3><p>${inSect?DAILY_TASKS.map(task=>`${task.name} ${dailyTasks(currentSave)[task.id]}/${task.target}${dailyTasks(currentSave).claimed.includes(task.id)?' · 已领取':''}`).join('<br>'):'尚未入宗，暂无宗门日课。'}</p></div>
- <div class="xg-location-actions">${actions.map(label=>`<button type="button" data-home-action>${label}</button>`).join('')}</div>
- <p id="xg-home-feedback" role="status" aria-live="polite"></p>
  <div class="xg-card xg-history"><div class="xg-history-heading"><h3>近日见闻</h3><small>最近十轮</small></div>
  ${history.length?[...history].reverse().map(event=>`<article><div class="xg-event-meta"><span>第 ${escapeHTML(event.round)} 轮</span><span>${escapeHTML(event.location||'')}</span></div>${event.messages.map(text=>`<p>${escapeHTML(text)}</p>`).join('')}</article>`).join(''):'<p class="xg-history-empty">行路伊始，尚无新的见闻。</p>'}
  </div></section>`;
- document.querySelectorAll('[data-home-action]').forEach(button=>button.onclick=()=>{document.getElementById('xg-home-feedback').textContent='此处行动尚未开放。'});
 }
 function activatePage(page){
  document.querySelectorAll('#xg-panel nav button').forEach(button=>{
@@ -221,9 +216,9 @@ const SECT_ROOMS={danxia:'炼丹房',tiangong:'锻兵室',wanling:'灵兽苑',ta
 function sectHeader(sect,back){return `<div class="xg-sect-heading"><h2>${sect.name}</h2><button type="button" id="xg-sect-back">${back}</button></div>`}
 function renderSectHall(sect){
  const sheet=sectOverlay(),eligible=sectEligibility(currentSave.player,sect);
- sheet.innerHTML=`${sectHeader(sect,'返回人物')}<p class="xg-sect-hint">${sect.feature}</p><div class="xg-card"><strong>${eligible.specialty?'特色传承资格已满足':'当前仅可学习通用功法'}</strong><p class="xg-sect-hint">宗门积分 ${currentSave.sectPoints||0} · 《引气诀》可在人物页参悟</p></div><div class="xg-sect-facilities"><button type="button" data-sect-shop>门派商店<small>通用战斗功法</small></button>${SECT_ROOMS[sect.id]?`<button type="button" data-sect-room>${SECT_ROOMS[sect.id]}<small>${eligible.specialty?'进入':'专精条件未满足'}</small></button>`:''}<button type="button" data-sect-tasks>宗门日课<small>每日三项 · 共 9 积分</small></button><button type="button" data-sect-inheritance>宗门传承<small>核心功法 · 9 积分</small></button>${['藏书阁','宗门大比','师尊授业'].map(name=>`<button type="button" disabled>${name}<small>尚未开放</small></button>`).join('')}</div><details class="xg-sect-rules"><summary>离宗与情缘须知</summary><p>离宗后，本宗专属功法与物品停止生效，专属功法自动卸下；已学记录保留，通用物品不受影响。</p><p>主动解除道侣关系须支付灵石。离开合欢宗时，至多保留一位道侣，其余关系须先结清费用。灵石不足时不能办理。</p><p>炼气离宗需 100 灵石，筑基需 300 灵石；离宗后须等待现实时间三天，才能再次加入任何宗门。</p></details><button type="button" data-leave-sect ${sectExitPrice(currentSave.player)===null?'disabled':''}>退出宗门 · ${sectExitPrice(currentSave.player)??'后续待定'} 灵石</button><p data-leave-status role="status"></p>`;
+ sheet.innerHTML=`${sectHeader(sect,'返回人物')}<p class="xg-sect-hint">${sect.feature}</p><div class="xg-card"><strong>${eligible.specialty?'特色传承资格已满足':'当前仅可学习通用功法'}</strong><p class="xg-sect-hint">宗门积分 ${currentSave.sectPoints||0} · 《引气诀》可在人物页参悟</p></div><div class="xg-sect-facilities"><button type="button" data-sect-shop>门派商店<small>通用战斗功法</small></button>${SECT_ROOMS[sect.id]?`<button type="button" data-sect-room>${SECT_ROOMS[sect.id]}<small>${eligible.specialty?'进入':'专精条件未满足'}</small></button>`:''}<button type="button" data-sect-tasks>宗门日课<small>每日三项 · 共 9 积分</small></button><button type="button" data-sect-inheritance>宗门传承<small>核心功法 · 9 积分</small></button>${['藏书阁','宗门大比','师尊授业'].map(name=>`<button type="button" disabled>${name}<small>尚未开放</small></button>`).join('')}</div><details class="xg-sect-rules"><summary>离宗与情缘须知</summary><p>离宗后，本宗专属功法与物品停止生效，专属功法自动卸下；已学记录保留，通用物品不受影响。</p><p>主动解除道侣关系须支付灵石。离开合欢宗时，至多保留一位道侣，其余关系须先结清费用。灵石不足时不能办理。</p><p>离宗后须等待现实时间三天，才能再次加入任何宗门；具体费用将在确认时显示。</p></details><button type="button" data-leave-sect ${sectExitPrice(currentSave.player)===null?'disabled':''}>退出宗门</button><p data-leave-status role="status"></p>`;
  sheet.querySelector('#xg-sect-back').onclick=closeSect;
- sheet.querySelector('[data-leave-sect]').onclick=async()=>{const button=sheet.querySelector('[data-leave-sect]');if(!confirm(`支付 ${sectExitPrice(currentSave.player)} 灵石退出宗门？专属功法停止生效，三天内不能再次入宗。`))return;button.disabled=true;try{await game.mutate(s=>leaveSect(s),{message:result=>result});closeSect()}catch(error){sheet.querySelector('[data-leave-status]').textContent=error.message;button.disabled=false}};
+ sheet.querySelector('[data-leave-sect]').onclick=async()=>{const button=sheet.querySelector('[data-leave-sect]');if(!confirm(`请提交 ${sectExitPrice(currentSave.player)} 灵石，确认退出宗门？专属功法停止生效，三天内不能再次入宗。`))return;button.disabled=true;try{await game.mutate(s=>leaveSect(s),{message:result=>result});closeSect()}catch(error){sheet.querySelector('[data-leave-status]').textContent=error.message;button.disabled=false}};
  sheet.querySelector('[data-sect-shop]').onclick=()=>renderSectShop(sect);
  sheet.querySelector('[data-sect-tasks]').onclick=()=>showSectTasks(sectAPI,closeSectFeature(sect));
  sheet.querySelector('[data-sect-inheritance]').onclick=()=>showSectInheritance(sectAPI,closeSectFeature(sect));
