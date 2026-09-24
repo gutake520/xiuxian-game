@@ -6,24 +6,25 @@ import {equipmentStats,awardItem,maxDurability} from './inventory.js';
 import {addCultivation,realmProgress} from '../data/realms.js';
 import {TECHNIQUES,hasActiveTechnique} from '../data/techniques.js';
 import {HERBALIST_NAME,maybeMeetHerbalist} from './encounters.js';
+import {maybeMeetDiviner} from './divination.js';
 import {startSeniorChallenge} from './sect-tournament.js';
 
 export const round2=value=>Math.round((value+Number.EPSILON)*100)/100;
 const herbs=['healing-herb','spirit-herb','qi-herb'];
 const pick=array=>array[Math.floor(Math.random()*array.length)];
-function grant(save,id,quantity,rewards,now){const place=awardItem(save,id,quantity,now);rewards.push(`${ITEMS[id].name}×${quantity}${place==='temporary'?'（临时储物）':''}`)}
+function grant(save,id,quantity,rewards,now,loot){const place=awardItem(save,id,quantity,now);rewards.push(`${ITEMS[id].name}×${quantity}${place==='temporary'?'（临时储物）':''}`);loot.push({itemId:id,quantity,place,uid:place==='bag'?(ITEMS[id].stackable?save.inventory.find(entry=>entry.itemId===id):save.inventory.at(-1))?.uid:save.temporaryLoot.at(-1)?.id})}
 function awardVictory(save,monster,now){
- const rewards=[];const count=Math.random()<(monster.twoDropChance??.6)?2:3;
- if(monster.resource==='stones'){save.player.spiritStones=round2(save.player.spiritStones+count);rewards.push(`灵石×${count}`)}
- else grant(save,monster.resource==='herbs'?pick(herbs):'ore',count,rewards,now);
+ const rewards=[],loot=[];const count=Math.random()<(monster.twoDropChance??.6)?2:3;
+ if(monster.resource==='stones'){save.player.spiritStones=round2(save.player.spiritStones+count);rewards.push(`灵石×${count}`);loot.push({itemId:'stones',quantity:count})}
+ else grant(save,monster.resource==='herbs'?pick(herbs):'ore',count,rewards,now,loot);
  const other=pick(monster.resource==='stones'?['herbs','ore']:monster.resource==='herbs'?['stones','ore']:['stones','herbs']);
- if(other==='stones'){save.player.spiritStones=round2(save.player.spiritStones+1);rewards.push('灵石×1')}
- else grant(save,other==='herbs'?pick(herbs):'ore',1,rewards,now);
- for(const [id,chance] of [['wild-shoes',.08],['wild-sword',.04],['wild-robe',.04]])if(Math.random()<chance)grant(save,id,1,rewards,now);
- if(Math.random()<.04)grant(save,pick(['hp-charm','mp-charm','crit-charm','dodge-charm']),1,rewards,now);
- if((monster.minTier??0)>=3&&Math.random()<.02)grant(save,'sting-manual',1,rewards,now);
+ if(other==='stones'){save.player.spiritStones=round2(save.player.spiritStones+1);rewards.push('灵石×1');loot.push({itemId:'stones',quantity:1})}
+ else grant(save,other==='herbs'?pick(herbs):'ore',1,rewards,now,loot);
+ for(const [id,chance] of [['wild-shoes',.08],['wild-sword',.04],['wild-robe',.04]])if(Math.random()<chance)grant(save,id,1,rewards,now,loot);
+ if(Math.random()<.04)grant(save,pick(['hp-charm','mp-charm','crit-charm','dodge-charm']),1,rewards,now,loot);
+ if((monster.minTier??0)>=3&&Math.random()<.02)grant(save,'sting-manual',1,rewards,now,loot);
  const xp=addCultivation(save,COMBAT_REWARD_XP);
- return {rewards,xp};
+ return {rewards,xp,loot};
 }
 function wearEquipment(save){
  for(const [slot,uid] of Object.entries(save.equipment||{})){
@@ -68,12 +69,17 @@ function resolveVictory(save,now,messages){
  if(monster.humanoid&&!battle.retaliation&&save.player.hp>0&&Math.random()<.3){
   beginBattle(save,monster.id,null,true);
   save.battle.log=[...messages.slice(-3),'你敢杀我兄弟？对方的同伴冲出，追战开始。'].slice(-10);
- }else if(maybeMeetHerbalist(save,battle.id))messages.push(`归途中遇见受伤的${HERBALIST_NAME}，他向你讨一株回血草。`);
+ }else{
+  if(maybeMeetDiviner(save,battle.id,result.loot,now))messages.push('归途中遇见卦师，他请你抛一枚铜钱。');
+  if(maybeMeetHerbalist(save,battle.id))messages.push(`归途中遇见受伤的${HERBALIST_NAME}，他向你讨一株回血草。`);
+ }
+ delete save.lastBattle.loot;
  save.lastBattle.log=[...messages];
  return save.lastBattle;
 }
 export function beginBattle(save,id,pet=null,retaliation=false){
  if(save.battle)throw new Error('尚有未结束的战斗。');
+ if(save.divinationPending)throw new Error('请先回应卦师。');
  if(save.encounterPending)throw new Error(`请先回应${HERBALIST_NAME}。`);
  if(save.seniorRewardPending)throw new Error('请先领取大比奖励。');
  if(save.player.cultivation< -100)throw new Error('请先去修炼。');

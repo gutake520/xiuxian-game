@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {beginBattle,playRound,useBattleTalisman} from '../systems/combat.js';
 import {resolveHerbalist} from '../systems/encounters.js';
+import {flipDivination} from '../systems/divination.js';
 import {addItem} from '../systems/inventory.js';
 import {startLearning,completeLearning,toggleCombatTechnique} from '../systems/techniques.js';
 
@@ -16,7 +17,7 @@ test('fortune chance has a two percent floor and increases per fortune point',()
 test('three separate gifts assemble a learnable middle manual exactly once',()=>{
  const s=save();addItem(s,'healing-herb',3);
  for(let i=1;i<=3;i++){
-  fixed(0,()=>win(s));const pending=JSON.parse(JSON.stringify(s)).encounterPending;
+  fixed(0,()=>win(s));if(s.divinationPending)fixed(0,()=>flipDivination(s,s.divinationPending.id));const pending=JSON.parse(JSON.stringify(s)).encounterPending;
   const before=s.inventory.find(entry=>entry.itemId==='healing-herb')?.quantity||0;
   resolveHerbalist(s,pending.id,true);assert.equal(s.herbalistFragments,i);
   assert.equal(s.inventory.find(entry=>entry.itemId==='healing-herb')?.quantity||0,before-1);
