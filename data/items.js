@@ -20,6 +20,7 @@ export const ITEMS={
  'guard-talisman':{id:'guard-talisman',name:'护身符',price:2.5,kind:'talisman',stackable:true,glyph:'符',description:'免疫下一次受到的伤害，每轮限一张。'},
  'binding-array':{id:'binding-array',name:'定身阵盘',price:3,kind:'array',stackable:true,glyph:'阵',description:'使小妖下一轮无法行动。'},
  'qi-manual':{id:'qi-manual',name:'引气诀',price:10,kind:'manual',methodId:'basic-qi-guide',glyph:'诀',description:'解开三阶数阵后学会，可设为主修。'},
+ 'archive-manual':{id:'archive-manual',name:'藏元诀',kind:'manual',methodId:'archive-meditation',glyph:'简',description:'三枚藏书阁玉简合成的中级修炼功法，参悟四阶数阵后可设为主修。'},
  'strengthen-manual':{id:'strengthen-manual',name:'强化普通',price:20,kind:'manual',methodId:'strengthen-attack',glyph:'诀',description:'普通战斗功法，参悟后可以装备。'},
  'wall-manual':{id:'wall-manual',name:'铜墙铁壁',price:20,kind:'manual',methodId:'iron-wall',glyph:'诀',description:'普通战斗功法，参悟后可以装备。'},
  'reset-manual':{id:'reset-manual',name:'滴，重置卡',sellPrice:20,blackMarketOnly:true,repeatable:true,stackable:true,kind:'manual',methodId:'cooldown-reset',glyph:'诀',description:'黑市典籍，参悟五阶数阵后学会；每本可出售 20 灵石。'},
@@ -38,7 +39,7 @@ export const ITEMS={
  'wait-manual':{id:'wait-manual',name:'等等再来',price:40,kind:'manual',methodId:'wait-then-strike',glyph:'诀',description:'中级战斗功法，参悟四阶数阵后可装备。'},
  'spirit-burn-manual':{id:'spirit-burn-manual',name:'灵息尽燃',kind:'manual',methodId:'spirit-burn',glyph:'简',description:'三片玉简拼成的中级战斗功法，参悟四阶数阵后可装备。'}
 };
-for(const item of Object.values(ITEMS))if(item.kind==='manual'&&!item.blackMarketOnly&&!['gamble-manual','steal-manual','only-once-manual','spirit-burn-manual'].includes(item.id)){item.repeatable=true;item.stackable=true;item.sellPrice=10}
+for(const item of Object.values(ITEMS))if(item.kind==='manual'&&!item.blackMarketOnly&&!['gamble-manual','steal-manual','only-once-manual','spirit-burn-manual','archive-manual'].includes(item.id)){item.repeatable=true;item.stackable=true;item.sellPrice=10}
 export const SHOP_ITEMS=['iron-sword','cloth-robe','qi-manual','strengthen-manual','wall-manual','breath-manual','charged-manual','wait-manual','calming-jade'];
 export const SECT_PILLS=['small-heal-pill','spirit-pill','mixed-pill','qi-pill'];
 export const SECT_TALISMANS=['attack-talisman','guard-talisman'];

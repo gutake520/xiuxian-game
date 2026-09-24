@@ -12,6 +12,8 @@ import {combatSlots} from './data/technique-slots.js';
 import {initialCombat} from './data/initial-combat.js';
 import {createMapUI} from './ui/map.js';
 import {showBattle} from './ui/combat.js';
+import {showSectLibrary} from './ui/sect-library.js';
+import {libraryVisits} from './systems/sect-library.js';
 const POS_KEY='xiuxian-game-fab-position', LAST_SLOT_KEY='xiuxian-game-last-slot';
 const rollKey=slot=>`xiuxian-game-pending-roots-${slot}`;
 const DB_NAME='xiuxian-game'; const DB_VERSION=1; const SLOTS=['slot1','slot2','slot3','slot4','slot5'];
@@ -128,7 +130,7 @@ function renderCharacter(){
  ].map(([label,value])=>cell(label,value)).join('')}</div>
  </div>
  <div class="xg-card"><h3>装备</h3><div class="xg-equipment-grid">${[['武器','weapon'],['防具','armor'],['鞋子','shoes'],['生命／法力饰品','accessoryVital'],['暴击／闪避饰品','accessoryFate']].map(([label,slot])=>cell(label,escapeHTML(equipmentName(currentSave,slot)))).join('')}</div>
- <h4>修炼功法</h4><div class="xg-method-row"><span>主修</span><span>${escapeHTML(TECHNIQUES[currentSave.techniques?.main]?.name||'未装备')}</span></div><div class="xg-method-row"><span>辅修</span><span>未装备</span></div>
+ <h4>修炼功法</h4><div class="xg-method-row"><span>主修</span><span>${escapeHTML(TECHNIQUES[currentSave.techniques?.main]?.name||'未装备')}</span></div>
  <button type="button" id="xg-methods" class="xg-methods-button">查看功法典籍</button><h4>战斗功法</h4><p class="xg-empty-note">${(currentSave.techniques?.combat||[]).map(id=>escapeHTML(TECHNIQUES[id]?.name||'')).join(' · ')||'尚未装备战斗功法'} · 最多 ${combatSlots(p)} 门</p></div>
  <div class="xg-character-actions"><button type="button" id="xg-sect">门派</button><button type="button" id="xg-cultivate">修炼</button><button type="button" disabled>突破<small>尚未开放</small></button></div>
  <p id="xg-character-message" role="status" aria-live="polite"></p></section>`;
@@ -222,12 +224,13 @@ function showSectTournamentBattle(sect){
 function sectHeader(sect,back){return `<div class="xg-sect-heading"><h2>${sect.name}</h2><button type="button" id="xg-sect-back">${back}</button></div>`}
 function renderSectHall(sect){
  const sheet=sectOverlay(),eligible=sectEligibility(currentSave.player,sect);
- sheet.innerHTML=`${sectHeader(sect,'返回人物')}<p class="xg-sect-hint">${sect.feature}</p><div class="xg-card"><strong>${eligible.specialty?'特色传承资格已满足':'当前仅可学习通用功法'}</strong><p class="xg-sect-hint">宗门积分 ${currentSave.sectPoints||0} · 《引气诀》可在人物页参悟</p></div><div class="xg-sect-facilities"><button type="button" data-sect-shop>门派商店<small>通用战斗功法</small></button>${SECT_ROOMS[sect.id]?`<button type="button" data-sect-room>${SECT_ROOMS[sect.id]}<small>${eligible.specialty?'进入':'专精条件未满足'}</small></button>`:''}<button type="button" data-sect-tasks>宗门日课<small>每日三项 · 共 9 积分</small></button><button type="button" data-sect-inheritance>宗门传承<small>核心功法 · 9 积分</small></button><button type="button" data-sect-tournament ${currentSave.battle||Date.now()<(currentSave.sectTournamentNextAt||0)?'disabled':''}>宗门大比<small>${currentSave.battle?'战斗进行中':Date.now()<(currentSave.sectTournamentNextAt||0)?'三日之期未到':'获胜可得 10 灵石'}</small></button>${['藏书阁','师尊授业'].map(name=>`<button type="button" disabled>${name}<small>尚未开放</small></button>`).join('')}</div><details class="xg-sect-rules"><summary>离宗与情缘须知</summary><p>离宗后，本宗专属功法与物品停止生效，专属功法自动卸下；已学记录保留，通用物品不受影响。</p><p>主动解除道侣关系须支付灵石。离开合欢宗时，至多保留一位道侣，其余关系须先结清费用。灵石不足时不能办理。</p><p>离宗后须等待现实时间三天，才能再次加入任何宗门；具体费用将在确认时显示。</p></details><button type="button" data-leave-sect ${sectExitPrice(currentSave.player)===null?'disabled':''}>退出宗门</button><p data-leave-status role="status"></p>`;
+ sheet.innerHTML=`${sectHeader(sect,'返回人物')}<p class="xg-sect-hint">${sect.feature}</p><div class="xg-card"><strong>${eligible.specialty?'特色传承资格已满足':'当前仅可学习通用功法'}</strong><p class="xg-sect-hint">宗门积分 ${currentSave.sectPoints||0} · 《引气诀》可在人物页参悟</p></div><div class="xg-sect-facilities"><button type="button" data-sect-shop>门派商店<small>通用战斗功法</small></button>${SECT_ROOMS[sect.id]?`<button type="button" data-sect-room>${SECT_ROOMS[sect.id]}<small>${eligible.specialty?'进入':'专精条件未满足'}</small></button>`:''}<button type="button" data-sect-tasks>宗门日课<small>每日三项 · 共 9 积分</small></button><button type="button" data-sect-inheritance>宗门传承<small>核心功法 · 9 积分</small></button><button type="button" data-sect-tournament ${currentSave.battle||Date.now()<(currentSave.sectTournamentNextAt||0)?'disabled':''}>宗门大比<small>${currentSave.battle?'战斗进行中':Date.now()<(currentSave.sectTournamentNextAt||0)?'三日之期未到':'获胜可得 10 灵石'}</small></button><button type="button" data-sect-library>藏书阁<small>今日 ${libraryVisits(currentSave)} / 3 次</small></button><button type="button" disabled>师尊授业<small>尚未开放</small></button></div><details class="xg-sect-rules"><summary>离宗与情缘须知</summary><p>离宗后，本宗专属功法与物品停止生效，专属功法自动卸下；已学记录保留，通用物品不受影响。</p><p>主动解除道侣关系须支付灵石。离开合欢宗时，至多保留一位道侣，其余关系须先结清费用。灵石不足时不能办理。</p><p>离宗后须等待现实时间三天，才能再次加入任何宗门；具体费用将在确认时显示。</p></details><button type="button" data-leave-sect ${sectExitPrice(currentSave.player)===null?'disabled':''}>退出宗门</button><p data-leave-status role="status"></p>`;
  sheet.querySelector('#xg-sect-back').onclick=closeSect;
  sheet.querySelector('[data-leave-sect]').onclick=async()=>{const button=sheet.querySelector('[data-leave-sect]');if(!confirm(`请提交 ${sectExitPrice(currentSave.player)} 灵石，确认退出宗门？专属功法停止生效，三天内不能再次入宗。`))return;button.disabled=true;try{await game.mutate(s=>leaveSect(s),{message:result=>result});closeSect()}catch(error){sheet.querySelector('[data-leave-status]').textContent=error.message;button.disabled=false}};
  sheet.querySelector('[data-sect-shop]').onclick=()=>renderSectShop(sect);
  sheet.querySelector('[data-sect-tasks]').onclick=()=>showSectTasks(sectAPI,closeSectFeature(sect));
  sheet.querySelector('[data-sect-inheritance]').onclick=()=>showSectInheritance(sectAPI,closeSectFeature(sect));
+ sheet.querySelector('[data-sect-library]').onclick=()=>showSectLibrary(sectAPI,closeSectFeature(sect));
  sheet.querySelector('[data-sect-tournament]').onclick=async()=>{const button=sheet.querySelector('[data-sect-tournament]');button.disabled=true;try{await game.startSectTournament();showSectTournamentBattle(sect)}catch(error){sheet.querySelector('[data-leave-status]').textContent=error.message;button.disabled=false}};
  sheet.querySelector('[data-sect-room]')?.addEventListener('click',()=>renderSectRoom(sect));
  sheet.scrollTop=0;

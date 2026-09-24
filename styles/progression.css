@@ -34,6 +34,12 @@
 #xg-panel .xg-number-grid button.xg-puzzle-selected{outline:2px solid #efd08c;background:#355439;outline-offset:0}
 #xg-panel .xg-number-pad{display:flex;gap:5px;flex-wrap:wrap;justify-content:center;margin:12px 0}
 #xg-panel .xg-number-pad button{min-width:34px;flex:1;padding:6px}
+#xg-panel .xg-idiom-question{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:20px auto;max-width:340px}
+#xg-panel .xg-idiom-question span{display:grid;place-items:center;min-height:62px;border:1px solid #667656;border-radius:9px;background:#18352b;color:#f1dda9!important;font-size:25px}
+#xg-panel .xg-idiom-question .xg-idiom-blank{border-color:#d7ae65;background:#283d30}
+#xg-panel .xg-idiom-choices{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;max-width:340px;margin:12px auto}
+#xg-panel .xg-idiom-choices button{min-width:0;font-size:22px;padding:8px}
+#xg-panel .xg-idiom-choices button.xg-idiom-selected{background:#456246;border-color:#efd39c}
 #xg-panel .xg-practice-intro{padding:18px 0;border-top:1px solid #47583c;margin-top:16px}
 #xg-panel .xg-practice-intro>button{display:block;width:100%;margin-top:14px;background:linear-gradient(100deg,#22483a,#34315c);border-color:#989568}
 #xg-panel #xg-feature-sheet.xg-practice-sheet{padding:12px}

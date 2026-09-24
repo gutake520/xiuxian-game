@@ -1,5 +1,6 @@
 export const TECHNIQUES={
  'basic-qi-guide':{id:'basic-qi-guide',name:'引气诀',rank:'初级',size:3,type:'cultivation',idlePerMinute:0.5,description:'凝神引气，主修后每分钟积累 0.5 修为。'},
+ 'archive-meditation':{id:'archive-meditation',name:'藏元诀',rank:'中级',size:4,type:'cultivation',idlePerMinute:0.5,idleHoursByRealm:{炼气:3,筑基:5},description:'主修后每分钟积累 0.5 修为；炼气期每天最多修炼三小时，筑基期提升至五小时。'},
  'strengthen-attack':{id:'strengthen-attack',name:'强化普通',rank:'普通',type:'combat',cooldown:2,description:'本次攻击造成攻击力 1.1 倍的伤害，再结算防御；冷却两轮。'},
  'iron-wall':{id:'iron-wall',name:'铜墙铁壁',rank:'普通',type:'combat',description:'本轮防御额外增加 1 点，同时造成 1 点伤害。'},
  'gamble-strike':{id:'gamble-strike',name:'我赌一把',rank:'普通',type:'combat',cooldown:5,description:'本次攻击各有 50% 概率造成 1.5 倍或 0.8 倍伤害；冷却五轮。'},
