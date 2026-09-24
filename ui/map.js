@@ -4,7 +4,7 @@ import {VISITING_SECTS,QI_MONSTERS,QI_PEAKS} from '../data/locations.js';
 import {realmProgress} from '../data/realms.js';
 import {showBattle} from './combat.js';
 import {ITEMS,SECT_PILLS,SECT_TALISMANS} from '../data/items.js';
-import {purchase} from '../systems/inventory.js';
+import {purchase,maxDurability} from '../systems/inventory.js';
 import {showShop,showSell} from './inventory.js';
 import {startQiExploration,QI_EXPLORATION_MS,QI_SCENES} from '../systems/exploration.js';
 import {localDay} from '../systems/cultivation.js';
@@ -14,12 +14,12 @@ import {escapeHTML,format} from './shared.js';
 
 export function createMapUI({getSave,activate,actions,onSectBattleExit}){
  const content=()=>document.getElementById('xg-content');
- const battle=outcome=>showBattle({getSave,activate,actions,onExit:(getSave().battle?getSave().battle.kind:getSave().lastBattle?.kind)==='sect-tournament'?onSectBattleExit:renderMonsters},outcome);
+ const battle=outcome=>showBattle({getSave,activate,actions,onExit:['sect-tournament','sect-senior'].includes(getSave().battle?.kind||getSave().lastBattle?.kind)?onSectBattleExit:renderMonsters},outcome);
  function heading(title,subtitle){return `<div class="xg-map-heading"><h2>${title}</h2><p>${subtitle}</p></div>`}
  const peaks=(locations,kind)=>`<div class="xg-map-landscape xg-map-${kind}">${locations.map((place,i)=>`<button type="button" class="xg-map-hill${place.locked?' xg-map-locked':''}" style="--hill-x:${place.x}%;--hill-y:${place.y}%;--hill-size:${place.size||1}" ${place.locked?'disabled':''} ${place.id?`data-${kind}="${place.id}"`:''}><span class="xg-map-label">${place.name}</span><span class="xg-map-summit" aria-hidden="true"></span></button>`).join('')}</div>`;
  function render(){
   if(!getSave())return;
-  if(getSave().battle||getSave().encounterPending)return battle();
+  if(getSave().battle||getSave().encounterPending||getSave().seniorRewardPending)return battle();
   if(getSave().qiSecret)return renderSecret();
   if(getSave().qiMeditation)return renderMeditation();
   activate('map');
@@ -61,7 +61,7 @@ export function createMapUI({getSave,activate,actions,onSectBattleExit}){
   const own=getSave()?.player?.sect===sect.name;
   const gear=getSave().inventory.filter(entry=>ITEMS[entry.itemId]?.kind==='equipment'&&repairPrice(entry)>0);
   const damaged=getSave().player.hp<equipmentStats(getSave()).maxHp;
-  const serviceActions=id==='tiangong'?(own?'<small class="xg-map-pending">你是天工阁弟子，匠师不会替你修补。</small>':gear.length?gear.map(entry=>`<button type="button" data-repair="${escapeHTML(entry.uid)}">修补 ${escapeHTML(ITEMS[entry.itemId].name)} · ${format(entry.durability)} / 20 · ${format(repairPrice(entry))} 灵石</button>`).join(''):'<small class="xg-map-pending">没有需要修补的装备。</small>'):id==='qinglan'?`<button type="button" data-heal ${damaged?'':'disabled'}>立即疗伤 · ${HEAL_PRICE} 灵石${damaged?'':'（生命已满）'}</button>`:id==='zhenyue'?`<button type="button" data-meditate ${damaged?'':'disabled'}>进入静室 · ${MEDITATION_PRICE} 灵石${damaged?'':'（生命已满）'}</button>`:'';
+  const serviceActions=id==='tiangong'?(own?'<small class="xg-map-pending">你是天工阁弟子，匠师不会替你修补。</small>':gear.length?gear.map(entry=>`<button type="button" data-repair="${escapeHTML(entry.uid)}">修补 ${escapeHTML(ITEMS[entry.itemId].name)} · ${format(entry.durability)} / ${maxDurability(entry)} · ${format(repairPrice(entry))} 灵石</button>`).join(''):'<small class="xg-map-pending">没有需要修补的装备。</small>'):id==='qinglan'?`<button type="button" data-heal ${damaged?'':'disabled'}>立即疗伤 · ${HEAL_PRICE} 灵石${damaged?'':'（生命已满）'}</button>`:id==='zhenyue'?`<button type="button" data-meditate ${damaged?'':'disabled'}>进入静室 · ${MEDITATION_PRICE} 灵石${damaged?'':'（生命已满）'}</button>`:'';
   activate('map');
   content().innerHTML=`<section class="xg-map-sheet"><button class="xg-map-back" type="button">← 返回九宗</button>${heading(sect.name,sect.service)}
    <div class="xg-map-place xg-map-scene"><span class="xg-map-peak" aria-hidden="true"></span><strong>${sect.npc}</strong><p>${sect.id==='tiangong'&&own?'“你也是天工阁的人？自己的装备，自己去修。”':`“来者是客，欢迎到${sect.name}坐坐。”`}</p></div>

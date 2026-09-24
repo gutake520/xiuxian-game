@@ -1,6 +1,6 @@
 import {LIBRARY_IDIOMS} from '../data/idioms.js';
 import {localDay} from './cultivation.js';
-import {addItem,ownsTechnique} from './inventory.js';
+import {addItem,awardItem,ownsTechnique} from './inventory.js';
 
 export const LIBRARY_DAILY_VISITS=3;
 export const LIBRARY_MANUAL='archive-manual';
@@ -33,6 +33,11 @@ export function visitSectLibrary(save,now=Date.now()){
  const count=libraryVisits(save,now);
  if(count>=LIBRARY_DAILY_VISITS)throw new Error('今日已逛过三次藏书阁。');
  save.libraryVisits={day:localDay(now),count:count+1};
+ if(!save.libraryDusterReceived&&Number(save.player.stats?.悟性)>=7&&ownsTechnique(save,METHOD_ID)){
+  const elder=libraryElderName(save),place=awardItem(save,'library-duster',1,now);
+  save.libraryDusterReceived=true;
+  return `学海无涯。${elder}见你勤于求学，赠你一把鸡毛掸子，请你帮忙打扫藏书阁。${place==='temporary'?'储物已满，掸子暂存于临时储物区。':'鸡毛掸子已收入储物。'}`;
+ }
  if(ownsTechnique(save,METHOD_ID)||(save.libraryFragments||0)>=3)return '你翻看架上旧书，今日无事发生。';
  const fortune=Math.max(0,Number(save.player.stats?.福缘)||0);
  if(Math.random()>=Math.min(1,(20+fortune)/100))return '你翻看架上旧书，今日无事发生。';

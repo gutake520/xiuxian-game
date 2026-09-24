@@ -32,7 +32,7 @@ export function migrateSave(save,now=Date.now()){
  save.bagCapacity=Number.isSafeInteger(save.bagCapacity)?Math.max(INITIAL_BAG_SIZE,save.bagCapacity):INITIAL_BAG_SIZE;
  save.equipment??={weapon:null,armor:null};
  for(const slot of ['weapon','armor','shoes','accessoryVital','accessoryFate'])save.equipment[slot]??=null;
- for(const entry of save.inventory)if(ITEMS[entry.itemId]?.kind==='equipment'&&!Number.isFinite(entry.durability))entry.durability=DURABILITY_MAX;
+ for(const entry of save.inventory)if(ITEMS[entry.itemId]?.kind==='equipment'&&!Number.isFinite(entry.durability))entry.durability=ITEMS[entry.itemId].maxDurability??DURABILITY_MAX;
  expireLoot(save,now);
  save.petRentals=Number.isSafeInteger(save.petRentals)?Math.max(0,save.petRentals):0;
  if(save.battle){save.battle.talismansUsed??=0;save.battle.talismanRound??=0;save.battle.bindRounds??=save.battle.bindRound?[save.battle.bindRound]:[];save.battle.arrayRound??=0;save.battle.freeArrayUsed??=false;save.battle.guard??=false;save.battle.pet??=null;save.battle.mp??=Math.max(0,(QI_MONSTERS.find(monster=>monster.id===save.battle.monsterId)?.mp||0)-(save.battle.enemySkillReady?1:0))}

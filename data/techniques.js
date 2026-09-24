@@ -10,6 +10,7 @@ export const TECHNIQUES={
  'catch-breath':{id:'catch-breath',name:'回一口气',rank:'普通',type:'combat',mpCost:0,description:'不耗法力，占一次行动，造成固定 1 点伤害并恢复 1 点法力。'},
  'charged-strike':{id:'charged-strike',name:'蓄势一击',rank:'普通',type:'combat',mpCost:1,cooldown:4,description:'消耗 1 点法力，单灵根攻击倍率 1.3，双／三灵根 1.2，四／五灵根 1.1；冷却四轮。'},
  'sting':{id:'sting',name:'蛰一下',rank:'普通',type:'combat',mpCost:2,cooldown:3,description:'造成固定 2 点伤害，下一轮敌人再失去 2 点生命；冷却三轮。'},
+ 'silent-strike':{id:'silent-strike',name:'你怎么什么都没有',rank:'中级',type:'combat',mpCost:2,cooldown:5,description:'攻击倍率随灵根数量为 1.3／1.2／1.1；命中后对方接下来两次行动不能使用技能，但仍可普攻。消耗 2 点法力，冷却五轮。'},
  'wait-then-strike':{id:'wait-then-strike',name:'等等再来',rank:'中级',type:'combat',mpCost:3,cooldown:3,description:'本轮蓄势，下一轮自动攻击并占用行动。单灵根伤害倍率 2.5，双／三灵根 2.4，四／五灵根 2.3；冷却三轮。'},
  'spirit-burn':{id:'spirit-burn',name:'灵息尽燃',rank:'中级',type:'combat',description:'耗尽当前全部法力，造成消耗量的 0.9／0.8／0.7 倍固定伤害，依次对应单灵根、双／三灵根、四／五灵根；无法暴击，无冷却。'},
  'only-once':{id:'only-once',name:'只此一次！',rank:'普通',type:'combat',mpCost:2,description:'每场战斗限用一次，占一次行动；本场战斗暴击率增加 15 个百分点。'},

@@ -4,6 +4,8 @@ import {LIBRARY_IDIOMS} from '../data/idioms.js';
 import {LIBRARY_MANUAL,LIBRARY_ELDERS,libraryElderName,makeLibraryQuestions,libraryVisits,visitSectLibrary,answerLibraryExam,claimLibraryManual} from '../systems/sect-library.js';
 import {idleLimitMs,settleIdle,localDay} from '../systems/cultivation.js';
 import {startLearning,completeLearning,setMainTechnique} from '../systems/techniques.js';
+import {equipmentStats,equipItem} from '../systems/inventory.js';
+import {repairPrice} from '../systems/sect-services.js';
 
 const minute=60000,day=new Date(2026,8,24).getTime();
 function make(fortune=5){return {player:{realm:'炼气一层',sect:'天工阁',stats:{福缘:fortune,神识:5},spiritStones:3,cultivation:0,hp:20},inventory:[],bagCapacity:20,techniques:{mastered:[],main:null,puzzles:{},combat:[]},idle:{day:localDay(day),lastAt:day,usedMs:0,totalEarned:0}}}
@@ -85,4 +87,15 @@ test('full bag keeps the synthesized manual claimable after freeing space',()=>{
   assert.throws(()=>claimLibraryManual(s),/储物格已满/);
   s.inventory=[];claimLibraryManual(s);assert.equal(s.inventory[0].itemId,LIBRARY_MANUAL);
  }finally{Math.random=original}
+});
+test('high aptitude earns one duster on returning after obtaining the manual; bonus grows at foundation',()=>{
+ const s=make();s.player.stats.悟性=7;s.player.combat={hp:20,mp:10,attack:3,defense:0,speed:2};s.equipment={weapon:null};
+ s.inventory.push({uid:'manual',itemId:LIBRARY_MANUAL,quantity:1});
+ const message=visitSectLibrary(s,day);assert.match(message,/学海无涯/);
+ const duster=s.inventory.find(e=>e.itemId==='library-duster');assert.equal(duster.durability,15);
+ equipItem(s,duster.uid);assert.equal(equipmentStats(s).attack,4.5);
+ s.player.realm='筑基一层';assert.equal(equipmentStats(s).attack,6);
+ duster.durability=13;assert.equal(repairPrice(duster),.4);
+ visitSectLibrary(s,day);assert.equal(s.inventory.filter(e=>e.itemId==='library-duster').length,1);
+ assert.equal(s.libraryDusterReceived,true);
 });

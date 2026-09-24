@@ -1,11 +1,12 @@
 import {chargedMultiplier,rootCount} from '../data/technique-slots.js';
 import {QI_MONSTERS} from '../data/locations.js';
 import {ITEMS} from '../data/items.js';
-import {DURABILITY_MAX,COMBAT_REWARD_XP} from '../data/balance.js';
-import {equipmentStats,awardItem} from './inventory.js';
+import {COMBAT_REWARD_XP} from '../data/balance.js';
+import {equipmentStats,awardItem,maxDurability} from './inventory.js';
 import {addCultivation,realmProgress} from '../data/realms.js';
 import {TECHNIQUES,hasActiveTechnique} from '../data/techniques.js';
 import {HERBALIST_NAME,maybeMeetHerbalist} from './encounters.js';
+import {startSeniorChallenge} from './sect-tournament.js';
 
 export const round2=value=>Math.round((value+Number.EPSILON)*100)/100;
 const herbs=['healing-herb','spirit-herb','qi-herb'];
@@ -27,7 +28,7 @@ function awardVictory(save,monster,now){
 function wearEquipment(save){
  for(const [slot,uid] of Object.entries(save.equipment||{})){
   const entry=save.inventory.find(item=>item.uid===uid);if(!entry||ITEMS[entry.itemId]?.kind!=='equipment')continue;
-  entry.durability=round2(Math.max(0,(entry.durability??DURABILITY_MAX)-(['weapon','armor'].includes(slot)?1:.5)));
+  entry.durability=round2(Math.max(0,(entry.durability??maxDurability(entry))-(['weapon','armor'].includes(slot)?1:.5)));
  }
  const stats=equipmentStats(save);save.player.hp=Math.min(save.player.hp,stats.maxHp);save.player.mp=Math.min(save.player.mp,stats.maxMp);
 }
@@ -36,12 +37,29 @@ function finish(save,outcome,details={}){
  save.lastBattle={id:save.battle.id,monster:save.battle.name,kind:save.battle.kind,outcome,round:save.battle.round,...details};save.battle=null;
  return save.lastBattle;
 }
+function refillTournament(save){const stats=equipmentStats(save);save.player.hp=round2(stats.maxHp);save.player.mp=round2(stats.maxMp)}
+function resolveTournamentLoss(save,outcome,messages){
+ const kind=save.battle.kind,result=finish(save,outcome,{log:[...messages]});
+ refillTournament(save);
+ if(kind==='sect-tournament'&&outcome==='defeat'&&(save.seniorRewards||0)<2&&Math.random()<.1){
+  startSeniorChallenge(save);messages.push(`${save.battle.name}走下看台，向你发起挑战。`);
+ }else messages.push('切磋结束，生命与法力已恢复。');
+ result.log=[...messages];return result;
+}
 function resolveVictory(save,now,messages){
  const battle=save.battle,monster=QI_MONSTERS.find(entry=>entry.id===battle.monsterId);
  if(battle.kind==='sect-tournament'){
   save.player.spiritStones=round2(save.player.spiritStones+10);
   const result=finish(save,'victory',{rewards:['灵石×10'],xp:0,kind:'sect-tournament'});
+  refillTournament(save);
   messages.push('宗门大比获胜，获得 10 灵石。');
+  result.log=[...messages];return result;
+ }
+ if(battle.kind==='sect-senior'){
+  const result=finish(save,'victory',{rewards:[],xp:0,kind:'sect-senior'});
+  refillTournament(save);
+  save.seniorRewardPending={id:crypto.randomUUID()};
+  messages.push(`战胜${battle.name}，请选择一次奖励。`);
   result.log=[...messages];return result;
  }
  const result=awardVictory(save,monster,now);
@@ -57,6 +75,7 @@ function resolveVictory(save,now,messages){
 export function beginBattle(save,id,pet=null,retaliation=false){
  if(save.battle)throw new Error('尚有未结束的战斗。');
  if(save.encounterPending)throw new Error(`请先回应${HERBALIST_NAME}。`);
+ if(save.seniorRewardPending)throw new Error('请先领取大比奖励。');
  if(save.player.cultivation< -100)throw new Error('请先去修炼。');
  const tier=realmProgress(save.player).index;if(tier<0)throw new Error('当前境界暂未开放此处战斗。');
  if(save.player.hp<=0)throw new Error('生命不足，无法迎战。');
@@ -69,7 +88,7 @@ export function beginBattle(save,id,pet=null,retaliation=false){
 }
 export function playRound(save,action='attack',now=Date.now()){
  const battle=save.battle;if(!battle)throw new Error('没有正在进行的战斗。');
- const tournament=battle.kind==='sect-tournament';
+ const tournament=['sect-tournament','sect-senior'].includes(battle.kind);
  const skill=TECHNIQUES[action];
  if(!['attack','skip'].includes(action)&&skill?.type!=='combat')throw new Error('请选择可用的行动。');
  if(battle.pendingStrike&&action!=='attack')throw new Error('蓄势攻击将在本轮自动施放。');
@@ -80,14 +99,9 @@ export function playRound(save,action='attack',now=Date.now()){
  const stats=equipmentStats(save),playerFirst=stats.speed>=battle.speed;
  const guarded=action==='iron-wall';
  let enemyAction='attack';
- if(tournament&&(battle.mp||0)>=1){
+ if(tournament&&!(battle.silencedTurns>0)&&(battle.mp||0)>=1){
   if(battle.round%3===1)enemyAction='iron-wall';
   else if((battle.enemySkillReady||0)<=battle.round+1)enemyAction='strengthen-attack';
-  if(enemyAction!=='attack'){
-   battle.mp=round2(battle.mp-1);
-   if(enemyAction==='strengthen-attack')battle.enemySkillReady=battle.round+4;
-   messages.push(`${battle.name}准备施展${enemyAction==='iron-wall'?'铜墙铁壁':'强化普通'}。`);
-  }
  }
  const playerTurn=()=>{
   const prepared=!!battle.pendingStrike;if(prepared)battle.pendingStrike=false;
@@ -104,27 +118,35 @@ export function playRound(save,action='attack',now=Date.now()){
   else{
    const crit=Math.random()<Math.min(1,(stats.critRate+(battle.criticalFocus?(save.techniques.upgraded?.includes('only-once')?20:15):0))/100);
    const upgraded=save.techniques.upgraded?.includes(action);
-   const multiplier=prepared?(rootCount(save.player)===1?2.5:rootCount(save.player)<=3?2.4:2.3):action==='charged-strike'?chargedMultiplier(save.player):action==='strengthen-attack'?1.1:action==='gamble-strike'?(Math.random()<.5?(upgraded?1.6:1.5):(upgraded?0.9:0.8)):1;
+   const multiplier=prepared?(rootCount(save.player)===1?2.5:rootCount(save.player)<=3?2.4:2.3):action==='charged-strike'||action==='silent-strike'?chargedMultiplier(save.player):action==='strengthen-attack'?1.1:action==='gamble-strike'?(Math.random()<.5?(upgraded?1.6:1.5):(upgraded?0.9:0.8)):1;
    dealt=round2(Math.max(1,stats.attack*(crit?1.5:1)*multiplier));
    damageIntro=`${prepared?'等等再来：':skill?skill.name+'：':''}你${crit?'暴击，':''}造成`;
   }
   if(action==='catch-breath'){const gained=round2(Math.min(1,stats.maxMp-save.player.mp));save.player.mp=round2(save.player.mp+gained);messages.push(`法力恢复 ${gained.toFixed(2)}。`)}
   if(tournament){
    if(Math.random()<battle.dodgeRate/100){messages.push(`${battle.name}避开了这一击。`);dealt=0;return}
+   if(action==='silent-strike'&&battle.hp>0&&playerFirst)enemyAction='attack';
    dealt=round2(Math.max(1,dealt-battle.defense-(enemyAction==='iron-wall'?1:0)));
   }
   if(hasActiveTechnique(save,'one-sword'))dealt=round2(dealt*1.1);
   messages.push(`${damageIntro} ${dealt.toFixed(2)} 伤害。`);
   const actual=Math.min(battle.hp,dealt);
   battle.hp=round2(Math.max(0,battle.hp-dealt));
+  if(action==='silent-strike'&&battle.hp>0){battle.silencedTurns=2;messages.push(`${battle.name}接下来两次行动无法使用技能。`)}
   if(action==='sting'&&battle.hp>0)battle.stingRound=battle.round+2;
   if(hasActiveTechnique(save,'life-steal')){const heal=round2(Math.min(stats.maxHp-save.player.hp,actual*.1));save.player.hp=round2(save.player.hp+heal);if(heal>0)messages.push(`吸取生命 ${heal.toFixed(2)}。`)}
   if(action==='empty-hands'&&battle.hp>0&&Math.random()<(save.techniques.upgraded?.includes(action)?.3:.2)){const stolen=round2(Math.min(round2((save.techniques.upgraded?.includes(action)?5:2)*(hasActiveTechnique(save,'one-sword')?1.1:1)),battle.hp)),healed=round2(Math.min(stolen,stats.maxHp-save.player.hp));battle.hp=round2(battle.hp-stolen);save.player.hp=round2(save.player.hp+healed);dealt=round2(dealt+stolen);messages.push(`妙手空空抽取 ${stolen.toFixed(2)} 生命，恢复 ${healed.toFixed(2)}。`)}
  };
  const enemyTurn=()=>{
   if(battle.bindRounds?.includes(battle.round+1)){messages.push('对手被阵盘困住，无法行动。');return}
+  const silenced=(battle.silencedTurns||0)>0;
+  if(silenced){battle.silencedTurns--;messages.push(`${battle.name}被压制，只能普攻。`)}
+  if(tournament){
+   if(silenced)enemyAction='attack';
+   else if(enemyAction!=='attack'){battle.mp=round2(battle.mp-1);if(enemyAction==='strengthen-attack')battle.enemySkillReady=battle.round+4;messages.push(`${battle.name}使出${enemyAction==='iron-wall'?'铜墙铁壁':'强化普通'}。`)}
+  }
   const monster=QI_MONSTERS.find(entry=>entry.id===battle.monsterId);
-  const empowered=!tournament&&monster?.attackBoost&&(battle.mp||0)>0&&(battle.enemySkillReady||0)<=battle.round+1;
+  const empowered=!tournament&&!silenced&&monster?.attackBoost&&(battle.mp||0)>0&&(battle.enemySkillReady||0)<=battle.round+1;
   const enemyCrit=tournament&&enemyAction!=='iron-wall'&&Math.random()<battle.critRate/100;
   const rawDamage=round2(tournament?(enemyAction==='iron-wall'?1:battle.attack*(enemyAction==='strengthen-attack'?1.1:1)*(enemyCrit?1.5:1)):battle.attack*(empowered?monster.attackBoost:1));
   if(empowered){battle.mp--;battle.enemySkillReady=battle.round+monster.boostCooldown+2;messages.push(`${battle.name}使出强化攻击。`)}
@@ -144,7 +166,7 @@ export function playRound(save,action='attack',now=Date.now()){
  battle.round++;
  battle.bindRounds=(battle.bindRounds||[]).filter(round=>round>battle.round);
  if(battle.hp<=0)resolveVictory(save,now,messages);
- else if(save.player.hp<=0){save.player.cultivation=round2(save.player.cultivation-50);save.player.hp=5;finish(save,'defeat');messages.push('战败：修为 −50，生命恢复至 5；无战利品。')}
+ else if(save.player.hp<=0){if(tournament)resolveTournamentLoss(save,'defeat',messages);else{save.player.cultivation=round2(save.player.cultivation-50);save.player.hp=5;finish(save,'defeat');messages.push('战败：修为 −50，生命恢复至 5；无战利品。')}}
  else{battle.log=[...battle.log,...messages].slice(-10)}
  return {messages,dealt,taken,result:save.lastBattle?.id===battle.id?save.lastBattle:null};
 }
@@ -179,6 +201,7 @@ export function useBattleTalisman(save,id){
 }
 export function fleeBattle(save){
  if(!save.battle)throw new Error('没有正在进行的战斗。');
+ if(['sect-tournament','sect-senior'].includes(save.battle.kind)){const result=finish(save,'fled',{log:['你结束了这场切磋。']});refillTournament(save);return result}
  const paid=save.player.spiritStones>=3;
  if(paid)save.player.spiritStones=round2(save.player.spiritStones-3);
  else save.player.cultivation=round2(save.player.cultivation-30);

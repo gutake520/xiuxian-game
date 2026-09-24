@@ -3,6 +3,7 @@ import {DURABILITY_MAX,TEMP_LOOT_MS} from '../data/balance.js';
 import {localDay} from './cultivation.js';
 import {realmHpBonus,realmBattleBonus} from '../data/realms.js';
 export function hasManual(save,id='basic-qi-guide'){return save.inventory.some(entry=>ITEMS[entry.itemId]?.methodId===id)}
+export const maxDurability=entry=>ITEMS[entry?.itemId]?.maxDurability??DURABILITY_MAX;
 export function ownsTechnique(save,id){return save.techniques.mastered.includes(id)||hasManual(save,id)}
 export function addItem(save,id,quantity=1){
  const item=ITEMS[id];if(!item)throw new Error('物品不存在。');
@@ -10,7 +11,7 @@ export function addItem(save,id,quantity=1){
  if(item.kind==='manual'&&!item.repeatable&&ownsTechnique(save,item.methodId))return false;
  if(item.stackable){const stack=save.inventory.find(entry=>entry.itemId===id);if(stack){stack.quantity=(stack.quantity||1)+quantity;return true}}
  if(save.inventory.length>=save.bagCapacity)throw new Error('储物格已满，暂时无法收下物品。');
- save.itemSerial=(save.itemSerial||0)+1;save.inventory.push({uid:'item-'+save.itemSerial,itemId:id,quantity,...(item.kind==='equipment'?{durability:DURABILITY_MAX}:{})});return true;
+ save.itemSerial=(save.itemSerial||0)+1;save.inventory.push({uid:'item-'+save.itemSerial,itemId:id,quantity,...(item.kind==='equipment'?{durability:item.maxDurability??DURABILITY_MAX}:{})});return true;
 }
 export function purchase(save,id,sectDiscount=false){
  const item=ITEMS[id];if(!item)throw new Error('商品不存在。');
@@ -37,13 +38,13 @@ export function equipItem(save,uid){
  save.player.hp=Math.round(Math.max(1,Math.min(maxHp,save.player.hp+maxHp-before.maxHp))*100)/100;
  save.player.mp=Math.round(Math.max(0,Math.min(maxMp,save.player.mp+maxMp-before.maxMp))*100)/100;
 }
-export function equipmentName(save,slot){const entry=save.inventory.find(e=>e.uid===save.equipment?.[slot]),item=ITEMS[entry?.itemId];return item?`${item.name} ${entry.durability??DURABILITY_MAX}/${DURABILITY_MAX}${entry.durability<=0?'（损坏）':''}`:'未装备'}
+export function equipmentName(save,slot){const entry=save.inventory.find(e=>e.uid===save.equipment?.[slot]),item=ITEMS[entry?.itemId];return item?`${item.name} ${entry.durability??maxDurability(entry)}/${maxDurability(entry)}${entry.durability<=0?'（损坏）':''}`:'未装备'}
 export function equipmentStats(save){
  const bonus=realmBattleBonus(save.player);
  const stats={attack:(save.player.combat?.attack||0)+bonus.attack,defense:(save.player.combat?.defense||0)+bonus.defense,speed:save.player.combat?.speed||0,critRate:(save.player.combat?.critRate||0)+bonus.critRate,dodgeRate:(save.player.combat?.dodgeRate||0)+bonus.dodgeRate,maxHp:(save.player.combat?.hp||save.player.hp||20)+realmHpBonus(save.player),maxMp:(save.player.combat?.mp||save.player.mp||10)+bonus.mp};
  for(const uid of Object.values(save.equipment||{})){
   const entry=save.inventory.find(entry=>entry.uid===uid),item=ITEMS[entry?.itemId];if(!item||item.kind!=='equipment'||(entry.durability??DURABILITY_MAX)<=0)continue;
-  for(const key of ['attack','defense','speed','critRate','dodgeRate'])stats[key]+=item[key]||0;
+  for(const key of ['attack','defense','speed','critRate','dodgeRate'])stats[key]+=key==='attack'&&entry.itemId==='library-duster'?(String(save.player.realm).startsWith('筑基')?3:1.5):item[key]||0;
   stats.maxHp+=item.hp||0;stats.maxMp+=item.mp||0;
  }
  return stats;
@@ -103,7 +104,7 @@ export function sellMaterial(save,uid,quantity){
 export function sellEquipment(save,uid){
  const entry=save.inventory.find(entry=>entry.uid===uid),item=ITEMS[entry?.itemId];
  if(!entry||item?.kind!=='equipment')throw new Error('只能出售装备。');
- if(entry.durability!==DURABILITY_MAX)throw new Error('耐久未满，不能出售；可以丢弃或以后修补。');
+ if(entry.durability!==maxDurability(entry))throw new Error('耐久未满，不能出售；可以丢弃或以后修补。');
  if(save.battle)throw new Error('战斗中不能出售。');
  if(save.equipment[item.slot]===uid)equipItem(save,uid);
  const price=equipmentSalePrice(item);

@@ -15,6 +15,7 @@ export function leaveSect(save,now=Date.now()){
  const sect=save.player.sect,price=sectExitPrice(save.player);
  if(!sect||sect==='无门无派')throw new Error('当前没有宗门。');
  if(save.battle)throw new Error('请先结束战斗。');
+ if(save.seniorRewardPending)throw new Error('请先领取大比奖励。');
  if(price===null)throw new Error('当前境界的离宗规则尚未开放。');
  if((save.player.companions?.length||0)>1)throw new Error('须先处理多余的道侣关系；相关功能尚未开放。');
  if(save.player.spiritStones<price)throw new Error('灵石不足，无法离宗。');

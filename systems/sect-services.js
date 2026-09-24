@@ -1,6 +1,5 @@
-import {DURABILITY_MAX} from '../data/balance.js';
 import {ITEMS} from '../data/items.js';
-import {equipmentStats} from './inventory.js';
+import {equipmentStats,maxDurability} from './inventory.js';
 
 const round2=value=>Math.round((value+Number.EPSILON)*100)/100;
 export const REPAIR_PER_POINT=.2;
@@ -9,7 +8,7 @@ export const HEAL_AMOUNT=12;
 export const MEDITATION_PRICE=2;
 export const MEDITATION_MS=3*60*1000;
 
-export function repairPrice(entry){return round2(Math.max(0,DURABILITY_MAX-(entry.durability??DURABILITY_MAX))*REPAIR_PER_POINT)}
+export function repairPrice(entry){return round2(Math.max(0,maxDurability(entry)-(entry.durability??maxDurability(entry)))*REPAIR_PER_POINT)}
 export function repairEquipment(save,uid){
  if(save.player.sect==='天工阁')throw new Error('炼器师请你自行修补，本处暂不提供自修功能。');
  const entry=save.inventory.find(item=>item.uid===uid),item=ITEMS[entry?.itemId];
@@ -17,7 +16,7 @@ export function repairEquipment(save,uid){
  const price=repairPrice(entry);if(price<=0)throw new Error('这件装备的耐久已满。');
  if(save.player.spiritStones<price)throw new Error('灵石不足。');
  const before=equipmentStats(save);
- entry.durability=DURABILITY_MAX;
+ entry.durability=maxDurability(entry);
  const after=equipmentStats(save);
  save.player.hp=round2(Math.min(after.maxHp,save.player.hp+after.maxHp-before.maxHp));
  save.player.mp=round2(Math.min(after.maxMp,save.player.mp+after.maxMp-before.maxMp));

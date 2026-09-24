@@ -2,6 +2,7 @@ export const ITEMS={
  'iron-sword':{id:'iron-sword',name:'铁剑',price:5,kind:'equipment',slot:'weapon',attack:1,glyph:'剑',description:'坊市铁剑，攻击 +1。'},
  'cloth-robe':{id:'cloth-robe',name:'布衣',price:5,kind:'equipment',slot:'armor',defense:.5,glyph:'衣',description:'坊市布衣，防御 +0.50。'},
  'wild-sword':{id:'wild-sword',name:'小妖铁剑',kind:'equipment',slot:'weapon',attack:1.2,glyph:'剑',description:'小妖掉落，攻击 +1.20。'},
+ 'library-duster':{id:'library-duster',name:'鸡毛掸子',kind:'equipment',slot:'weapon',maxDurability:15,glyph:'掸',description:'藏书阁前辈赠予的武器。炼气攻击 +1.50，筑基攻击 +3.00。'},
  'wild-robe':{id:'wild-robe',name:'小妖布甲',kind:'equipment',slot:'armor',defense:.6,glyph:'甲',description:'小妖掉落，防御 +0.60。'},
  'wild-shoes':{id:'wild-shoes',name:'轻行靴',kind:'equipment',slot:'shoes',speed:2,glyph:'履',description:'小妖掉落，速度 +2。'},
  'hp-charm':{id:'hp-charm',name:'护命佩',kind:'equipment',slot:'accessoryVital',hp:3,glyph:'佩',description:'小妖掉落，生命上限 +3。'},
@@ -36,6 +37,7 @@ export const ITEMS={
  'only-once-manual':{id:'only-once-manual',name:'只此一次！',price:20,kind:'manual',methodId:'only-once',glyph:'诀',description:'普通战斗功法，参悟后可装备；每场施展一次，暴击率增加 15 个百分点。'},
  'gamble-manual':{id:'gamble-manual',name:'我赌一把',price:20,kind:'manual',methodId:'gamble-strike',glyph:'诀',description:'普通战斗功法，参悟后可以装备。'},
  'sting-manual':{id:'sting-manual',name:'蛰一下',kind:'manual',methodId:'sting',glyph:'诀',description:'小妖遗落的普通战斗功法，参悟后可装备。'},
+ 'silence-manual':{id:'silence-manual',name:'你怎么什么都没有',kind:'manual',methodId:'silent-strike',rank:'中级',sellPrice:10,glyph:'诀',description:'大比前辈赠予的中级功法，参悟四阶数阵后可装备。'},
  'wait-manual':{id:'wait-manual',name:'等等再来',price:40,kind:'manual',methodId:'wait-then-strike',glyph:'诀',description:'中级战斗功法，参悟四阶数阵后可装备。'},
  'spirit-burn-manual':{id:'spirit-burn-manual',name:'灵息尽燃',kind:'manual',methodId:'spirit-burn',glyph:'简',description:'三片玉简拼成的中级战斗功法，参悟四阶数阵后可装备。'}
 };
