@@ -127,7 +127,7 @@ export function createMapUI({getSave,activate,actions,onSectBattleExit}){
   if(peak.kind==='npc')return renderNpc(peak);
   if(peak.kind==='secret')return renderSecret();
   const tier=realmProgress(getSave().player).index;
-  const monsters=QI_MONSTERS.filter(item=>(item.id===peak.monsterId||item.id===peak.monsterId+'-mid'||item.id===peak.monsterId+'-human')&&tier>=(item.minTier??0));if(!monsters.length)return renderMonsters();
+  const monsters=QI_MONSTERS.filter(item=>(item.id===peak.monsterId||item.id===peak.monsterId+'-mid'||item.id===peak.monsterId+'-human')&&tier+1>=item.minLevel);if(!monsters.length)return renderMonsters();
   activate('map');
   content().innerHTML=`<section class="xg-map-sheet"><button class="xg-map-back" type="button">← 返回丰原镇</button>${heading(peak.name,'山中对手')}
    ${getSave().petRentals>0||getSave().spiritBeast&&hasActiveTechnique(getSave(),'beast-keeper')?`<fieldset class="xg-card"><legend>灵兽出战（${getSave().spiritBeast&&hasActiveTechnique(getSave(),'beast-keeper')?'自养灵兽 · 无需租约':'租约余 '+getSave().petRentals+' 次'}）</legend><label><input type="radio" name="xg-pet" value="" checked> 不出战</label><label><input type="radio" name="xg-pet" value="attack"> 追击：每次 +0.50 伤害</label><label><input type="radio" name="xg-pet" value="guard"> 守护：每次挡 0.30 伤害</label></fieldset>`:''}

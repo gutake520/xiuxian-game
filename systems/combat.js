@@ -22,7 +22,7 @@ function awardVictory(save,monster,now){
  else grant(save,other==='herbs'?pick(herbs):'ore',1,rewards,now,loot);
  for(const [id,chance] of [['wild-shoes',.08],['wild-sword',.04],['wild-robe',.04]])if(Math.random()<chance)grant(save,id,1,rewards,now,loot);
  if(Math.random()<.04)grant(save,pick(['hp-charm','mp-charm','crit-charm','dodge-charm']),1,rewards,now,loot);
- if((monster.minTier??0)>=3&&Math.random()<.02)grant(save,'sting-manual',1,rewards,now,loot);
+ if(monster.minLevel>=4&&Math.random()<.02)grant(save,'sting-manual',1,rewards,now,loot);
  const xp=addCultivation(save,COMBAT_REWARD_XP);
  return {rewards,xp,loot};
 }
@@ -86,7 +86,7 @@ export function beginBattle(save,id,pet=null,retaliation=false){
  const tier=realmProgress(save.player).index;if(tier<0)throw new Error('当前境界暂未开放此处战斗。');
  if(save.player.hp<=0)throw new Error('生命不足，无法迎战。');
  const monster=QI_MONSTERS.find(entry=>entry.id===id);if(!monster)throw new Error('对手不存在。');
- if(tier<(monster.minTier??0))throw new Error(`需炼气${['一','二','三','四','五','六','七','八','九'][monster.minTier]||'后期'}层解锁此处。`);
+ if(tier+1<monster.minLevel)throw new Error(`需炼气${['一','二','三','四','五','六','七','八','九','十'][monster.minLevel-1]}层解锁此处。`);
  if(pet!==null){if(!['attack','guard'].includes(pet))throw new Error('灵兽类型无效。');if(!(save.spiritBeast&&hasActiveTechnique(save,'beast-keeper'))){if((save.petRentals||0)<1)throw new Error('尚未租借灵兽。');save.petRentals--}}
  const maxHp=monster.hpMin+Math.floor(Math.random()*(monster.hpMax-monster.hpMin+1));
  save.battle={id:crypto.randomUUID(),monsterId:id,name:monster.name,maxHp,hp:maxHp,attack:monster.attack,speed:monster.speed,mp:monster.mp||0,round:0,pet,retaliation,guard:false,bindRounds:[],arrayRound:0,talismansUsed:0,talismanRound:0,freeArrayUsed:false,criticalFocus:false,skillReady:{},log:['狭路相逢，战斗开始。']};

@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {beginBattle,playRound,useBattleTalisman} from '../systems/combat.js';
 import {equipmentStats,sellExtra,addItem} from '../systems/inventory.js';
 import {applyRealmHp} from '../data/realms.js';
+import {QI_MONSTERS} from '../data/locations.js';
 import {purchase} from '../systems/inventory.js';
 import {startUpgrade,completeLearning} from '../systems/techniques.js';
 function make(speed=5){return {player:{realm:'炼气四层',sect:'镇岳宗',spiritRoot:'土灵根',stats:{根骨:8},cultivation:0,spiritStones:0,hp:20,mp:10,combat:{hp:30,mp:10,attack:3,defense:3,speed,critRate:0,dodgeRate:0}},inventory:[],equipment:{},techniques:{mastered:['only-one','empty-hands','resentment'],combat:['only-one','empty-hands','resentment']},bagCapacity:20,realmHpBonusApplied:3}}
@@ -89,6 +90,9 @@ test('prepared strike scales with spirit-root count',()=>{
  }
 });
 test('human opponents unlock across later qi stages and earlier foes remain available',()=>{
+ assert.deepEqual(QI_MONSTERS.map(monster=>monster.minLevel),[1,1,1,4,4,4,7,8,9]);
+ const early=make();early.player.realm='炼气三层';assert.throws(()=>beginBattle(early,'tough-mid'),/四层/);
+ early.player.realm='炼气四层';beginBattle(early,'tough-mid');
  const s=make();assert.throws(()=>beginBattle(s,'tough-human'),/七层/);
  s.player.realm='炼气七层';beginBattle(s,'tough-human');s.battle=null;assert.throws(()=>beginBattle(s,'fierce-human'),/八层/);
  s.player.realm='炼气八层';beginBattle(s,'fierce-human');s.battle=null;assert.throws(()=>beginBattle(s,'swift-human'),/九层/);
