@@ -1,13 +1,27 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {LIBRARY_IDIOMS} from '../data/idioms.js';
-import {LIBRARY_MANUAL,makeLibraryQuestions,libraryVisits,visitSectLibrary,answerLibraryExam,claimLibraryManual} from '../systems/sect-library.js';
+import {LIBRARY_MANUAL,LIBRARY_ELDERS,libraryElderName,makeLibraryQuestions,libraryVisits,visitSectLibrary,answerLibraryExam,claimLibraryManual} from '../systems/sect-library.js';
 import {idleLimitMs,settleIdle,localDay} from '../systems/cultivation.js';
 import {startLearning,completeLearning,setMainTechnique} from '../systems/techniques.js';
 
 const minute=60000,day=new Date(2026,8,24).getTime();
 function make(fortune=5){return {player:{realm:'炼气一层',sect:'天工阁',stats:{福缘:fortune,神识:5},spiritStones:3,cultivation:0,hp:20},inventory:[],bagCapacity:20,techniques:{mastered:[],main:null,puzzles:{},combat:[]},idle:{day:localDay(day),lastAt:day,usedMs:0,totalEarned:0}}}
 function answerAll(save){let result;while(save.libraryExam){const q=save.libraryExam.questions[save.libraryExam.index];result=answerLibraryExam(save,save.libraryExam.id,q.positions.map(i=>q.idiom[i]).join(''))}return result}
+
+test('nine sects have distinct male and female library elders and exams retain their elder',()=>{
+ const elders=Object.values(LIBRARY_ELDERS);
+ assert.equal(elders.length,9);assert.equal(new Set(elders.map(e=>e.name)).size,9);
+ assert.ok(elders.some(e=>e.gender==='男'));assert.ok(elders.some(e=>e.gender==='女'));
+ const original=Math.random;
+ try{Math.random=()=>0;
+  for(const [sect,elder] of Object.entries(LIBRARY_ELDERS)){
+   const save=make();save.player.sect=sect;
+   assert.match(visitSectLibrary(save,day),new RegExp(elder.name));
+   assert.equal(libraryElderName(JSON.parse(JSON.stringify(save))),elder.name);
+  }
+ }finally{Math.random=original}
+});
 
 test('one hundred unique common idioms make distinct three-question rounds and eight choices',()=>{
  assert.equal(LIBRARY_IDIOMS.length,100);assert.equal(new Set(LIBRARY_IDIOMS).size,100);
