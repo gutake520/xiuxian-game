@@ -19,7 +19,7 @@ export function createMapUI({getSave,activate,actions}){
  const peaks=(locations,kind)=>`<div class="xg-map-landscape xg-map-${kind}">${locations.map((place,i)=>`<button type="button" class="xg-map-hill${place.locked?' xg-map-locked':''}" style="--hill-x:${place.x}%;--hill-y:${place.y}%;--hill-size:${place.size||1}" ${place.locked?'disabled':''} ${place.id?`data-${kind}="${place.id}"`:''}><span class="xg-map-label">${place.name}</span><span class="xg-map-summit" aria-hidden="true"></span></button>`).join('')}</div>`;
  function render(){
   if(!getSave())return;
-  if(getSave().battle)return battle();
+  if(getSave().battle||getSave().encounterPending)return battle();
   if(getSave().qiSecret)return renderSecret();
   if(getSave().qiMeditation)return renderMeditation();
   activate('map');
@@ -122,7 +122,7 @@ export function createMapUI({getSave,activate,actions}){
   back(render);
  }
  function renderEncounter(id){
-  if(getSave().battle)return battle();
+  if(getSave().battle||getSave().encounterPending)return battle();
   const peak=QI_PEAKS.find(item=>item.id===id);if(!peak)return renderMonsters();
   if(peak.kind==='npc')return renderNpc(peak);
   if(peak.kind==='secret')return renderSecret();

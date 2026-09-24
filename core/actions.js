@@ -9,6 +9,7 @@ import {beginBattle,playRound,fleeBattle,useBattleTalisman,useBattleArray} from 
 import {settleRecovery} from '../systems/recovery.js';
 import {finishQiExploration} from '../systems/exploration.js';
 import {finishMeditation} from '../systems/sect-services.js';
+import {resolveHerbalist} from '../systems/encounters.js';
 export function createActions({getSave,setSave}){
  function settleWorld(save){migrateSave(save);dailyTasks(save);const wait=save.qiSecret||save.qiMeditation;if(wait){const until=Math.min(Date.now(),wait.endsAt);save.idle.lastAt=Math.max(save.idle.lastAt,until);save.recovery??={hpAt:until,mpAt:until};save.recovery.hpAt=Math.max(save.recovery.hpAt,until);save.recovery.mpAt=Math.max(save.recovery.mpAt,until)}settleIdle(save);settleRecovery(save)}
  async function select(slot){const data=await updateSave(slot,s=>{settleWorld(s);return s});setSave(data);return data}
@@ -27,6 +28,7 @@ export function createActions({getSave,setSave}){
   battleArray:()=>mutate(s=>useBattleArray(s),{allowBattle:true}),
   battleRound:action=>mutate(s=>playRound(s,action),{allowBattle:true,message:(result)=>result.result?`${result.result.monster}：${result.result.outcome==='victory'?'胜利': '战败'}。`:null}),
   flee:()=>mutate(s=>fleeBattle(s),{allowBattle:true,message:result=>`脱离${result.monster}的战斗，${result.cost}。`}),
+  respondToHerbalist:(id,give)=>mutate(s=>resolveHerbalist(s,id,give),{message:result=>result}),
   startPractice:()=>mutate(s=>{if(realmProgress(s.player).index<0||realmProgress(s.player).complete)throw new Error('当前境界暂不开放修炼。');const id=crypto.randomUUID();s.practiceSession={id,startedAt:Date.now(),hasMain:idleRate(s)>0};return id},{allowDebt:true}),
   finishPractice:(id,bricks,slot)=>mutate(s=>{if(s.practiceSession?.id!==id)throw new Error('这一局已结算或已失效。');const amount=s.practiceSession.hasMain?practiceReward(bricks):(bricks>0?1:0);const earned=addCultivation(s,amount);s.practiceSession=null;return earned},{slot,allowDebt:true,message:earned=>`主动修炼结束，获得 ${earned} 修为。`})
  };

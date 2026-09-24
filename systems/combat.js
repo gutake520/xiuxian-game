@@ -5,6 +5,7 @@ import {DURABILITY_MAX,COMBAT_REWARD_XP} from '../data/balance.js';
 import {equipmentStats,awardItem} from './inventory.js';
 import {addCultivation,realmProgress} from '../data/realms.js';
 import {TECHNIQUES,hasActiveTechnique} from '../data/techniques.js';
+import {maybeMeetHerbalist} from './encounters.js';
 
 export const round2=value=>Math.round((value+Number.EPSILON)*100)/100;
 const herbs=['healing-herb','spirit-herb','qi-herb'];
@@ -40,15 +41,16 @@ function resolveVictory(save,now,messages){
  const result=awardVictory(save,monster,now);
  finish(save,'victory',result);
  messages.push(`胜利！修为 +${result.xp}，${result.rewards.join('、')}。`);
- save.lastBattle.log=[...messages];
  if(monster.humanoid&&!battle.retaliation&&save.player.hp>0&&Math.random()<.3){
   beginBattle(save,monster.id,null,true);
   save.battle.log=[...messages.slice(-3),'你敢杀我兄弟？对方的同伴冲出，追战开始。'].slice(-10);
- }
+ }else if(maybeMeetHerbalist(save,battle.id))messages.push('归途中遇见一位受伤的路人，向你讨一株回血草。');
+ save.lastBattle.log=[...messages];
  return save.lastBattle;
 }
 export function beginBattle(save,id,pet=null,retaliation=false){
  if(save.battle)throw new Error('尚有未结束的战斗。');
+ if(save.encounterPending)throw new Error('请先回应途中遇见的人。');
  if(save.player.cultivation< -100)throw new Error('请先去修炼。');
  const tier=realmProgress(save.player).index;if(tier<0)throw new Error('当前境界暂未开放此处战斗。');
  if(save.player.hp<=0)throw new Error('生命不足，无法迎战。');
@@ -65,9 +67,9 @@ export function playRound(save,action='attack',now=Date.now()){
  if(!['attack','skip'].includes(action)&&skill?.type!=='combat')throw new Error('请选择可用的行动。');
  if(battle.pendingStrike&&action!=='attack')throw new Error('蓄势攻击将在本轮自动施放。');
  const messages=[];let dealt=0,taken=0;
- if(battle.stingRound===battle.round+1){battle.stingRound=0;battle.hp=round2(Math.max(0,battle.hp-2));messages.push('蛰一下继续生效，对手失去 2.00 生命。');if(battle.hp<=0){battle.round++;const result=resolveVictory(save,now,messages);return {messages,dealt,taken,result}}}
- const mpCost=save.techniques.upgraded?.includes(action)?action==='only-once'?3:2:skill?.mpCost??1;
- if(skill){if(skill.passive)throw new Error('被动功法无需主动施放。');if(!hasActiveTechnique(save,action))throw new Error('尚未装备这门功法。');if(action==='cooldown-reset'&&battle.cooldownResetUsed)throw new Error('本场已经使用过重置功法。');if(action==='only-once'&&battle.criticalFocus)throw new Error('本场战斗已使用过这门功法。');if((battle.skillReady?.[action]||0)>battle.round+1)throw new Error('这门功法仍在冷却。');if(save.player.mp<mpCost)throw new Error('法力不足，无法施放。')}
+ if(battle.stingRound===battle.round+1){battle.stingRound=0;const dot=round2(2*(hasActiveTechnique(save,'one-sword')?1.1:1));battle.hp=round2(Math.max(0,battle.hp-dot));messages.push(`蛰一下继续生效，对手失去 ${dot.toFixed(2)} 生命。`);if(battle.hp<=0){battle.round++;const result=resolveVictory(save,now,messages);return {messages,dealt,taken,result}}}
+ const mpCost=action==='spirit-burn'?save.player.mp:save.techniques.upgraded?.includes(action)?action==='only-once'?3:2:skill?.mpCost??1;
+ if(skill){if(skill.passive)throw new Error('被动功法无需主动施放。');if(!hasActiveTechnique(save,action))throw new Error('尚未装备这门功法。');if(action==='cooldown-reset'&&battle.cooldownResetUsed)throw new Error('本场已经使用过重置功法。');if(action==='only-once'&&battle.criticalFocus)throw new Error('本场战斗已使用过这门功法。');if((battle.skillReady?.[action]||0)>battle.round+1)throw new Error('这门功法仍在冷却。');if(save.player.mp<mpCost||action==='spirit-burn'&&save.player.mp<=0)throw new Error('法力不足，无法施放。')}
  const stats=equipmentStats(save),playerFirst=stats.speed>=battle.speed;
  const guarded=action==='iron-wall';
  const playerTurn=()=>{
@@ -78,21 +80,25 @@ export function playRound(save,action='attack',now=Date.now()){
   if(action==='cooldown-reset'){battle.cooldownResetUsed=true;for(const id of save.techniques.combat||[])if(id!==action&&battle.skillReady)delete battle.skillReady[id];messages.push('其他已装备功法的冷却已重置。');return}
   if(action==='only-once'){battle.criticalFocus=true;messages.push(`凝聚心神，本场战斗暴击率提高 ${save.techniques.upgraded?.includes(action)?20:15} 个百分点。`);return}
   if(action==='healing-hands'){battle.regenRounds=3;messages.push('妙手回春生效，连续三轮恢复生命。');return}
-  if(action==='only-one'||action==='empty-hands'||action==='catch-breath'||action==='sting'){dealt=action==='empty-hands'?(save.techniques.upgraded?.includes(action)?3:2):action==='sting'?2:1;messages.push(`${skill.name}造成 ${dealt.toFixed(2)} 伤害。`)}
-  else if(guarded){dealt=1;messages.push('铜墙铁壁护住周身，同时造成 1.00 伤害。')}
+  let damageIntro='';
+  if(action==='spirit-burn'){const count=rootCount(save.player),ratio=count===1?.9:count<=3?.8:.7;dealt=round2(mpCost*ratio);damageIntro=skill.name+'造成'}
+  else if(action==='only-one'||action==='empty-hands'||action==='catch-breath'||action==='sting'){dealt=action==='empty-hands'?(save.techniques.upgraded?.includes(action)?3:2):action==='sting'?2:1;damageIntro=skill.name+'造成'}
+  else if(guarded){dealt=1;damageIntro='铜墙铁壁护住周身，同时造成'}
   else{
    const crit=Math.random()<Math.min(1,(stats.critRate+(battle.criticalFocus?(save.techniques.upgraded?.includes('only-once')?20:15):0))/100);
    const upgraded=save.techniques.upgraded?.includes(action);
-   const multiplier=prepared?(rootCount(save.player)===1?2.5:rootCount(save.player)<=3?2.4:2.3):action==='charged-strike'?chargedMultiplier(save.player):action==='one-sword'?1.3:action==='strengthen-attack'?1.1:action==='gamble-strike'?(Math.random()<.5?(upgraded?1.6:1.5):(upgraded?0.9:0.8)):1;
+   const multiplier=prepared?(rootCount(save.player)===1?2.5:rootCount(save.player)<=3?2.4:2.3):action==='charged-strike'?chargedMultiplier(save.player):action==='strengthen-attack'?1.1:action==='gamble-strike'?(Math.random()<.5?(upgraded?1.6:1.5):(upgraded?0.9:0.8)):1;
    dealt=round2(Math.max(1,stats.attack*(crit?1.5:1)*multiplier));
-   messages.push(`${prepared?'等等再来：':skill?skill.name+'：':''}你${crit?'暴击，':''}造成 ${dealt.toFixed(2)} 伤害。`);
+   damageIntro=`${prepared?'等等再来：':skill?skill.name+'：':''}你${crit?'暴击，':''}造成`;
   }
   if(action==='catch-breath'){const gained=round2(Math.min(1,stats.maxMp-save.player.mp));save.player.mp=round2(save.player.mp+gained);messages.push(`法力恢复 ${gained.toFixed(2)}。`)}
+  if(hasActiveTechnique(save,'one-sword'))dealt=round2(dealt*1.1);
+  messages.push(`${damageIntro} ${dealt.toFixed(2)} 伤害。`);
   const actual=Math.min(battle.hp,dealt);
   battle.hp=round2(Math.max(0,battle.hp-dealt));
   if(action==='sting'&&battle.hp>0)battle.stingRound=battle.round+2;
   if(hasActiveTechnique(save,'life-steal')){const heal=round2(Math.min(stats.maxHp-save.player.hp,actual*.1));save.player.hp=round2(save.player.hp+heal);if(heal>0)messages.push(`吸取生命 ${heal.toFixed(2)}。`)}
-  if(action==='empty-hands'&&battle.hp>0&&Math.random()<(save.techniques.upgraded?.includes(action)?.3:.2)){const stolen=round2(Math.min(save.techniques.upgraded?.includes(action)?5:2,battle.hp)),healed=round2(Math.min(stolen,stats.maxHp-save.player.hp));battle.hp=round2(battle.hp-stolen);save.player.hp=round2(save.player.hp+healed);dealt=round2(dealt+stolen);messages.push(`妙手空空抽取 ${stolen.toFixed(2)} 生命，恢复 ${healed.toFixed(2)}。`)}
+  if(action==='empty-hands'&&battle.hp>0&&Math.random()<(save.techniques.upgraded?.includes(action)?.3:.2)){const stolen=round2(Math.min(round2((save.techniques.upgraded?.includes(action)?5:2)*(hasActiveTechnique(save,'one-sword')?1.1:1)),battle.hp)),healed=round2(Math.min(stolen,stats.maxHp-save.player.hp));battle.hp=round2(battle.hp-stolen);save.player.hp=round2(save.player.hp+healed);dealt=round2(dealt+stolen);messages.push(`妙手空空抽取 ${stolen.toFixed(2)} 生命，恢复 ${healed.toFixed(2)}。`)}
  };
  const enemyTurn=()=>{
   if(battle.bindRounds?.includes(battle.round+1)){messages.push('对手被阵盘困住，无法行动。');return}

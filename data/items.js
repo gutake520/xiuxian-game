@@ -35,9 +35,10 @@ export const ITEMS={
  'only-once-manual':{id:'only-once-manual',name:'只此一次！',price:20,kind:'manual',methodId:'only-once',glyph:'诀',description:'普通战斗功法，参悟后可装备；每场施展一次，暴击率增加 15 个百分点。'},
  'gamble-manual':{id:'gamble-manual',name:'我赌一把',price:20,kind:'manual',methodId:'gamble-strike',glyph:'诀',description:'普通战斗功法，参悟后可以装备。'},
  'sting-manual':{id:'sting-manual',name:'蛰一下',kind:'manual',methodId:'sting',glyph:'诀',description:'小妖遗落的普通战斗功法，参悟后可装备。'},
- 'wait-manual':{id:'wait-manual',name:'等等再来',price:40,kind:'manual',methodId:'wait-then-strike',glyph:'诀',description:'中级战斗功法，参悟四阶数阵后可装备。'}
+ 'wait-manual':{id:'wait-manual',name:'等等再来',price:40,kind:'manual',methodId:'wait-then-strike',glyph:'诀',description:'中级战斗功法，参悟四阶数阵后可装备。'},
+ 'spirit-burn-manual':{id:'spirit-burn-manual',name:'灵息尽燃',kind:'manual',methodId:'spirit-burn',glyph:'简',description:'三片玉简拼成的中级战斗功法，参悟四阶数阵后可装备。'}
 };
-for(const item of Object.values(ITEMS))if(item.kind==='manual'&&!item.blackMarketOnly&&!['gamble-manual','steal-manual','only-once-manual'].includes(item.id)){item.repeatable=true;item.stackable=true;item.sellPrice=10}
+for(const item of Object.values(ITEMS))if(item.kind==='manual'&&!item.blackMarketOnly&&!['gamble-manual','steal-manual','only-once-manual','spirit-burn-manual'].includes(item.id)){item.repeatable=true;item.stackable=true;item.sellPrice=10}
 export const SHOP_ITEMS=['iron-sword','cloth-robe','qi-manual','strengthen-manual','wall-manual','breath-manual','charged-manual','wait-manual','calming-jade'];
 export const SECT_PILLS=['small-heal-pill','spirit-pill','mixed-pill','qi-pill'];
 export const SECT_TALISMANS=['attack-talisman','guard-talisman'];
