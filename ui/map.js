@@ -12,9 +12,9 @@ import {equipmentStats} from '../systems/inventory.js';
 import {repairPrice,repairEquipment,healAtSect,startMeditation,HEAL_PRICE,MEDITATION_PRICE,MEDITATION_MS} from '../systems/sect-services.js';
 import {escapeHTML,format} from './shared.js';
 
-export function createMapUI({getSave,activate,actions}){
+export function createMapUI({getSave,activate,actions,onSectBattleExit}){
  const content=()=>document.getElementById('xg-content');
- const battle=outcome=>showBattle({getSave,activate,actions,onExit:renderMonsters},outcome);
+ const battle=outcome=>showBattle({getSave,activate,actions,onExit:(getSave().battle?getSave().battle.kind:getSave().lastBattle?.kind)==='sect-tournament'?onSectBattleExit:renderMonsters},outcome);
  function heading(title,subtitle){return `<div class="xg-map-heading"><h2>${title}</h2><p>${subtitle}</p></div>`}
  const peaks=(locations,kind)=>`<div class="xg-map-landscape xg-map-${kind}">${locations.map((place,i)=>`<button type="button" class="xg-map-hill${place.locked?' xg-map-locked':''}" style="--hill-x:${place.x}%;--hill-y:${place.y}%;--hill-size:${place.size||1}" ${place.locked?'disabled':''} ${place.id?`data-${kind}="${place.id}"`:''}><span class="xg-map-label">${place.name}</span><span class="xg-map-summit" aria-hidden="true"></span></button>`).join('')}</div>`;
  function render(){

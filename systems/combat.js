@@ -33,11 +33,17 @@ function wearEquipment(save){
 }
 function finish(save,outcome,details={}){
  wearEquipment(save);
- save.lastBattle={id:save.battle.id,monster:save.battle.name,outcome,round:save.battle.round,...details};save.battle=null;
+ save.lastBattle={id:save.battle.id,monster:save.battle.name,kind:save.battle.kind,outcome,round:save.battle.round,...details};save.battle=null;
  return save.lastBattle;
 }
 function resolveVictory(save,now,messages){
  const battle=save.battle,monster=QI_MONSTERS.find(entry=>entry.id===battle.monsterId);
+ if(battle.kind==='sect-tournament'){
+  save.player.spiritStones=round2(save.player.spiritStones+10);
+  const result=finish(save,'victory',{rewards:['灵石×10'],xp:0,kind:'sect-tournament'});
+  messages.push('宗门大比获胜，获得 10 灵石。');
+  result.log=[...messages];return result;
+ }
  const result=awardVictory(save,monster,now);
  finish(save,'victory',result);
  messages.push(`胜利！修为 +${result.xp}，${result.rewards.join('、')}。`);
@@ -63,6 +69,7 @@ export function beginBattle(save,id,pet=null,retaliation=false){
 }
 export function playRound(save,action='attack',now=Date.now()){
  const battle=save.battle;if(!battle)throw new Error('没有正在进行的战斗。');
+ const tournament=battle.kind==='sect-tournament';
  const skill=TECHNIQUES[action];
  if(!['attack','skip'].includes(action)&&skill?.type!=='combat')throw new Error('请选择可用的行动。');
  if(battle.pendingStrike&&action!=='attack')throw new Error('蓄势攻击将在本轮自动施放。');
@@ -72,6 +79,16 @@ export function playRound(save,action='attack',now=Date.now()){
  if(skill){if(skill.passive)throw new Error('被动功法无需主动施放。');if(!hasActiveTechnique(save,action))throw new Error('尚未装备这门功法。');if(action==='cooldown-reset'&&battle.cooldownResetUsed)throw new Error('本场已经使用过重置功法。');if(action==='only-once'&&battle.criticalFocus)throw new Error('本场战斗已使用过这门功法。');if((battle.skillReady?.[action]||0)>battle.round+1)throw new Error('这门功法仍在冷却。');if(save.player.mp<mpCost||action==='spirit-burn'&&save.player.mp<=0)throw new Error('法力不足，无法施放。')}
  const stats=equipmentStats(save),playerFirst=stats.speed>=battle.speed;
  const guarded=action==='iron-wall';
+ let enemyAction='attack';
+ if(tournament&&(battle.mp||0)>=1){
+  if(battle.round%3===1)enemyAction='iron-wall';
+  else if((battle.enemySkillReady||0)<=battle.round+1)enemyAction='strengthen-attack';
+  if(enemyAction!=='attack'){
+   battle.mp=round2(battle.mp-1);
+   if(enemyAction==='strengthen-attack')battle.enemySkillReady=battle.round+4;
+   messages.push(`${battle.name}准备施展${enemyAction==='iron-wall'?'铜墙铁壁':'强化普通'}。`);
+  }
+ }
  const playerTurn=()=>{
   const prepared=!!battle.pendingStrike;if(prepared)battle.pendingStrike=false;
   if(action==='skip'){messages.push('你选择跳过本轮。');return}
@@ -92,6 +109,10 @@ export function playRound(save,action='attack',now=Date.now()){
    damageIntro=`${prepared?'等等再来：':skill?skill.name+'：':''}你${crit?'暴击，':''}造成`;
   }
   if(action==='catch-breath'){const gained=round2(Math.min(1,stats.maxMp-save.player.mp));save.player.mp=round2(save.player.mp+gained);messages.push(`法力恢复 ${gained.toFixed(2)}。`)}
+  if(tournament){
+   if(Math.random()<battle.dodgeRate/100){messages.push(`${battle.name}避开了这一击。`);dealt=0;return}
+   dealt=round2(Math.max(1,dealt-battle.defense-(enemyAction==='iron-wall'?1:0)));
+  }
   if(hasActiveTechnique(save,'one-sword'))dealt=round2(dealt*1.1);
   messages.push(`${damageIntro} ${dealt.toFixed(2)} 伤害。`);
   const actual=Math.min(battle.hp,dealt);
@@ -103,9 +124,11 @@ export function playRound(save,action='attack',now=Date.now()){
  const enemyTurn=()=>{
   if(battle.bindRounds?.includes(battle.round+1)){messages.push('对手被阵盘困住，无法行动。');return}
   const monster=QI_MONSTERS.find(entry=>entry.id===battle.monsterId);
-  const empowered=monster?.attackBoost&&(battle.mp||0)>0&&(battle.enemySkillReady||0)<=battle.round+1;
-  const rawDamage=round2(battle.attack*(empowered?monster.attackBoost:1));
+  const empowered=!tournament&&monster?.attackBoost&&(battle.mp||0)>0&&(battle.enemySkillReady||0)<=battle.round+1;
+  const enemyCrit=tournament&&enemyAction!=='iron-wall'&&Math.random()<battle.critRate/100;
+  const rawDamage=round2(tournament?(enemyAction==='iron-wall'?1:battle.attack*(enemyAction==='strengthen-attack'?1.1:1)*(enemyCrit?1.5:1)):battle.attack*(empowered?monster.attackBoost:1));
   if(empowered){battle.mp--;battle.enemySkillReady=battle.round+monster.boostCooldown+2;messages.push(`${battle.name}使出强化攻击。`)}
+  if(enemyCrit)messages.push(`${battle.name}打出暴击。`);
   if(Math.random()<stats.dodgeRate/100){messages.push('你闪开了对手的攻击。');return}
   if(battle.guard){battle.guard=false;messages.push('护身符抵挡了这次伤害。');return}
   const afterDefense=Math.max(1,rawDamage-stats.defense-(guarded?1:0));

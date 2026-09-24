@@ -10,6 +10,7 @@ import {settleRecovery} from '../systems/recovery.js';
 import {finishQiExploration} from '../systems/exploration.js';
 import {finishMeditation} from '../systems/sect-services.js';
 import {resolveHerbalist} from '../systems/encounters.js';
+import {startSectTournament} from '../systems/sect-tournament.js';
 export function createActions({getSave,setSave}){
  function settleWorld(save){migrateSave(save);dailyTasks(save);const wait=save.qiSecret||save.qiMeditation;if(wait){const until=Math.min(Date.now(),wait.endsAt);save.idle.lastAt=Math.max(save.idle.lastAt,until);save.recovery??={hpAt:until,mpAt:until};save.recovery.hpAt=Math.max(save.recovery.hpAt,until);save.recovery.mpAt=Math.max(save.recovery.mpAt,until)}settleIdle(save);settleRecovery(save)}
  async function select(slot){const data=await updateSave(slot,s=>{settleWorld(s);return s});setSave(data);return data}
@@ -24,6 +25,7 @@ export function createActions({getSave,setSave}){
   finishExploration:()=>mutate(s=>finishQiExploration(s),{allowWait:true,allowDebt:true,message:result=>result}),
   finishMeditation:()=>mutate(s=>finishMeditation(s),{allowWait:true,allowDebt:true,message:result=>result}),
   startBattle:(id,pet)=>mutate(s=>beginBattle(s,id,pet)),
+  startSectTournament:()=>mutate(s=>startSectTournament(s)),
   battleTalisman:id=>mutate(s=>useBattleTalisman(s,id),{allowBattle:true}),
   battleArray:()=>mutate(s=>useBattleArray(s),{allowBattle:true}),
   battleRound:action=>mutate(s=>playRound(s,action),{allowBattle:true,message:(result)=>result.result?`${result.result.monster}：${result.result.outcome==='victory'?'胜利': '战败'}。`:null}),
