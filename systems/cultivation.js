@@ -1,4 +1,4 @@
-import {IDLE_LIMIT_MS,PRACTICE} from '../data/balance.js';
+import {IDLE_LIMIT_MS,PRACTICE,PRACTICE_ENTRY_FEES} from '../data/balance.js';
 import {TECHNIQUES} from '../data/techniques.js';
 import {realmProgress,addCultivation} from '../data/realms.js';
 export function localDay(time){const d=new Date(time);return `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`}
@@ -31,3 +31,13 @@ export function settleIdle(save,now=Date.now()){
 }
 export function paddleWidth(root){return Math.min(PRACTICE.maxPaddle,Math.max(PRACTICE.minPaddle,(Number(root)||0)*PRACTICE.paddlePerRoot))}
 export function practiceReward(bricks){return Math.max(0,Math.min(PRACTICE.rows*PRACTICE.columns,Math.floor(bricks)))*PRACTICE.rewardPerBrick}
+export function practiceEntryFee(player){return PRACTICE_ENTRY_FEES[String(player.realm||'').slice(0,2)]??null}
+export function beginPracticeSession(save,now=Date.now()){
+ const progress=realmProgress(save.player),fee=practiceEntryFee(save.player);
+ if(progress.index<0||progress.complete||fee===null)throw new Error('当前境界暂不开放灵境修炼。');
+ if(save.player.spiritStones<fee)throw new Error(`进入灵境需要 ${fee} 灵石。`);
+ const id=crypto.randomUUID();
+ save.player.spiritStones=Math.round((save.player.spiritStones-fee)*100)/100;
+ save.practiceSession={id,startedAt:now,hasMain:idleRate(save)>0};
+ return id;
+}
