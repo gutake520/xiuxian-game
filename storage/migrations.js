@@ -1,3 +1,4 @@
+import {syncAchievements} from '../systems/achievements.js';
 import {combatSlots} from '../data/technique-slots.js';
 import {TECHNIQUES,techniqueEligible} from '../data/techniques.js';
 import {INITIAL_STONES,INITIAL_BAG_SIZE} from '../data/balance.js';
@@ -56,5 +57,6 @@ export function migrateSave(save,now=Date.now()){
  if(!save.idle.day)save.idle.day=localDay(now);
  const progress=realmProgress(p);if(progress.index>=0){p.cultivationRequired=QI_REQUIREMENTS[progress.index]??null;if(progress.required&&p.cultivation>=progress.required){const xp=p.cultivation;p.cultivation=0;addCultivation(save,xp)}}
  applyRealmHp(save);
+ syncAchievements(save);
  save.version=6;return save;
 }

@@ -1,3 +1,4 @@
+import {syncAchievements} from '../systems/achievements.js';
 import {dailyTasks,recordDailyProgress} from '../systems/sect-progression.js';
 import {updateSave,readSave,writeSave} from '../storage/saves.js';
 import {migrateSave} from '../storage/migrations.js';
@@ -14,7 +15,7 @@ export function createActions({getSave,setSave}){
  async function mutate(change,{message,slot=getSave()?.slot,allowBattle=false,allowDebt=false,allowWait=false}={}){
   if(!slot)throw new Error('请先选择存档。');
   let result;
-  const data=await updateSave(slot,s=>{settleWorld(s);if(change&&(s.qiSecret||s.qiMeditation)&&!allowWait)throw new Error('正在等待探索或静坐结束，请稍候。');if(change&&s.battle&&!allowBattle)throw new Error('请先结束当前战斗。');if(change&&s.player.cultivation< -100&&!allowDebt)throw new Error('请先去修炼。');const before={stones:s.player.spiritStones,battleId:s.lastBattle?.id};result=change?.(s);if(result?.then)throw new Error('操作结算不能包含异步任务。');recordDailyProgress(s,before,!allowBattle);const entry=typeof message==='function'?message(result,s):message;if(entry)appendEvent(s,entry);s.updatedAt=Date.now();return s});
+  const data=await updateSave(slot,s=>{settleWorld(s);if(change&&(s.qiSecret||s.qiMeditation)&&!allowWait)throw new Error('正在等待探索或静坐结束，请稍候。');if(change&&s.battle&&!allowBattle)throw new Error('请先结束当前战斗。');if(change&&s.player.cultivation< -100&&!allowDebt)throw new Error('请先去修炼。');const before={stones:s.player.spiritStones,battleId:s.lastBattle?.id};result=change?.(s);if(result?.then)throw new Error('操作结算不能包含异步任务。');recordDailyProgress(s,before,!allowBattle);syncAchievements(s);const entry=typeof message==='function'?message(result,s):message;if(entry)appendEvent(s,entry);s.updatedAt=Date.now();return s});
   if(getSave()?.slot===slot)setSave(data);return{save:data,result};
  }
  async function create(data){migrateSave(data);await writeSave(data);setSave(data);return data}
