@@ -22,13 +22,19 @@ export const ITEMS={
  'qi-manual':{id:'qi-manual',name:'引气诀',price:10,kind:'manual',methodId:'basic-qi-guide',glyph:'诀',description:'解开三阶数阵后学会，可设为主修。'},
  'strengthen-manual':{id:'strengthen-manual',name:'强化普通',price:20,kind:'manual',methodId:'strengthen-attack',glyph:'诀',description:'普通战斗功法，参悟后可以装备。'},
  'wall-manual':{id:'wall-manual',name:'铜墙铁壁',price:20,kind:'manual',methodId:'iron-wall',glyph:'诀',description:'普通战斗功法，参悟后可以装备。'},
- 'one-manual':{id:'one-manual',name:'这里有一',price:66,kind:'manual',methodId:'only-one',glyph:'诀',description:'高级通用战斗功法，参悟五阶数阵后可装备。'},
+ 'reset-manual':{id:'reset-manual',name:'滴，重置卡',sellPrice:20,blackMarketOnly:true,repeatable:true,stackable:true,kind:'manual',methodId:'cooldown-reset',glyph:'诀',description:'黑市典籍，参悟五阶数阵后学会；每本可出售 20 灵石。'},
+ 'calming-jade':{id:'calming-jade',name:'清心玉佩',price:5,sellPrice:4,kind:'gift',stackable:true,glyph:'玉',description:'可用于赠礼的清润玉佩；赠礼功能待开放。'},
+ 'broken-jade-slip':{id:'broken-jade-slip',name:'破裂玉简',kind:'junk',stackable:true,glyph:'简',description:'口诀已随裂痕消散，无法使用或出售。'},
+ 'burnt-talisman':{id:'burnt-talisman',name:'焦黑符纸',kind:'junk',stackable:true,glyph:'纸',description:'画符失败留下的焦纸，无法使用或出售。'},
+ 'leaky-pill-bottle':{id:'leaky-pill-bottle',name:'漏底丹瓶',kind:'junk',stackable:true,glyph:'瓶',description:'瓶底破了一个洞，无法使用或出售。'},
+ 'broken-whisk':{id:'broken-whisk',name:'断柄拂尘',kind:'junk',stackable:true,glyph:'尘',description:'尘丝散尽，木柄折断，无法使用或出售。'},
+ 'one-manual':{id:'one-manual',name:'这里有一',sellPrice:20,blackMarketOnly:true,repeatable:true,stackable:true,kind:'manual',methodId:'only-one',glyph:'诀',description:'高级通用战斗功法，参悟五阶数阵后可装备。'},
  'steal-manual':{id:'steal-manual',name:'妙手空空',price:20,kind:'manual',methodId:'empty-hands',glyph:'诀',description:'普通战斗功法，参悟后可装备。'},
  'breath-manual':{id:'breath-manual',name:'回一口气',price:20,kind:'manual',methodId:'catch-breath',glyph:'诀',description:'不耗法力，造成固定 1 点伤害并恢复 1 点法力。'},
- 'charged-manual':{id:'charged-manual',name:'蓄势一击',price:20,kind:'manual',methodId:'charged-strike',glyph:'诀',description:'耗 1 点法力，本次攻击造成 1.3 倍伤害，冷却四轮。'},
+ 'charged-manual':{id:'charged-manual',name:'蓄势一击',price:20,kind:'manual',methodId:'charged-strike',glyph:'诀',description:'耗 1 点法力，攻击倍率随灵根数量为 1.3／1.2／1.1，冷却四轮。'},
  'only-once-manual':{id:'only-once-manual',name:'只此一次！',price:20,kind:'manual',methodId:'only-once',glyph:'诀',description:'普通战斗功法，参悟后可装备；每场施展一次，暴击率增加 15 个百分点。'},
  'gamble-manual':{id:'gamble-manual',name:'我赌一把',price:20,kind:'manual',methodId:'gamble-strike',glyph:'诀',description:'普通战斗功法，参悟后可以装备。'}
 };
-export const SHOP_ITEMS=['iron-sword','cloth-robe','qi-manual','strengthen-manual','wall-manual','breath-manual','charged-manual'];
+export const SHOP_ITEMS=['iron-sword','cloth-robe','qi-manual','strengthen-manual','wall-manual','breath-manual','charged-manual','calming-jade'];
 export const SECT_PILLS=['small-heal-pill','spirit-pill','mixed-pill','qi-pill'];
 export const SECT_TALISMANS=['attack-talisman','guard-talisman'];

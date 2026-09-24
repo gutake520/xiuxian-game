@@ -1,3 +1,4 @@
+import {chargedMultiplier} from '../data/technique-slots.js';
 import {QI_MONSTERS} from '../data/locations.js';
 import {ITEMS} from '../data/items.js';
 import {DURABILITY_MAX,COMBAT_REWARD_XP} from '../data/balance.js';
@@ -50,13 +51,14 @@ export function playRound(save,action='attack',now=Date.now()){
  const skill=TECHNIQUES[action];
  if(!['attack','skip'].includes(action)&&skill?.type!=='combat')throw new Error('请选择可用的行动。');
  const mpCost=save.techniques.upgraded?.includes(action)?action==='only-once'?3:2:skill?.mpCost??1;
- if(skill){if(skill.passive)throw new Error('被动功法无需主动施放。');if(!hasActiveTechnique(save,action))throw new Error('尚未装备这门功法。');if(action==='only-once'&&battle.criticalFocus)throw new Error('本场战斗已使用过这门功法。');if((battle.skillReady?.[action]||0)>battle.round+1)throw new Error('这门功法仍在冷却。');if(save.player.mp<mpCost)throw new Error('法力不足，无法施放。')}
+ if(skill){if(skill.passive)throw new Error('被动功法无需主动施放。');if(!hasActiveTechnique(save,action))throw new Error('尚未装备这门功法。');if(action==='cooldown-reset'&&battle.cooldownResetUsed)throw new Error('本场已经使用过重置功法。');if(action==='only-once'&&battle.criticalFocus)throw new Error('本场战斗已使用过这门功法。');if((battle.skillReady?.[action]||0)>battle.round+1)throw new Error('这门功法仍在冷却。');if(save.player.mp<mpCost)throw new Error('法力不足，无法施放。')}
  const stats=equipmentStats(save),messages=[],playerFirst=stats.speed>=battle.speed;
  const guarded=action==='iron-wall';
  let dealt=0,taken=0;
  const playerTurn=()=>{
   if(action==='skip'){messages.push('你选择跳过本轮。');return}
   if(skill){save.player.mp=round2(save.player.mp-mpCost);if(skill.cooldown){battle.skillReady??={};battle.skillReady[action]=battle.round+skill.cooldown+2}if(['only-once','empty-hands','gamble-strike'].includes(action)){save.techniques.usage??={};save.techniques.usage[action]=(save.techniques.usage[action]||0)+1}}
+  if(action==='cooldown-reset'){battle.cooldownResetUsed=true;for(const id of save.techniques.combat||[])if(id!==action&&battle.skillReady)delete battle.skillReady[id];messages.push('其他已装备功法的冷却已重置。');return}
   if(action==='only-once'){battle.criticalFocus=true;messages.push(`凝聚心神，本场战斗暴击率提高 ${save.techniques.upgraded?.includes(action)?20:15} 个百分点。`);return}
   if(action==='healing-hands'){battle.regenRounds=3;messages.push('妙手回春生效，连续三轮恢复生命。');return}
   if(action==='only-one'||action==='empty-hands'||action==='catch-breath'){dealt=action==='empty-hands'?(save.techniques.upgraded?.includes(action)?3:2):1;messages.push(`${skill.name}造成 ${dealt.toFixed(2)} 伤害。`)}
@@ -64,7 +66,7 @@ export function playRound(save,action='attack',now=Date.now()){
   else{
    const crit=Math.random()<Math.min(1,(stats.critRate+(battle.criticalFocus?(save.techniques.upgraded?.includes('only-once')?20:15):0))/100);
    const upgraded=save.techniques.upgraded?.includes(action);
-   const multiplier=['one-sword','charged-strike'].includes(action)?1.3:action==='strengthen-attack'?1.1:action==='gamble-strike'?(Math.random()<.5?(upgraded?1.6:1.5):(upgraded?0.9:0.8)):1;
+   const multiplier=action==='charged-strike'?chargedMultiplier(save.player):action==='one-sword'?1.3:action==='strengthen-attack'?1.1:action==='gamble-strike'?(Math.random()<.5?(upgraded?1.6:1.5):(upgraded?0.9:0.8)):1;
    dealt=round2(Math.max(1,stats.attack*(crit?1.5:1)*multiplier));
    messages.push(`${skill?skill.name+'：':''}你${crit?'暴击，':''}造成 ${dealt.toFixed(2)} 伤害。`);
   }

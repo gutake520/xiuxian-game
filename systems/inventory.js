@@ -7,13 +7,15 @@ export function ownsTechnique(save,id){return save.techniques.mastered.includes(
 export function addItem(save,id,quantity=1){
  const item=ITEMS[id];if(!item)throw new Error('物品不存在。');
  if(!Number.isSafeInteger(quantity)||quantity<1)throw new Error('物品数量无效。');
- if(item.kind==='manual'&&ownsTechnique(save,item.methodId))return false;
+ if(item.kind==='manual'&&!item.repeatable&&ownsTechnique(save,item.methodId))return false;
  if(item.stackable){const stack=save.inventory.find(entry=>entry.itemId===id);if(stack){stack.quantity=(stack.quantity||1)+quantity;return true}}
  if(save.inventory.length>=save.bagCapacity)throw new Error('储物格已满，暂时无法收下物品。');
  save.itemSerial=(save.itemSerial||0)+1;save.inventory.push({uid:'item-'+save.itemSerial,itemId:id,quantity,...(item.kind==='equipment'?{durability:DURABILITY_MAX}:{})});return true;
 }
 export function purchase(save,id,sectDiscount=false){
  const item=ITEMS[id];if(!item)throw new Error('商品不存在。');
+ if(item.blackMarketOnly)throw new Error('这部典籍只能从黑市抽取。');
+ if(!Number.isFinite(item.price))throw new Error('此物品不供出售。');
  const sectOnly=['gamble-manual','steal-manual','only-once-manual'];
  if(sectOnly.includes(id)&&!sectDiscount)throw new Error('这部功法仅在宗门商店出售。');
  if(id==='one-manual'&&sectDiscount)throw new Error('这部功法只在黑市出售。');
@@ -59,6 +61,22 @@ export function claimLoot(save,id,now=Date.now()){
 }
 export function equipmentSalePrice(item){return ['iron-sword','cloth-robe'].includes(item?.id)?2:['wild-sword','wild-robe'].includes(item?.id)?2.5:3}
 export const MATERIAL_SALE_PRICE=.8;
+export function sellExtra(save,uid,quantity=1){
+ const entry=save.inventory.find(e=>e.uid===uid),item=ITEMS[entry?.itemId];
+ if(!entry||!['gift','manual'].includes(item?.kind)||!Number.isFinite(item.sellPrice))throw new Error('此物品不能出售。');
+ if(save.battle)throw new Error('战斗中不能出售物品。');
+ if(!Number.isSafeInteger(quantity)||quantity<1||quantity>(entry.quantity||1))throw new Error('出售数量无效。');
+ if(quantity===(entry.quantity||1))save.inventory=save.inventory.filter(e=>e!==entry);else entry.quantity-=quantity;
+ const total=Math.round(item.sellPrice*quantity*100)/100;
+ save.player.spiritStones=Math.round((save.player.spiritStones+total)*100)/100;
+ return `出售${item.name}×${quantity}，获得 ${total} 灵石。`;
+}
+export function discardJunk(save,uid){
+ const entry=save.inventory.find(e=>e.uid===uid);
+ if(ITEMS[entry?.itemId]?.kind!=='junk')throw new Error('这不是杂物。');
+ if(save.battle)throw new Error('请先结束战斗。');
+ save.inventory=save.inventory.filter(e=>e!==entry);
+}
 export function pillSalePrice(item){return Math.round((item?.price||0)*50)/100}
 export function sellPill(save,uid,quantity){
  const entry=save.inventory.find(item=>item.uid===uid),item=ITEMS[entry?.itemId];

@@ -1,3 +1,4 @@
+import {showBlackMarket} from './black-market.js';
 import {hasActiveTechnique} from '../data/techniques.js';
 import {VISITING_SECTS,QI_MONSTERS,QI_PEAKS} from '../data/locations.js';
 import {realmProgress} from '../data/realms.js';
@@ -45,14 +46,7 @@ export function createMapUI({getSave,activate,actions}){
   content().querySelector('[data-market-gear]').onclick=()=>showShop(api,true,close);
   content().querySelector('[data-market-sell]').onclick=()=>showSell(api,close);
  }
- function renderBlackMarket(){
-  activate('map');
-  content().innerHTML=`<section class="xg-map-sheet"><button class="xg-map-back" type="button">← 返回地图</button>${heading('黑市','隐在山道尽头的交易处。')}
-   <div class="xg-card"><h3>隐秘典籍</h3><p>这里有一 · 66 灵石 · 五阶数阵</p><button type="button" data-black-buy ${getSave().techniques.mastered.includes('only-one')||getSave().inventory.some(item=>item.itemId==='one-manual')?'disabled':''}>购买典籍</button></div><p role="status"></p></section>`;
-  back(render);
-  const button=content().querySelector('[data-black-buy]');
-  button.onclick=async()=>{button.disabled=true;try{const {result}=await actions.mutate(s=>purchase(s,'one-manual'),{message:result=>result});renderBlackMarket();content().querySelector('[role=status]').textContent=result}catch(error){content().querySelector('[role=status]').textContent=error.message;button.disabled=false}};
- }
+ function renderBlackMarket(){showBlackMarket({getSave,actions,activate},render)}
  function renderSects(){
   activate('map');
   const spots=[[3,3],[58,5],[30,18],[70,30],[8,36],[42,49],[2,65],[63,67],[28,78]];

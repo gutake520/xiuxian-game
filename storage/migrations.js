@@ -1,3 +1,4 @@
+import {combatSlots} from '../data/technique-slots.js';
 import {TECHNIQUES,techniqueEligible} from '../data/techniques.js';
 import {INITIAL_STONES,INITIAL_BAG_SIZE} from '../data/balance.js';
 import {QI_REQUIREMENTS,realmProgress,addCultivation,applyRealmHp} from '../data/realms.js';
@@ -36,7 +37,7 @@ export function migrateSave(save,now=Date.now()){
  if(save.battle){save.battle.talismansUsed??=0;save.battle.talismanRound??=0;save.battle.bindRounds??=save.battle.bindRound?[save.battle.bindRound]:[];save.battle.arrayRound??=0;save.battle.freeArrayUsed??=false;save.battle.guard??=false;save.battle.pet??=null;save.battle.mp??=Math.max(0,(QI_MONSTERS.find(monster=>monster.id===save.battle.monsterId)?.mp||0)-(save.battle.enemySkillReady?1:0))}
  save.techniques??={mastered:[],main:null,puzzles:{}};
  save.techniques.mastered??=[];save.techniques.puzzles??={};
- save.techniques.combat=Array.isArray(save.techniques.combat)?save.techniques.combat.filter(id=>TECHNIQUES[id]?.type==='combat'&&techniqueEligible(p,TECHNIQUES[id])&&save.techniques.mastered.includes(id)).slice(0,2):[];
+ save.techniques.combat=Array.isArray(save.techniques.combat)?save.techniques.combat.filter(id=>TECHNIQUES[id]?.type==='combat'&&techniqueEligible(p,TECHNIQUES[id])&&save.techniques.mastered.includes(id)).slice(0,combatSlots(p)):[];
  save.techniques.sectManuals??=[];
  if(save.techniques.mastered.includes('beast-keeper'))save.spiritBeast??={name:'伴生灵兽',stage:'炼气'};
  save.sectPoints=Number.isFinite(save.sectPoints)?Math.max(0,save.sectPoints):0;

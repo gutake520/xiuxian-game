@@ -1,3 +1,4 @@
+import {combatSlots} from '../data/technique-slots.js';
 import {ITEMS} from '../data/items.js';
 import {TECHNIQUES,PUZZLE_SIZES,UPGRADEABLE_TECHNIQUES,hintAllowance,techniqueEligible} from '../data/techniques.js';
 import {hasManual} from './inventory.js';
@@ -58,7 +59,7 @@ export function completeLearning(save,id){
  if(upgrade){save.techniques.upgraded??=[];save.techniques.upgraded.push(id.slice(8));delete save.techniques.puzzles[id];return}
  save.techniques.mastered.push(id);
  if(id==='beast-keeper')save.spiritBeast??={name:'伴生灵兽',stage:'炼气'};
- const at=save.inventory.findIndex(entry=>ITEMS[entry.itemId]?.methodId===id);if(at>=0)save.inventory.splice(at,1);
+ const at=save.inventory.findIndex(entry=>ITEMS[entry.itemId]?.methodId===id);if(at>=0){if((save.inventory[at].quantity||1)>1)save.inventory[at].quantity--;else save.inventory.splice(at,1)}
  delete save.techniques.puzzles[id];
 }
 export function setMainTechnique(save,id){
@@ -70,5 +71,5 @@ export function toggleCombatTechnique(save,id){
  if(save.battle)throw new Error('战斗中不能更换功法。');
  save.techniques.combat??=[];
  if(save.techniques.combat.includes(id))save.techniques.combat=save.techniques.combat.filter(value=>value!==id);
- else{if(save.techniques.combat.length>=2)throw new Error('当前最多装备两门战斗功法。');save.techniques.combat.push(id)}
+ else{if(save.techniques.combat.length>=combatSlots(save.player))throw new Error(`当前最多装备 ${combatSlots(save.player)} 门战斗功法。`);save.techniques.combat.push(id)}
 }

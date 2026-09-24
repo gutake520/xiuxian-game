@@ -6,6 +6,7 @@ import {createActions} from './core/actions.js';
 import {createFeatureUI,progressMarkup} from './ui/progression.js';
 import {equipmentName,equipmentStats,addItem,ownsTechnique,purchase} from './systems/inventory.js';
 import {TECHNIQUES} from './data/techniques.js';
+import {combatSlots} from './data/technique-slots.js';
 import {initialCombat} from './data/initial-combat.js';
 import {createMapUI} from './ui/map.js';
 const POS_KEY='xiuxian-game-fab-position', LAST_SLOT_KEY='xiuxian-game-last-slot';
@@ -130,7 +131,7 @@ function renderCharacter(){
  </div>
  <div class="xg-card"><h3>装备</h3><div class="xg-equipment-grid">${[['武器','weapon'],['防具','armor'],['鞋子','shoes'],['生命／法力饰品','accessoryVital'],['暴击／闪避饰品','accessoryFate']].map(([label,slot])=>cell(label,escapeHTML(equipmentName(currentSave,slot)))).join('')}</div>
  <h4>修炼功法</h4><div class="xg-method-row"><span>主修</span><span>${escapeHTML(TECHNIQUES[currentSave.techniques?.main]?.name||'未装备')}</span></div><div class="xg-method-row"><span>辅修</span><span>未装备</span></div>
- <button type="button" id="xg-methods" class="xg-methods-button">查看功法典籍</button><h4>战斗功法</h4><p class="xg-empty-note">${(currentSave.techniques?.combat||[]).map(id=>escapeHTML(TECHNIQUES[id]?.name||'')).join(' · ')||'尚未装备战斗功法'} · 最多两门</p></div>
+ <button type="button" id="xg-methods" class="xg-methods-button">查看功法典籍</button><h4>战斗功法</h4><p class="xg-empty-note">${(currentSave.techniques?.combat||[]).map(id=>escapeHTML(TECHNIQUES[id]?.name||'')).join(' · ')||'尚未装备战斗功法'} · 最多 ${combatSlots(p)} 门</p></div>
  <div class="xg-character-actions"><button type="button" id="xg-sect">门派</button><button type="button" id="xg-cultivate">修炼</button><button type="button" disabled>突破<small>尚未开放</small></button></div>
  <p id="xg-character-message" role="status" aria-live="polite"></p></section>`;
  document.getElementById('xg-sect').onclick=showSect;document.getElementById('xg-cultivate').onclick=()=>runAction(async()=>{await game.refresh();featureUI.cultivation()});document.getElementById('xg-methods').onclick=featureUI.library;
