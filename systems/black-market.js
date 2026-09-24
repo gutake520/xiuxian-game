@@ -1,7 +1,7 @@
 import {awardItem} from './inventory.js';
 import {ITEMS} from '../data/items.js';
 const manuals=['one-manual','reset-manual'];
-const manualDropRate=1; // 临时用于实测动画，测试后恢复原概率。
+const manualDropRate=.005;
 const junk=['broken-jade-slip','burnt-talisman','leaky-pill-bottle','broken-whisk'];
 const herbs=['healing-herb','spirit-herb','qi-herb'];
 const pick=values=>values[Math.floor(Math.random()*values.length)];
