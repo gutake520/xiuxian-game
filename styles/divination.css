@@ -1,6 +1,7 @@
 .xg-divination{text-align:center}
 .xg-divination h3{text-align:left}
-.xg-divination-stage{display:grid;place-items:center;min-height:220px;background:radial-gradient(circle,#244539,#112820 68%,#0d1f1a);border-radius:16px;perspective:800px}
+.xg-divination-stage{display:grid;place-items:center;min-height:250px;background:radial-gradient(circle,#244539,#112820 68%,#0d1f1a);border-radius:16px;perspective:900px;position:relative}
+.xg-divination-stage::before{content:"";position:absolute;width:205px;height:205px;border:1px solid #d3af6655;border-radius:50%;box-shadow:0 0 38px #d2a3593d,inset 0 0 25px #e6c07621;pointer-events:none}
 .xg-divination-coin{width:min(190px,54vw);aspect-ratio:1;filter:drop-shadow(0 12px 14px #0008);transform-style:preserve-3d}
 .xg-divination-coin svg{width:100%;height:100%;display:block}
 .xg-divination-coin.is-front{animation:xg-coin-front 1.6s cubic-bezier(.18,.75,.24,1) both}
