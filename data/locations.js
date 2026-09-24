@@ -17,7 +17,10 @@ export const QI_MONSTERS = [
  {id:'swift',name:'风影',hp:'12～14',hpMin:12,hpMax:14,attack:3,speed:3,drop:'矿石 2～3',resource:'ore'},
  {id:'tough-mid',name:'磐牙兽',hp:'22～26',hpMin:22,hpMax:26,attack:2,speed:1,drop:'灵石 2～3',resource:'stones',minTier:3,maxTier:5,twoDropChance:.5,attackBoost:1.1,boostCooldown:3,mp:2},
  {id:'fierce-mid',name:'赤爪豹',hp:'10～12',hpMin:10,hpMax:12,attack:4.5,speed:1,drop:'草药 2～3',resource:'herbs',minTier:3,maxTier:5,twoDropChance:.5,attackBoost:1.1,boostCooldown:3,mp:2},
- {id:'swift-mid',name:'疾风貂',hp:'14～16',hpMin:14,hpMax:16,attack:3.3,speed:3,drop:'矿石 2～3',resource:'ore',minTier:3,maxTier:5,twoDropChance:.5,attackBoost:1.1,boostCooldown:3,mp:2}
+ {id:'swift-mid',name:'疾风貂',hp:'14～16',hpMin:14,hpMax:16,attack:3.3,speed:3,drop:'矿石 2～3',resource:'ore',minTier:3,maxTier:5,twoDropChance:.5,attackBoost:1.1,boostCooldown:3,mp:2},
+ {id:'tough-human',name:'石岭散修',hp:'28～32',hpMin:28,hpMax:32,attack:2.8,speed:1,drop:'灵石 2～3',resource:'stones',minTier:6,maxTier:8,twoDropChance:.5,attackBoost:1.1,boostCooldown:3,mp:2,humanoid:true},
+ {id:'fierce-human',name:'赤刃散修',hp:'18～22',hpMin:18,hpMax:22,attack:5,speed:2,drop:'草药 2～3',resource:'herbs',minTier:7,maxTier:8,twoDropChance:.5,attackBoost:1.1,boostCooldown:3,mp:2,humanoid:true},
+ {id:'swift-human',name:'逐风散修',hp:'20～24',hpMin:20,hpMax:24,attack:3.8,speed:4,drop:'矿石 2～3',resource:'ore',minTier:8,maxTier:8,twoDropChance:.5,attackBoost:1.1,boostCooldown:3,mp:2,humanoid:true}
 ];
 
 export const QI_PEAKS = [

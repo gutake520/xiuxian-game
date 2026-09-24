@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {beginBattle,playRound} from '../systems/combat.js';
-import {equipmentStats,sellExtra} from '../systems/inventory.js';
+import {beginBattle,playRound,useBattleTalisman} from '../systems/combat.js';
+import {equipmentStats,sellExtra,addItem} from '../systems/inventory.js';
 import {applyRealmHp} from '../data/realms.js';
 import {purchase} from '../systems/inventory.js';
 import {startUpgrade,completeLearning} from '../systems/techniques.js';
@@ -87,4 +87,23 @@ test('prepared strike scales with spirit-root count',()=>{
   const s=battle(make());s.player.spiritRoot=root;s.player.combat.defense=20;s.techniques.mastered.push('wait-then-strike');s.techniques.combat=['wait-then-strike'];
   const random=Math.random;try{Math.random=()=>.99;playRound(s,'wait-then-strike');assert.equal(s.player.mp,7);assert.equal(playRound(s,'attack').dealt,Math.round(3*multiplier*100)/100);assert.equal(s.player.mp,7)}finally{Math.random=random}
  }
+});
+test('human opponents unlock across later qi stages and earlier foes remain available',()=>{
+ const s=make();assert.throws(()=>beginBattle(s,'tough-human'),/七层/);
+ s.player.realm='炼气七层';beginBattle(s,'tough-human');s.battle=null;assert.throws(()=>beginBattle(s,'fierce-human'),/八层/);
+ s.player.realm='炼气八层';beginBattle(s,'fierce-human');s.battle=null;assert.throws(()=>beginBattle(s,'swift-human'),/九层/);
+ s.player.realm='炼气九层';beginBattle(s,'swift-human');s.battle=null;beginBattle(s,'tough');assert.equal(s.battle.monsterId,'tough');
+});
+test('human victory may trigger exactly one saved follow-up fight with one reward each',()=>{
+ const s=make(0);s.player.realm='炼气九层';s.player.hp=30;s.player.combat.defense=0;
+ const random=Math.random;try{
+  Math.random=()=>.2;beginBattle(s,'swift-human');s.battle.hp=1;
+  const first=playRound(s,'attack');assert.equal(first.result.outcome,'victory');assert.equal(s.battle.retaliation,true);assert.equal(s.player.cultivation,20);
+  const hp=s.player.hp;const resumed=JSON.parse(JSON.stringify(s));assert.equal(resumed.player.hp,hp);
+  resumed.battle.hp=1;const second=playRound(resumed,'attack');assert.equal(second.result.outcome,'victory');assert.equal(resumed.battle,null);assert.equal(resumed.player.cultivation,40);
+ }finally{Math.random=random}
+});
+test('attack talisman victory follows the same one-time chase rule',()=>{
+ const s=make();s.player.realm='炼气七层';addItem(s,'attack-talisman');
+ const random=Math.random;try{Math.random=()=>.1;beginBattle(s,'tough-human');s.battle.hp=2;useBattleTalisman(s,'attack-talisman');assert.equal(s.battle.retaliation,true);assert.equal(s.player.cultivation,20)}finally{Math.random=random}
 });
