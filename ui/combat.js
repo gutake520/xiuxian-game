@@ -1,6 +1,7 @@
 import {equipmentStats} from '../systems/inventory.js';
 import {escapeHTML} from './shared.js';
 import {TECHNIQUES} from '../data/techniques.js';
+import {HERBALIST_NAME} from '../systems/encounters.js';
 
 export function showBattle({getSave,actions,activate,onExit},endResult=null){
  const save=getSave(),battle=save?.battle;activate('map');
@@ -8,7 +9,7 @@ export function showBattle({getSave,actions,activate,onExit},endResult=null){
  if(!battle){
   const result=endResult||save?.lastBattle;
   const encounter=save.encounterPending,hasHerb=save.inventory.some(entry=>entry.itemId==='healing-herb');
-  content.innerHTML=`<section class="xg-map-sheet xg-battle-sheet"><h2>战斗结束</h2><p>${result?.outcome==='victory'?'击败对手':result?.outcome==='defeat'?'你败下阵来':'已脱离战斗'}</p><div class="xg-card">${(result?.log||[]).map(line=>`<p>${escapeHTML(line)}</p>`).join('')}</div>${encounter?`<div class="xg-card"><h3>山道相逢</h3><p>一位受伤的路人请你给他一株回血草。</p><p>已获玉简 ${save.herbalistFragments||0}/3</p><div class="xg-feature-row"><button type="button" data-encounter-give ${hasHerb?'':'disabled'}>交出一株回血草</button><button type="button" data-encounter-leave>离开</button></div></div>`:'<button type="button" data-return>返回丰原镇'}<p role="status" aria-live="polite"></p></section>`;
+  content.innerHTML=`<section class="xg-map-sheet xg-battle-sheet"><h2>战斗结束</h2><p>${result?.outcome==='victory'?'击败对手':result?.outcome==='defeat'?'你败下阵来':'已脱离战斗'}</p><div class="xg-card">${(result?.log||[]).map(line=>`<p>${escapeHTML(line)}</p>`).join('')}</div>${encounter?`<div class="xg-card"><h3>${escapeHTML(HERBALIST_NAME)}</h3><p>他身上带伤，想向你讨一株回血草。</p><p>已获玉简 ${save.herbalistFragments||0}/3</p><div class="xg-feature-row"><button type="button" data-encounter-give ${hasHerb?'':'disabled'}>交出一株回血草</button><button type="button" data-encounter-leave>离开</button></div></div>`:'<button type="button" data-return>返回丰原镇'}<p role="status" aria-live="polite"></p></section>`;
   content.querySelector('[data-return]')?.addEventListener('click',onExit);
   content.querySelectorAll('[data-encounter-give],[data-encounter-leave]').forEach(button=>button.onclick=async()=>{const pending=save.encounterPending?.id;content.querySelectorAll('[data-encounter-give],[data-encounter-leave]').forEach(item=>item.disabled=true);try{const {result:message}=await actions.respondToHerbalist(pending,button.hasAttribute('data-encounter-give'));showBattle({getSave,actions,activate,onExit});content.querySelector('[role=status]').textContent=message}catch(error){content.querySelector('[role=status]').textContent=error.message;content.querySelector('[data-encounter-leave]').disabled=false;if(hasHerb)content.querySelector('[data-encounter-give]').disabled=false}});
   return;

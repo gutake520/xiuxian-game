@@ -5,7 +5,7 @@ import {DURABILITY_MAX,COMBAT_REWARD_XP} from '../data/balance.js';
 import {equipmentStats,awardItem} from './inventory.js';
 import {addCultivation,realmProgress} from '../data/realms.js';
 import {TECHNIQUES,hasActiveTechnique} from '../data/techniques.js';
-import {maybeMeetHerbalist} from './encounters.js';
+import {HERBALIST_NAME,maybeMeetHerbalist} from './encounters.js';
 
 export const round2=value=>Math.round((value+Number.EPSILON)*100)/100;
 const herbs=['healing-herb','spirit-herb','qi-herb'];
@@ -44,13 +44,13 @@ function resolveVictory(save,now,messages){
  if(monster.humanoid&&!battle.retaliation&&save.player.hp>0&&Math.random()<.3){
   beginBattle(save,monster.id,null,true);
   save.battle.log=[...messages.slice(-3),'你敢杀我兄弟？对方的同伴冲出，追战开始。'].slice(-10);
- }else if(maybeMeetHerbalist(save,battle.id))messages.push('归途中遇见一位受伤的路人，向你讨一株回血草。');
+ }else if(maybeMeetHerbalist(save,battle.id))messages.push(`归途中遇见受伤的${HERBALIST_NAME}，他向你讨一株回血草。`);
  save.lastBattle.log=[...messages];
  return save.lastBattle;
 }
 export function beginBattle(save,id,pet=null,retaliation=false){
  if(save.battle)throw new Error('尚有未结束的战斗。');
- if(save.encounterPending)throw new Error('请先回应途中遇见的人。');
+ if(save.encounterPending)throw new Error(`请先回应${HERBALIST_NAME}。`);
  if(save.player.cultivation< -100)throw new Error('请先去修炼。');
  const tier=realmProgress(save.player).index;if(tier<0)throw new Error('当前境界暂未开放此处战斗。');
  if(save.player.hp<=0)throw new Error('生命不足，无法迎战。');
