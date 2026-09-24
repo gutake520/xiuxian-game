@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {beginBattle,playRound} from '../systems/combat.js';
-import {equipmentStats} from '../systems/inventory.js';
+import {equipmentStats,sellExtra} from '../systems/inventory.js';
 import {applyRealmHp} from '../data/realms.js';
 import {purchase} from '../systems/inventory.js';
 import {startUpgrade,completeLearning} from '../systems/techniques.js';
@@ -68,4 +68,23 @@ test('upgraded theft and gamble use two MP and upgraded combat values',()=>{
   const t=battle(make());t.techniques.upgraded=['gamble-strike'];t.techniques.mastered.push('gamble-strike');t.techniques.combat=['gamble-strike'];
   assert.equal(playRound(t,'gamble-strike').dealt,4.8);assert.equal(t.player.mp,8);
  }finally{Math.random=original}
+});
+test('repeated manuals stack, sell at ten stones, and middle manual costs thirty in sect',()=>{
+ const s=make();s.player.spiritStones=100;purchase(s,'wait-manual',true);assert.equal(s.player.spiritStones,70);
+ purchase(s,'wait-manual');assert.equal(s.player.spiritStones,30);
+ const stack=s.inventory.find(entry=>entry.itemId==='wait-manual');assert.equal(stack.quantity,2);
+ sellExtra(s,stack.uid);assert.equal(s.player.spiritStones,40);assert.equal(stack.quantity,1);
+});
+test('delayed sting damage and prepared strike survive save reload',()=>{
+ const s=battle(make());s.techniques.mastered.push('sting','wait-then-strike');s.techniques.combat=['sting','wait-then-strike'];s.player.combat.defense=20;
+ const sting=playRound(s,'sting');assert.equal(sting.dealt,2);assert.equal(s.battle.stingRound,2);
+ let resumed=JSON.parse(JSON.stringify(s));playRound(resumed,'wait-then-strike');assert.equal(resumed.battle.pendingStrike,true);assert.equal(resumed.battle.hp,96);
+ resumed=JSON.parse(JSON.stringify(resumed));assert.throws(()=>playRound(resumed,'skip'),/蓄势攻击/);
+ const random=Math.random;try{Math.random=()=>.99;const strike=playRound(resumed,'attack');assert.equal(strike.dealt,7.5);assert.equal(resumed.battle.pendingStrike,false)}finally{Math.random=random}
+});
+test('prepared strike scales with spirit-root count',()=>{
+ for(const [root,multiplier] of [['金灵根',2.5],['金木双灵根',2.4],['金木水火土五灵根',2.3]]){
+  const s=battle(make());s.player.spiritRoot=root;s.player.combat.defense=20;s.techniques.mastered.push('wait-then-strike');s.techniques.combat=['wait-then-strike'];
+  const random=Math.random;try{Math.random=()=>.99;playRound(s,'wait-then-strike');assert.equal(s.player.mp,7);assert.equal(playRound(s,'attack').dealt,Math.round(3*multiplier*100)/100);assert.equal(s.player.mp,7)}finally{Math.random=random}
+ }
 });

@@ -8,6 +8,8 @@ export const TECHNIQUES={
  'empty-hands':{id:'empty-hands',name:'妙手空空',rank:'普通',type:'combat',cooldown:2,description:'造成固定 2 点伤害；敌人存活时，有 20% 概率额外抽取最多 2 点生命并回复自身。冷却两轮。'},
  'catch-breath':{id:'catch-breath',name:'回一口气',rank:'普通',type:'combat',mpCost:0,description:'不耗法力，占一次行动，造成固定 1 点伤害并恢复 1 点法力。'},
  'charged-strike':{id:'charged-strike',name:'蓄势一击',rank:'普通',type:'combat',mpCost:1,cooldown:4,description:'消耗 1 点法力，单灵根攻击倍率 1.3，双／三灵根 1.2，四／五灵根 1.1；冷却四轮。'},
+ 'sting':{id:'sting',name:'蛰一下',rank:'普通',type:'combat',mpCost:2,cooldown:3,description:'造成固定 2 点伤害，下一轮敌人再失去 2 点生命；冷却三轮。'},
+ 'wait-then-strike':{id:'wait-then-strike',name:'等等再来',rank:'中级',type:'combat',mpCost:3,cooldown:3,description:'本轮蓄势，下一轮自动攻击并占用行动。单灵根伤害倍率 2.5，双／三灵根 2.4，四／五灵根 2.3；冷却三轮。'},
  'only-once':{id:'only-once',name:'只此一次！',rank:'普通',type:'combat',mpCost:2,description:'每场战斗限用一次，占一次行动；本场战斗暴击率增加 15 个百分点。'},
  'divine-pharmacopoeia':{id:'divine-pharmacopoeia',name:'神药谱',rank:'特殊',type:'craft',sect:'丹霞谷',roots:['火','木'],description:'丹霞谷炼丹传承。参悟五阶数阵后，便可用药草炼制丹药。'},
  'mending':{id:'mending',name:'缝缝补补又三年',rank:'特殊',type:'craft',sect:'天工阁',roots:['金','火'],description:'学会后解锁自行修补装备；修补材料规则待定。'},
