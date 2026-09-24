@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {syncAchievements,claimAchievement} from '../systems/achievements.js';
 import {leaveSect,assertCanJoinSect,sectExitPrice,SECT_REJOIN_DELAY} from '../systems/sect-membership.js';
 import {hasActiveTechnique} from '../data/techniques.js';
+import {libraryElderName} from '../systems/sect-library.js';
 const make=()=>({player:{sect:'凌霄剑宗',realm:'炼气四层',spiritRoot:'金灵根',spiritStones:400},techniques:{main:'basic-qi-guide',mastered:['one-sword','strengthen-attack'],combat:['one-sword','strengthen-attack']} });
 test('achievement rewards are once per save and reached realms backfill',()=>{
  const s=make();syncAchievements(s);claimAchievement(s,'first-sect');assert.equal(s.player.spiritStones,405);assert.throws(()=>claimAchievement(s,'first-sect'));
@@ -19,4 +20,11 @@ test('leaving pays exact tier fee, disables inheritance and blocks reentry for 7
 test('insufficient funds and undefined future exit fees leave state untouched',()=>{
  const s=make();s.player.spiritStones=99;const before=JSON.stringify(s);assert.throws(()=>leaveSect(s));assert.equal(JSON.stringify(s),before);
  s.player.realm='金丹一层';assert.equal(sectExitPrice(s.player),null);assert.throws(()=>leaveSect(s),/尚未开放/);
+});
+test('leaving cancels unfinished library exam while keeping visits and earned fragments',()=>{
+ const s=make();s.libraryExam={id:'old-exam',elder:'裴寒声',index:1,questions:[]};
+ s.libraryVisits={day:'2026-09-24',count:2};s.libraryFragments=1;
+ leaveSect(s,1000);
+ assert.equal(s.libraryExam,null);assert.deepEqual(s.libraryVisits,{day:'2026-09-24',count:2});assert.equal(s.libraryFragments,1);
+ s.player.sect='青岚谷';assert.equal(libraryElderName(s),'沈听溪');
 });

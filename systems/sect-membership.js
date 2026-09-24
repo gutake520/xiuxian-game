@@ -21,6 +21,7 @@ export function leaveSect(save,now=Date.now()){
  syncAchievements(save);
  save.player.spiritStones=Math.round((save.player.spiritStones-price)*100)/100;
  save.player.sect='无门无派';save.sectRejoinAt=now+SECT_REJOIN_DELAY;
+ save.libraryExam=null;
  save.techniques.combat=(save.techniques.combat||[]).filter(id=>!TECHNIQUES[id]?.sect);
  if(TECHNIQUES[save.techniques.main]?.sect)save.techniques.main=null;
  save.sectProgress=null;
