@@ -62,7 +62,8 @@ function resolveVictory(save,now,messages){
  if(battle.kind==='wounded-boss'){
   const result=finish(save,'victory',{rewards:[],xp:0,kind:'wounded-boss'});
   save.bossLine.phase='defeated';save.bossLine.insight=true;
-  messages.push('仇人倒下，旧日血仇终于有了了断。你获得突破所需的感悟。');
+  messages.push('陆仁嘉倒在山石旁，低声道：「你还活着的消息，我养伤时就已经上报了。其他人会来解决你的。」');
+  messages.push('陆仁嘉死了。威胁尚未结束；你获得突破所需的感悟。');
   result.log=[...messages];return result;
  }
  if(battle.kind==='sect-tournament'){
@@ -107,7 +108,7 @@ export function beginBattle(save,id,pet=null,retaliation=false){
  if(id==='wounded-boss'){
   if(save.bossLine?.phase!=='wounded')throw new Error('这里没有可挑战的仇人。');
   const foe=bossAttributes(save,1.1),chosen=selectBattlePet(save,pet);
-  save.battle={id:crypto.randomUUID(),kind:'wounded-boss',monsterId:null,name:BOSS_NAME,maxHp:foe.maxHp,hp:foe.maxHp,attack:foe.attack,defense:foe.defense,speed:foe.speed,maxMp:foe.maxMp,mp:foe.maxMp,critRate:foe.critRate,dodgeRate:foe.dodgeRate,round:0,pet:chosen,petName:chosen?(beastCanFight(save,chosen)?beastName(save,chosen):'租借灵兽'):null,guard:false,bindRounds:[],arrayRound:0,talismansUsed:0,talismanRound:0,freeArrayUsed:false,criticalFocus:false,skillReady:{},log:['你在山中找到了负伤的仇人。旧怨未了，战斗开始。']};
+  save.battle={id:crypto.randomUUID(),kind:'wounded-boss',monsterId:null,name:BOSS_NAME,maxHp:foe.maxHp,hp:foe.maxHp,attack:foe.attack,defense:foe.defense,speed:foe.speed,maxMp:foe.maxMp,mp:foe.maxMp,critRate:foe.critRate,dodgeRate:foe.dodgeRate,round:0,pet:chosen,petName:chosen?(beastCanFight(save,chosen)?beastName(save,chosen):'租借灵兽'):null,guard:false,bindRounds:[],arrayRound:0,talismansUsed:0,talismanRound:0,freeArrayUsed:false,criticalFocus:false,skillReady:{},log:[`你在山中找到了负伤的${BOSS_NAME}。旧怨未了，战斗开始。`]};
   return save.battle;
  }
  if(FOXES[id]){
