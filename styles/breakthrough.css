@@ -11,4 +11,7 @@
 #xg-panel .xg-breakthrough-tile circle{fill:currentColor}
 #xg-panel .xg-breakthrough-tile span{position:absolute;inset:0;display:grid;place-items:center;color:#eee1c8!important;text-shadow:0 1px 3px #07130d;pointer-events:none}
 #xg-panel .xg-breakthrough-footer button{white-space:nowrap}
+#xg-panel .xg-foundation-reward p{line-height:1.8}
+#xg-panel .xg-foundation-aptitudes{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin-top:12px}
+#xg-panel .xg-foundation-aptitudes button{min-width:0;white-space:normal}
 @media(max-width:380px){#xg-panel .xg-breakthrough-grid{gap:4px}#xg-panel .xg-breakthrough-tile span{font-size:11px}}

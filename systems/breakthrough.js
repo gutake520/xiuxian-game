@@ -1,7 +1,14 @@
 // The nine connected tiles match the playable preview. Other tiles are dead ends.
 import {realmBattleBonus} from '../data/realms.js';
+import {rootCount} from '../data/technique-slots.js';
 import {localDay} from './cultivation.js';
 export const SPIRIT_ROUTE=[10,5,6,1,2,3,8,13,12];
+export const FOUNDATION_APTITUDES=['悟性','根骨','神识','魅力','福缘'];
+const round2=value=>Math.round((value+Number.EPSILON)*100)/100;
+export function foundationReward(player){
+ const count=rootCount(player);
+ return count===1?{hp:10,mp:2,attack:1.5,defense:1,speed:2,critRate:3,dodgeRate:2}:count<=3?{hp:9,mp:2,attack:1.2,defense:.9,speed:2,critRate:2,dodgeRate:2}:{hp:8,mp:2,attack:1,defense:.8,speed:2,critRate:1,dodgeRate:2};
+}
 const directions=[[-1,0],[0,1],[1,0],[0,-1]];
 const direction=(from,to)=>directions.findIndex(([r,c])=>Math.floor(to/5)-Math.floor(from/5)===r&&to%5-from%5===c);
 export const breakthroughHints=player=>Number(player.stats?.悟性)>=10?2:Number(player.stats?.悟性)>=5?1:0;
@@ -49,12 +56,27 @@ function sessionFor(save,id){
 
 function completeIfConnected(save){
  if(!flowingTiles(save.breakthrough).has(12))return false;
- save.player.foundationBonus=realmBattleBonus(save.player);
- save.player.realm='筑基一层';
- save.player.cultivation=0;
- save.player.cultivationRequired=null;
+ const player=save.player,reward=foundationReward(player),count=rootCount(player);
+ player.foundationBonus=realmBattleBonus(player);
+ player.combat??={hp:player.hp??20,mp:player.mp??10};
+ for(const [key,value] of Object.entries(reward))player.combat[key]=round2((Number(player.combat[key])||0)+value);
+ if(Number.isFinite(player.hp))player.hp=round2(player.hp+reward.hp);
+ if(Number.isFinite(player.mp))player.mp=round2(player.mp+reward.mp);
+ if(count===2||count===3){save.techniques??={mastered:[],combat:[]};save.techniques.mastered??=[];if(!save.techniques.mastered.includes('self-as-self'))save.techniques.mastered.push('self-as-self')}
+ player.realm='筑基一层';
+ player.cultivation=0;
+ player.cultivationRequired=null;
+ save.foundationAptitudePending=true;
  save.breakthrough=null;
  return true;
+}
+
+export function chooseFoundationAptitude(save,key){
+ if(save.player.realm!=='筑基一层'||save.foundationAptitudePending!==true)throw new Error('没有待分配的筑基资质。');
+ if(!FOUNDATION_APTITUDES.includes(key))throw new Error('请选择一项资质。');
+ save.player.stats??={};save.player.stats[key]=(Number(save.player.stats[key])||0)+1;
+ save.foundationAptitudePending=false;
+ return `${key} +1，筑基奖励已领取。`;
 }
 
 export function rotateMeridian(save,id,index){

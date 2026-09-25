@@ -136,10 +136,10 @@ function renderCharacter(){
  <div class="xg-card"><h3>装备</h3><div class="xg-equipment-grid">${[['武器','weapon'],['防具','armor'],['鞋子','shoes'],['生命／法力饰品','accessoryVital'],['暴击／闪避饰品','accessoryFate']].map(([label,slot])=>cell(label,escapeHTML(equipmentName(currentSave,slot)))).join('')}</div>
  <h4>修炼功法</h4><div class="xg-method-row"><span>主修</span><span>${escapeHTML(TECHNIQUES[currentSave.techniques?.main]?.name||'未装备')}</span></div>
  <button type="button" id="xg-methods" class="xg-methods-button">查看功法典籍</button><h4>战斗功法</h4><p class="xg-empty-note">${(currentSave.techniques?.combat||[]).map(id=>escapeHTML(TECHNIQUES[id]?.name||'')).join(' · ')||'尚未装备战斗功法'} · 最多 ${combatSlots(p)} 门</p></div>
- <div class="xg-character-actions"><button type="button" id="xg-sect">门派</button><button type="button" id="xg-cultivate">修炼</button><button type="button" id="xg-breakthrough" ${breakthroughReady(currentSave)?'':'disabled'}>突破<small>${breakthroughReady(currentSave)?currentSave.breakthrough?'继续灵脉':'筑基':'需十层满修为与感悟'}</small></button></div>
+ <div class="xg-character-actions"><button type="button" id="xg-sect">门派</button><button type="button" id="xg-cultivate">修炼</button><button type="button" id="xg-breakthrough" ${breakthroughReady(currentSave)||currentSave.foundationAptitudePending?'':'disabled'}>${currentSave.foundationAptitudePending?'选资质':'突破'}<small>${currentSave.foundationAptitudePending?'筑基奖励待领取':breakthroughReady(currentSave)?currentSave.breakthrough?'继续灵脉':'筑基':'需十层满修为与感悟'}</small></button></div>
  <p id="xg-character-message" role="status" aria-live="polite"></p></section>`;
  document.getElementById('xg-sect').onclick=showSect;document.getElementById('xg-cultivate').onclick=()=>runAction(async()=>{await game.refresh();featureUI.cultivation()});document.getElementById('xg-methods').onclick=featureUI.library;
- document.getElementById('xg-breakthrough').onclick=()=>runAction(async()=>{await game.startBreakthrough();showBreakthrough({getSave:()=>currentSave,actions:game},()=>{document.getElementById('xg-feature-sheet')?.remove();renderCharacter()})});
+ document.getElementById('xg-breakthrough').onclick=()=>runAction(async()=>{if(!currentSave.foundationAptitudePending)await game.startBreakthrough();showBreakthrough({getSave:()=>currentSave,actions:game},()=>{document.getElementById('xg-feature-sheet')?.remove();renderCharacter()})});
 }
 const SECTS=[
  {id:'tiangong',name:'天工阁',roots:['金','火'],condition:'金或火灵根',feature:'炼器与装备打造，提升装备耐久。'},
