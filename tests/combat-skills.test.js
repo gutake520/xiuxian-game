@@ -5,7 +5,7 @@ import {equipmentStats,sellExtra,addItem} from '../systems/inventory.js';
 import {applyRealmHp} from '../data/realms.js';
 import {QI_MONSTERS} from '../data/locations.js';
 import {purchase} from '../systems/inventory.js';
-import {startUpgrade,completeLearning} from '../systems/techniques.js';
+import {startUpgrade,completeLearning,toggleCombatTechnique} from '../systems/techniques.js';
 function make(speed=5){return {player:{realm:'炼气四层',sect:'镇岳宗',spiritRoot:'土灵根',stats:{根骨:8},cultivation:0,spiritStones:0,hp:20,mp:10,combat:{hp:30,mp:10,attack:3,defense:3,speed,critRate:0,dodgeRate:0}},inventory:[],equipment:{},techniques:{mastered:['only-one','empty-hands','resentment'],combat:['only-one','empty-hands','resentment']},bagCapacity:20,realmHpBonusApplied:3}}
 function battle(s,id='fierce'){beginBattle(s,id);s.battle.hp=100;s.battle.attack=5;return s}
 test('first strike caps damage while reflection uses pre-defense damage',()=>{const s=battle(make());const r=playRound(s,'only-one');assert.equal(r.dealt,1);assert.equal(r.taken,1);assert.equal(s.battle.hp,98.5);const t=battle(make(0));assert.equal(playRound(t,'only-one').taken,2);assert.equal(t.battle.hp,98.5)});
@@ -44,6 +44,19 @@ test('筑基双三灵根专属功法耗 2 蓝、按 1.7 倍出手并冷却四轮
  }finally{Math.random=random}
  const single=make();single.player.realm='筑基一层';single.techniques.mastered=['self-as-self'];single.techniques.combat=['self-as-self'];beginBattle(single,'fierce');
  assert.throws(()=>playRound(single,'self-as-self'),/尚未装备/);
+});
+test('我即我在筑基二、三层仍能装备并施放，炼气与单灵根不能使用',()=>{
+ for(const realm of ['筑基二层','筑基三层']){
+  const s=make();s.player.realm=realm;s.player.spiritRoot='金木双灵根';s.player.combat.defense=20;
+  s.techniques.mastered=['self-as-self'];s.techniques.combat=[];
+  toggleCombatTechnique(s,'self-as-self');
+  const random=Math.random;
+  try{Math.random=()=>.99;beginBattle(s,'fierce');s.battle.hp=100;assert.equal(playRound(s,'self-as-self').dealt,5.1)}finally{Math.random=random}
+ }
+ const qi=make();qi.player.realm='炼气十层';qi.player.spiritRoot='金木双灵根';qi.techniques.mastered=['self-as-self'];
+ assert.throws(()=>toggleCombatTechnique(qi,'self-as-self'),/须先学会/);
+ const single=make();single.player.realm='筑基二层';single.techniques.mastered=['self-as-self'];
+ assert.throws(()=>toggleCombatTechnique(single,'self-as-self'),/须先学会/);
 });
 test('later qi stages grant root-dependent combat stats and old saves gain one MP',()=>{
  const single=make(),many=make();single.player.spiritRoot='金灵根';many.player.spiritRoot='金木水火土五灵根';
