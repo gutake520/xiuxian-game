@@ -13,6 +13,12 @@ import {ensureBossLine} from '../systems/boss-line.js';
 export function migrateSave(save,now=Date.now()){
  if(!save?.player)throw new Error('存档缺少人物信息。');
  const p=save.player;
+ // Earlier builds used an extra “炼气圆满” realm with zero cultivation.
+ // Preserve any cultivation debt while converting that cleared tier to 1000 / 1000.
+ if(p.realm==='炼气圆满'){
+  p.realm='炼气十层';
+  p.cultivation=Math.min(1000,Math.max(0,1000+Math.min(0,Number(p.cultivation)||0)));
+ }
  let initial=null;
  if(p.spiritRoot){
   // Some older saves included the category prefix in the root's display name.
@@ -60,5 +66,5 @@ export function migrateSave(save,now=Date.now()){
  applyRealmHp(save);
  ensureBossLine(save);
  syncAchievements(save);
- save.version=6;return save;
+ save.version=7;return save;
 }

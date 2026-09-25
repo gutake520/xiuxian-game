@@ -15,6 +15,8 @@ import {showBattle} from './ui/combat.js';
 import {showSectLibrary} from './ui/sect-library.js';
 import {libraryVisits} from './systems/sect-library.js';
 import {showMidAutumn} from './ui/mid-autumn.js';
+import {showBreakthrough} from './ui/breakthrough.js';
+import {breakthroughReady} from './systems/breakthrough.js';
 const POS_KEY='xiuxian-game-fab-position', LAST_SLOT_KEY='xiuxian-game-last-slot';
 const rollKey=slot=>`xiuxian-game-pending-roots-${slot}`;
 const DB_NAME='xiuxian-game'; const DB_VERSION=1; const SLOTS=['slot1','slot2','slot3','slot4','slot5'];
@@ -58,7 +60,7 @@ const STAT_NAMES=['悟性','根骨','福缘','神识','魅力'], FREE_POINTS=30,
 function emptyAllocation(){return{悟性:0,根骨:0,福缘:0,神识:0,魅力:0}}
 function finalStats(root,alloc){const out={};for(const k of STAT_NAMES)out[k]=(alloc[k]||0)+(root.bonus[k]||0);return out}
 function rootDesc(root){const b=STAT_NAMES.filter(k=>root.bonus[k]).map(k=>k+(root.bonus[k]>0?'+':'')+root.bonus[k]).join(' · ');return root.name+'｜'+b}
-function newSave(name,gender,root,alloc){const stats=finalStats(root,alloc),combat=initialCombat(root.name);return{slot:currentSlot,version:6,createdAt:Date.now(),updatedAt:Date.now(),player:{name,gender,realm:'炼气一层',sect:'无门无派',cultivation:0,spirit:combat.mp,hp:combat.hp,mp:combat.mp,mind:60,combat,spiritRoot:root.name,rootType:root.type,rootDesc:rootDesc(root),aptitude:root.bonus,stats},story:{chapter:1,revenge:true,homeDestroyed:true},inventory:[],events:[],actionRound:0,world:{location:'荒山古道',day:1},flags:{}}}
+function newSave(name,gender,root,alloc){const stats=finalStats(root,alloc),combat=initialCombat(root.name);return{slot:currentSlot,version:7,createdAt:Date.now(),updatedAt:Date.now(),player:{name,gender,realm:'炼气一层',sect:'无门无派',cultivation:0,spirit:combat.mp,hp:combat.hp,mp:combat.mp,mind:60,combat,spiritRoot:root.name,rootType:root.type,rootDesc:rootDesc(root),aptitude:root.bonus,stats},story:{chapter:1,revenge:true,homeDestroyed:true},inventory:[],events:[],actionRound:0,world:{location:'荒山古道',day:1},flags:{}}}
 async function saveNow(){if(currentSave)await game.refresh()}
 // Only narrative history is capped. Inventory, quests and flags remain untouched.
 const EVENT_ROUND_LIMIT=10;
@@ -134,9 +136,10 @@ function renderCharacter(){
  <div class="xg-card"><h3>装备</h3><div class="xg-equipment-grid">${[['武器','weapon'],['防具','armor'],['鞋子','shoes'],['生命／法力饰品','accessoryVital'],['暴击／闪避饰品','accessoryFate']].map(([label,slot])=>cell(label,escapeHTML(equipmentName(currentSave,slot)))).join('')}</div>
  <h4>修炼功法</h4><div class="xg-method-row"><span>主修</span><span>${escapeHTML(TECHNIQUES[currentSave.techniques?.main]?.name||'未装备')}</span></div>
  <button type="button" id="xg-methods" class="xg-methods-button">查看功法典籍</button><h4>战斗功法</h4><p class="xg-empty-note">${(currentSave.techniques?.combat||[]).map(id=>escapeHTML(TECHNIQUES[id]?.name||'')).join(' · ')||'尚未装备战斗功法'} · 最多 ${combatSlots(p)} 门</p></div>
- <div class="xg-character-actions"><button type="button" id="xg-sect">门派</button><button type="button" id="xg-cultivate">修炼</button><button type="button" disabled>突破<small>尚未开放</small></button></div>
+ <div class="xg-character-actions"><button type="button" id="xg-sect">门派</button><button type="button" id="xg-cultivate">修炼</button><button type="button" id="xg-breakthrough" ${breakthroughReady(currentSave)?'':'disabled'}>突破<small>${breakthroughReady(currentSave)?currentSave.breakthrough?'继续灵脉':'筑基':'需十层满修为与感悟'}</small></button></div>
  <p id="xg-character-message" role="status" aria-live="polite"></p></section>`;
  document.getElementById('xg-sect').onclick=showSect;document.getElementById('xg-cultivate').onclick=()=>runAction(async()=>{await game.refresh();featureUI.cultivation()});document.getElementById('xg-methods').onclick=featureUI.library;
+ document.getElementById('xg-breakthrough').onclick=()=>runAction(async()=>{await game.startBreakthrough();showBreakthrough({getSave:()=>currentSave,actions:game},()=>{document.getElementById('xg-feature-sheet')?.remove();renderCharacter()})});
 }
 const SECTS=[
  {id:'tiangong',name:'天工阁',roots:['金','火'],condition:'金或火灵根',feature:'炼器与装备打造，提升装备耐久。'},

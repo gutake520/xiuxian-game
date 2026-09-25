@@ -12,6 +12,6 @@ test('each qi practice entry costs three stones, including a new attempt after a
 
 test('insufficient stones or unopened realms cannot start or charge practice',()=>{
  const s=save(2);assert.throws(()=>beginPracticeSession(s),/3 灵石/);assert.equal(s.player.spiritStones,2);assert.equal(s.practiceSession,undefined);
- s.player.spiritStones=10;s.player.realm='炼气圆满';assert.throws(()=>beginPracticeSession(s),/暂不开放/);assert.equal(s.player.spiritStones,10);
+ s.player.spiritStones=10;s.player.realm='炼气十层';s.player.cultivation=1000;assert.throws(()=>beginPracticeSession(s),/暂不开放/);assert.equal(s.player.spiritStones,10);
  s.player.realm='筑基一层';assert.equal(practiceEntryFee(s.player),null);assert.throws(()=>beginPracticeSession(s),/暂不开放/);assert.equal(s.player.spiritStones,10);
 });

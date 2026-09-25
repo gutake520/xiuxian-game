@@ -1,0 +1,14 @@
+#xg-panel .xg-breakthrough{padding:5px 0;color:#eee1c8}
+#xg-panel .xg-breakthrough>small{color:#efcb86!important}
+#xg-panel .xg-breakthrough>p{margin:10px 0 18px;color:#b2bdad!important}
+#xg-panel .xg-breakthrough-meta,#xg-panel .xg-breakthrough-footer{display:flex;align-items:center;justify-content:space-between;gap:12px;color:#c6d0c1;font-size:13px}
+#xg-panel .xg-breakthrough-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px;margin:12px 0 17px}
+#xg-panel .xg-feature .xg-breakthrough-tile{position:relative;min-width:0;min-height:0;aspect-ratio:1;padding:0;border:1px solid #43624e;border-radius:9px;background:#19372e;color:#789b82!important;touch-action:manipulation}
+#xg-panel .xg-feature .xg-breakthrough-tile[data-lit="true"]{background:#304c38;border-color:#c6a66f;color:#efcb86!important}
+#xg-panel .xg-feature .xg-breakthrough-tile[data-end="true"]{border-color:#d3a96a}
+#xg-panel .xg-breakthrough-tile svg{width:100%;height:100%;display:block}
+#xg-panel .xg-breakthrough-tile path{stroke:currentColor;stroke-width:7;stroke-linecap:round;fill:none}
+#xg-panel .xg-breakthrough-tile circle{fill:currentColor}
+#xg-panel .xg-breakthrough-tile span{position:absolute;inset:0;display:grid;place-items:center;color:#eee1c8!important;text-shadow:0 1px 3px #07130d;pointer-events:none}
+#xg-panel .xg-breakthrough-footer button{white-space:nowrap}
+@media(max-width:380px){#xg-panel .xg-breakthrough-grid{gap:4px}#xg-panel .xg-breakthrough-tile span{font-size:11px}}
