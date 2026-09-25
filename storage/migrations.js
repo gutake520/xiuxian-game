@@ -13,6 +13,10 @@ import {ensureBossLine} from '../systems/boss-line.js';
 import {ensureSpiritBeasts} from '../systems/pets.js';
 export function migrateSave(save,now=Date.now()){
  if(!save?.player)throw new Error('存档缺少人物信息。');
+ if(!(Number.isFinite(save.createdAt)&&save.createdAt>0)){
+  save.world??={};
+  if(!(Number.isFinite(save.world.dayAnchorAt)&&save.world.dayAnchorAt>0))save.world.dayAnchorAt=Number.isFinite(save.updatedAt)&&save.updatedAt>0?save.updatedAt:now;
+ }
  const p=save.player;
  // Earlier builds used an extra “炼气圆满” realm with zero cultivation.
  // Preserve any cultivation debt while converting that cleared tier to 1000 / 1000.
