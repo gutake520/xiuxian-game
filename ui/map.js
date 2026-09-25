@@ -13,7 +13,7 @@ import {repairPrice,repairEquipment,healAtSect,startMeditation,healingService,ME
 import {escapeHTML,format} from './shared.js';
 import {BOSS_NAME,bossAttributes} from '../systems/boss-line.js';
 import {FOXES} from '../data/foxes.js';
-import {foxState,giftableEntries,giveFoxGift,seenFoxScene,answerFox,leaveFox,COMPANION_BREAKUP_FEE} from '../systems/foxes.js';
+import {foxState,giftableEntries,giveFoxGift,seenFoxScene,answerFox,leaveFox,companionBreakupFee} from '../systems/foxes.js';
 
 export function createMapUI({getSave,activate,actions,onSectBattleExit}){
  const content=()=>document.getElementById('xg-content');
@@ -197,7 +197,7 @@ export function createMapUI({getSave,activate,actions,onSectBattleExit}){
     content().querySelectorAll('[data-answer]').forEach(button=>button.onclick=async()=>{const choice=button.dataset.answer;content().querySelectorAll('[data-answer]').forEach(b=>b.disabled=true);try{const {result}=await actions.mutate(s=>answerFox(s,peak.id,choice),{message:choice==='accept'?`${fox.name}成为你的道侣。`:undefined});if(choice==='later')renderFoxMenu();else showText(result,()=>choice==='accept'?renderFoxMenu():renderMonsters)}catch(error){content().querySelector('[role=status]').textContent=error.message;content().querySelectorAll('[data-answer]').forEach(b=>b.disabled=false)}});
    });
    content().querySelector('[data-fox-leave]')?.addEventListener('click',()=>{
-    content().innerHTML=`<section class="xg-map-sheet">${heading('解除道侣','请再次确认')}<div class="xg-card"><p>解除与${fox.name}的道侣关系，需支付 ${COMPANION_BREAKUP_FEE} 灵石；此后三天不能结新道侣。</p><button type="button" data-leave-confirm>确认解除</button><button type="button" data-leave-cancel>返回</button></div><p role="status"></p></section>`;
+    content().innerHTML=`<section class="xg-map-sheet">${heading('解除道侣','请再次确认')}<div class="xg-card"><p>解除与${fox.name}的道侣关系，需支付 ${companionBreakupFee(getSave().player)??'待定'} 灵石；此后三天不能结新道侣。</p><button type="button" data-leave-confirm>确认解除</button><button type="button" data-leave-cancel>返回</button></div><p role="status"></p></section>`;
     content().querySelector('[data-leave-cancel]').onclick=renderFoxMenu;
     content().querySelector('[data-leave-confirm]').onclick=async event=>{event.currentTarget.disabled=true;try{const {result}=await actions.mutate(s=>leaveFox(s,peak.id),{message:message=>message});showText(result,renderMonsters)}catch(error){content().querySelector('[role=status]').textContent=error.message;event.currentTarget.disabled=false}};
    });

@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {migrateSave} from '../storage/migrations.js';
 import {addItem,equipItem} from '../systems/inventory.js';
 import {beginBattle,playRound} from '../systems/combat.js';
-import {giveFoxGift,foxState,giftableEntries,answerFox,leaveFox,seenFoxScene,COMPANION_COOLDOWN_MS} from '../systems/foxes.js';
+import {giveFoxGift,foxState,giftableEntries,answerFox,leaveFox,seenFoxScene,companionBreakupFee,COMPANION_COOLDOWN_MS} from '../systems/foxes.js';
 import {idleLimitMs} from '../systems/cultivation.js';
 import {drawBlackMarket} from '../systems/black-market.js';
 function save(){return migrateSave({player:{name:'测试',realm:'炼气七层',sect:'无门无派',spiritRoot:'金灵根',spiritStones:120,cultivation:0,hp:25,mp:10,combat:{hp:25,mp:10,attack:4,defense:.5,speed:5,critRate:0,dodgeRate:0}},inventory:[],equipment:{},techniques:{mastered:[],combat:[],puzzles:{},main:null},bagCapacity:20})}
@@ -24,9 +24,12 @@ test('partner cap extends idle by thirty minutes; separation costs stones and lo
  const s=save(),base=idleLimitMs(s);s.foxes={'spring-hill':{met:true,affinity:100,seen:[]},'pine-summit':{met:true,affinity:100,seen:[]}};
  seenFoxScene(s,'spring-hill',30);const time=Date.now();answerFox(s,'spring-hill','accept',time);assert.equal(idleLimitMs(s),base+1800000);
  assert.throws(()=>answerFox(s,'pine-summit','accept',time),/名额/);
- const stones=s.player.spiritStones;leaveFox(s,'spring-hill',time);assert.equal(s.player.spiritStones,stones-5);assert.equal(idleLimitMs(s),base);
+ const stones=s.player.spiritStones;leaveFox(s,'spring-hill',time);assert.equal(s.player.spiritStones,stones-100);assert.equal(idleLimitMs(s),base);
  assert.throws(()=>answerFox(s,'pine-summit','accept',time+COMPANION_COOLDOWN_MS-1),/三天/);
  answerFox(s,'pine-summit','accept',time+COMPANION_COOLDOWN_MS);assert.deepEqual(s.player.companions,['沈砚']);
+ s.player.realm='筑基一层';s.player.spiritStones=199;assert.equal(companionBreakupFee(s.player),200);
+ assert.throws(()=>leaveFox(s,'pine-summit',time+COMPANION_COOLDOWN_MS),/200/);
+ s.player.spiritStones=200;leaveFox(s,'pine-summit',time+COMPANION_COOLDOWN_MS);assert.equal(s.player.spiritStones,0);
 });
 test('black market gift pool stays at its previous aggregate chance',()=>{
  const original=Math.random;try{for(const [selection,id] of [[0,'calming-jade'],[.3,'fox-wine'],[.6,'bamboo-chess'],[.99,'camellia-seeds']]){const s=save();let n=0;Math.random=()=>++n===1?.52:selection;drawBlackMarket(s,1,'gift');assert.equal(s.inventory[0].itemId,id)}}finally{Math.random=original}

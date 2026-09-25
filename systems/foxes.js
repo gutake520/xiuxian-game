@@ -1,9 +1,15 @@
 import {FOXES} from '../data/foxes.js';
 import {ITEMS} from '../data/items.js';
 import {maxDurability} from './inventory.js';
+import {recordDailyGift} from './sect-progression.js';
 
 export const COMPANION_COOLDOWN_MS=3*24*60*60*1000;
-export const COMPANION_BREAKUP_FEE=5;
+export function companionBreakupFee(player){
+ const realm=String(player.realm||'');
+ if(realm.startsWith('炼气'))return 100;
+ if(realm.startsWith('筑基'))return 200;
+ return null;
+}
 const round2=n=>Math.round((n+Number.EPSILON)*100)/100;
 export function foxState(save,id){return save.foxes?.[id]||{affinity:0,seen:[]}}
 function ensureFox(save,id){if(!FOXES[id])throw new Error('山中无人。');save.foxes??={};return save.foxes[id]??={affinity:0,seen:[]}}
@@ -35,6 +41,7 @@ export function giveFoxGift(save,id,uid){
   }
  }
  state.affinity=Math.max(0,Math.min(100,(state.affinity||0)+amount));
+ if(!item||item.kind!=='equipment'||entry.durability>=maxDurability(entry))recordDailyGift(save);
  return `${reaction} 好感 ${amount>=0?'+':''}${amount} · ${state.affinity}/100。`;
 }
 export function seenFoxScene(save,id,level){const state=ensureFox(save,id);if(![30,60,90].includes(level)||state.affinity<level)throw new Error('尚未到这一步。');state.seen??=[];if(!state.seen.includes(level))state.seen.push(level)}
@@ -51,9 +58,11 @@ export function answerFox(save,id,answer,now=Date.now()){
 }
 export function leaveFox(save,id,now=Date.now()){
  const fox=FOXES[id],state=ensureFox(save,id);if(!fox||!state.bonded)throw new Error('当前并无道侣关系。');
- if(save.player.spiritStones<COMPANION_BREAKUP_FEE)throw new Error(`解除关系需支付 ${COMPANION_BREAKUP_FEE} 灵石。`);
- save.player.spiritStones=round2(save.player.spiritStones-COMPANION_BREAKUP_FEE);
+ const fee=companionBreakupFee(save.player);
+ if(fee===null)throw new Error('当前境界的解除道侣费用尚未设定。');
+ if(save.player.spiritStones<fee)throw new Error(`解除关系需支付 ${fee} 灵石。`);
+ save.player.spiritStones=round2(save.player.spiritStones-fee);
  save.player.companions=(save.player.companions||[]).filter(name=>(typeof name==='string'?name:name?.name)!==fox.name);
  save.companionRejoinAt=now+COMPANION_COOLDOWN_MS;state.bonded=false;
- return `与${fox.name}解除道侣关系，支付 ${COMPANION_BREAKUP_FEE} 灵石；三天内不能再结缘。`;
+ return `与${fox.name}解除道侣关系，支付 ${fee} 灵石；三天内不能再结缘。`;
 }

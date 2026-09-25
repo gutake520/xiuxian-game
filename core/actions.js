@@ -1,5 +1,5 @@
 import {syncAchievements} from '../systems/achievements.js';
-import {dailyTasks,recordDailyProgress} from '../systems/sect-progression.js';
+import {dailyTasks,recordDailyProgress,recordDailyPractice} from '../systems/sect-progression.js';
 import {updateSave,readSave,writeSave} from '../storage/saves.js';
 import {migrateSave} from '../storage/migrations.js';
 import {settleIdle,practiceReward,beginPracticeSession} from '../systems/cultivation.js';
@@ -46,6 +46,6 @@ export function createActions({getSave,setSave}){
   respondToHerbalist:(id,give)=>mutate(s=>resolveHerbalist(s,id,give),{allowBossStory:true,message:result=>result}),
   flipDivination:id=>mutate(s=>flipDivination(s,id),{allowDivination:true,allowBattle:true,message:result=>result.message}),
   startPractice:()=>mutate(s=>beginPracticeSession(s),{allowDebt:true}),
-  finishPractice:(id,bricks,slot)=>mutate(s=>{if(s.practiceSession?.id!==id)throw new Error('这一局已结算或已失效。');const amount=s.practiceSession.hasMain?practiceReward(bricks,s.player):(bricks>0?1:0);const earned=addCultivation(s,amount);s.practiceSession=null;return earned},{slot,allowDebt:true,message:earned=>`主动修炼结束，获得 ${earned} 修为。`})
+  finishPractice:(id,bricks,slot)=>mutate(s=>{if(s.practiceSession?.id!==id)throw new Error('这一局已结算或已失效。');const amount=s.practiceSession.hasMain?practiceReward(bricks,s.player):(bricks>0?1:0);const earned=addCultivation(s,amount);recordDailyPractice(s,earned);s.practiceSession=null;return earned},{slot,allowDebt:true,message:earned=>`主动修炼结束，获得 ${earned} 修为。`})
  };
 }
