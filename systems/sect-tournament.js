@@ -1,5 +1,6 @@
 import {equipmentStats,awardItem} from './inventory.js';
 import {UPGRADEABLE_TECHNIQUES,TECHNIQUES} from '../data/techniques.js';
+import {selectBattlePet} from './pets.js';
 
 export const SECT_TOURNAMENT_INTERVAL=3*24*60*60*1000;
 export const SECT_TOURNAMENT_NAMES={
@@ -40,11 +41,12 @@ export function claimSeniorReward(save,id,choice,now=Date.now()){
  return `${TECHNIQUES[choice].name}直接精进成功。`;
 }
 
-export function startSectTournament(save,now=Date.now()){
+export function startSectTournament(save,now=Date.now(),pet=null){
  if(!save.player.sect||save.player.sect==='无门无派')throw new Error('须先加入宗门。');
  if(save.battle)throw new Error('请先结束当前战斗。');
  if(save.seniorRewardPending)throw new Error('请先领取大比奖励。');
  if(save.encounterPending)throw new Error('请先回应途中遇见的人。');
+ if(save.divinationPending||save.bossLine?.phase==='ambush'||save.bossLine?.rescuePending)throw new Error('请先走完当前事件。');
  if(save.player.hp<=0)throw new Error('生命不足，无法参赛。');
  if((save.sectTournamentNextAt||0)>now)throw new Error('三日之期未到，暂不能再次参赛。');
  const roster=SECT_TOURNAMENT_NAMES[save.player.sect];
@@ -52,7 +54,8 @@ export function startSectTournament(save,now=Date.now()){
  const stats=equipmentStats(save),gender=Math.random()<.5?'male':'female';
  const names=roster[gender],name=names[Math.floor(Math.random()*names.length)];
  const scaled=value=>round2(value*1.1);
- save.battle={id:crypto.randomUUID(),kind:'sect-tournament',monsterId:null,name,maxHp:scaled(stats.maxHp),hp:scaled(stats.maxHp),attack:scaled(stats.attack),defense:scaled(stats.defense),speed:stats.speed,maxMp:scaled(stats.maxMp),mp:scaled(stats.maxMp),critRate:scaled(stats.critRate),dodgeRate:scaled(stats.dodgeRate),round:0,pet:null,retaliation:false,guard:false,bindRounds:[],arrayRound:0,talismansUsed:0,talismanRound:0,freeArrayUsed:false,criticalFocus:false,skillReady:{},log:[`${name}上场与你切磋，你先出手。`]};
+ const chosen=selectBattlePet(save,pet);
+ save.battle={id:crypto.randomUUID(),kind:'sect-tournament',monsterId:null,name,maxHp:scaled(stats.maxHp),hp:scaled(stats.maxHp),attack:scaled(stats.attack),defense:scaled(stats.defense),speed:stats.speed,maxMp:scaled(stats.maxMp),mp:scaled(stats.maxMp),critRate:scaled(stats.critRate),dodgeRate:scaled(stats.dodgeRate),round:0,pet:chosen,retaliation:false,guard:false,bindRounds:[],arrayRound:0,talismansUsed:0,talismanRound:0,freeArrayUsed:false,criticalFocus:false,skillReady:{},log:[`${name}上场与你切磋，你先出手。`]};
  save.sectTournamentNextAt=now+SECT_TOURNAMENT_INTERVAL;
  return save.battle;
 }
