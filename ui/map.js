@@ -170,7 +170,7 @@ export function createMapUI({getSave,activate,actions,onSectBattleExit}){
  function renderWoundedBoss(){
   const foe=bossAttributes(getSave(),1.1);
   activate('map');
-  content().innerHTML=`<section class="xg-map-sheet"><button class="xg-map-back" type="button">← 返回丰原镇</button>${heading('残影峰','仇人躲在此处养伤。')}<div class="xg-card"><h3>${BOSS_NAME}</h3><p>生命 ${foe.maxHp.toFixed(2)} · 攻击 ${foe.attack.toFixed(2)} · 防御 ${foe.defense.toFixed(2)} · 速度 ${foe.speed.toFixed(2)}</p></div>${petChoices(getSave(),'xg-boss-pet')}<button type="button" data-challenge-boss>迎战</button><p role="status"></p></section>`;
+  content().innerHTML=`<section class="xg-map-sheet"><button class="xg-map-back" type="button">← 返回丰原镇</button>${heading('残影峰',`${BOSS_NAME}躲在此处养伤。`)}<div class="xg-card"><h3>${BOSS_NAME}</h3><p>生命 ${foe.maxHp.toFixed(2)} · 攻击 ${foe.attack.toFixed(2)} · 防御 ${foe.defense.toFixed(2)} · 速度 ${foe.speed.toFixed(2)}</p></div>${petChoices(getSave(),'xg-boss-pet')}<button type="button" data-challenge-boss>迎战</button><p role="status"></p></section>`;
   back(renderMonsters);
   content().querySelector('[data-challenge-boss]').onclick=async event=>{const button=event.currentTarget;button.disabled=true;try{await actions.startBattle('wounded-boss',content().querySelector('[name="xg-boss-pet"]:checked')?.value||null);battle()}catch(error){content().querySelector('[role=status]').textContent=error.message;button.disabled=false}};
  }
