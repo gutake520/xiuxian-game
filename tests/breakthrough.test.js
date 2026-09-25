@@ -1,17 +1,17 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {startBreakthrough,rotateMeridian,hintMeridian,retryBreakthrough,breakthroughHints,SPIRIT_ROUTE} from '../systems/breakthrough.js';
-import {realmProgress} from '../data/realms.js';
+import {realmProgress,addCultivation} from '../data/realms.js';
 import {migrateSave} from '../storage/migrations.js';
 import {equipmentStats} from '../systems/inventory.js';
 
-const save=(wisdom=5)=>({slot:'breakthrough',version:6,player:{name:'测试',realm:'炼气圆满',cultivation:0,sect:'无门无派',stats:{悟性:wisdom}},bossLine:{phase:'defeated',insight:true},inventory:[],events:[],flags:{}});
+const save=(wisdom=5)=>({slot:'breakthrough',version:7,player:{name:'测试',realm:'炼气十层',cultivation:1000,sect:'无门无派',stats:{悟性:wisdom}},bossLine:{phase:'defeated',insight:true},inventory:[],events:[],flags:{}});
 
-test('击败仇人且修为圆满才可入场；悟性 5/10 分别给一次/两次提示',()=>{
+test('击败仇人且炼气十层满 1000 才可入场；悟性 5/10 分别给一次/两次提示',()=>{
  for(const [wisdom,hints] of [[4,0],[5,1],[9,1],[10,2]])assert.equal(breakthroughHints(save(wisdom).player),hints);
  const s=save();s.bossLine.insight=false;assert.throws(()=>startBreakthrough(s),/感悟/);
- s.bossLine.insight=true;s.player.realm='炼气十层';assert.throws(()=>startBreakthrough(s),/圆满/);
- s.player.realm='炼气圆满';const session=startBreakthrough(s);assert.equal(startBreakthrough(s).id,session.id);
+ s.bossLine.insight=true;s.player.cultivation=999;assert.throws(()=>startBreakthrough(s),/1000/);
+ s.player.cultivation=1000;const session=startBreakthrough(s);assert.equal(startBreakthrough(s).id,session.id);
  assert.equal(session.tiles.length,25);assert.equal(session.remaining,24);
 });
 
@@ -27,7 +27,7 @@ test('提示摆正一格、每次旋转写入进度，失败后才可重试',()=
  assert.equal(session.tiles[24].rot,1);
  assert.throws(()=>rotateMeridian(s,'other',24),/结束/);
  while(session.remaining)rotateMeridian(s,session.id,24);
- assert.equal(s.player.realm,'炼气圆满');
+ assert.equal(s.player.realm,'炼气十层');
  const next=retryBreakthrough(s,session.id);assert.notEqual(next.id,session.id);assert.equal(next.remaining,24);
  assert.notEqual(initial,0);
 });
@@ -39,10 +39,11 @@ test('每一盘都能在 24 步内接通，成功原子写入筑基并禁止重�
    while(s.breakthrough&&s.breakthrough.tiles[index].rot!==0)rotateMeridian(s,session.id,index);
   }
   assert.equal(s.player.realm,'筑基一层');
+  assert.equal(s.player.cultivation,0);
   assert.equal(s.breakthrough,null);
   assert.equal(s.player.cultivationRequired,null);
   assert.throws(()=>rotateMeridian(s,session.id,10),/结束/);
-  assert.throws(()=>startBreakthrough(s),/圆满/);
+  assert.throws(()=>startBreakthrough(s),/1000/);
   assert.equal(realmProgress(s.player).index,10);
  }
 });
@@ -60,4 +61,18 @@ test('未完的数阵经旧档迁移仍能继续，筑基存档不退回炼气',
  assert.equal(loaded.player.realm,'筑基一层');
  assert.deepEqual(equipmentStats(loaded),before);
  assert.equal(loaded.achievements.unlocked.includes('immortal-path'),true);
+});
+
+test('旧圆满档迁到炼气十层满 1000；扣修为后可以修炼补回，但不会溢出',()=>{
+ const s=save();s.player.realm='炼气圆满';s.player.cultivation=0;
+ migrateSave(s);
+ assert.equal(s.player.realm,'炼气十层');assert.equal(s.player.cultivation,1000);
+ assert.equal(s.player.cultivationRequired,1000);
+ s.player.cultivation=950;
+ assert.equal(addCultivation(s,80),50);
+ assert.equal(s.player.cultivation,1000);
+ assert.equal(addCultivation(s,50),0);
+ s.player.cultivation=-50;
+ assert.equal(addCultivation(s,50),50);
+ assert.equal(s.player.cultivation,0);
 });

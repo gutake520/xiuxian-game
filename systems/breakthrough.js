@@ -5,7 +5,7 @@ const directions=[[-1,0],[0,1],[1,0],[0,-1]];
 const direction=(from,to)=>directions.findIndex(([r,c])=>Math.floor(to/5)-Math.floor(from/5)===r&&to%5-from%5===c);
 export const breakthroughHints=player=>Number(player.stats?.悟性)>=10?2:Number(player.stats?.悟性)>=5?1:0;
 
-export function breakthroughReady(save){return save.player.realm==='炼气圆满'&&save.bossLine?.insight===true}
+export function breakthroughReady(save){return save.player.realm==='炼气十层'&&Number(save.player.cultivation)>=1000&&save.bossLine?.insight===true}
 
 function createSession(save){
  const tiles=Array.from({length:25},(_,i)=>({ports:[(i*7+1)%4],rot:0}));
@@ -18,7 +18,7 @@ function createSession(save){
 }
 
 export function startBreakthrough(save){
- if(!breakthroughReady(save))throw new Error('需要炼气圆满，并击败仇人取得感悟。');
+ if(!breakthroughReady(save))throw new Error('需要炼气十层、修为达到 1000，并击败仇人取得感悟。');
  if(save.battle||save.qiSecret||save.qiMeditation||save.divinationPending||save.encounterPending||save.seniorRewardPending)throw new Error('请先结束当前事件。');
  return save.breakthrough??(save.breakthrough=createSession(save));
 }
@@ -47,6 +47,7 @@ function completeIfConnected(save){
  if(!flowingTiles(save.breakthrough).has(12))return false;
  save.player.foundationBonus=realmBattleBonus(save.player);
  save.player.realm='筑基一层';
+ save.player.cultivation=0;
  save.player.cultivationRequired=null;
  save.breakthrough=null;
  return true;

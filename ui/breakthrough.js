@@ -13,7 +13,7 @@ export function showBreakthrough(api,onClose){
  const flowing=flowingTiles(session);
  const ends=[[50,0],[100,50],[50,100],[0,50]];
  const exhausted=session.remaining===0;
- body.innerHTML=`<div class="xg-breakthrough"><small>炼气圆满 · 悟道已成</small><p>点经脉旋转，让灵气从左侧进入丹田。</p>
+ body.innerHTML=`<div class="xg-breakthrough"><small>炼气十层 · 灵气充盈</small><p>点经脉旋转，让灵气从左侧进入丹田。</p>
  <div class="xg-breakthrough-meta"><span>入口 → 丹田</span><span>剩余旋转 ${session.remaining} 次</span></div>
  <div class="xg-breakthrough-grid" role="group" aria-label="五行五列灵脉格">${session.tiles.map((tile,index)=>{
   const paths=tilePorts(tile).map(side=>`<path d="M50 50 L${ends[side][0]} ${ends[side][1]}"></path>`).join('');

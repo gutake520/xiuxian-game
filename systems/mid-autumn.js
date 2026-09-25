@@ -1,4 +1,4 @@
-import {addCultivation,realmProgress} from '../data/realms.js';
+import {addCultivation} from '../data/realms.js';
 import {SECT_TOURNAMENT_NAMES} from './sect-tournament.js';
 
 const lunar=new Intl.DateTimeFormat('en-u-ca-chinese',{month:'numeric',day:'numeric'});
@@ -23,7 +23,6 @@ export function eatMooncake(save,year){
  if(!pending||pending.year!==year||save.midAutumnYear===year)throw new Error('这次赏月已经结束。');
  save.midAutumnPending=null;
  save.midAutumnYear=year;
- if(realmProgress(save.player).index>=10)save.player.cultivation=Math.round(((save.player.cultivation||0)+50)*100)/100;
- else addCultivation(save,50);
- return `${pending.visitor}与你分吃月饼，你获得 50 点灵气值。`;
+ const gained=addCultivation(save,50);
+ return gained?`${pending.visitor}与你分吃月饼，你获得 ${gained} 点灵气值。`:`${pending.visitor}与你分吃月饼。灵气已满，本次没有增加修为。`;
 }
