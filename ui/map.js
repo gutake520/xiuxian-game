@@ -12,12 +12,14 @@ import {equipmentStats} from '../systems/inventory.js';
 import {repairPrice,repairEquipment,healAtSect,startMeditation,healingService,MEDITATION_MS} from '../systems/sect-services.js';
 import {escapeHTML,format} from './shared.js';
 import {BOSS_NAME,bossAttributes} from '../systems/boss-line.js';
+import {FOXES} from '../data/foxes.js';
+import {foxState,giftableEntries,giveFoxGift,seenFoxScene,answerFox,leaveFox,companionBreakupFee} from '../systems/foxes.js';
 
 export function createMapUI({getSave,activate,actions,onSectBattleExit}){
  const content=()=>document.getElementById('xg-content');
  const foundationPlayer=()=>String(getSave()?.player?.realm||'').startsWith('筑基');
  const petChoices=(save,name)=>{const foundation=String(save.player.realm).startsWith('筑基'),rented=(foundation?save.foundationPetRentals:save.petRentals)>0,attack=beastCanFight(save,'attack'),guard=beastCanFight(save,'guard');return rented||attack||guard?`<fieldset class="xg-card"><legend>灵兽出战</legend><label><input type="radio" name="${name}" value="" checked> 不出战</label>${['attack','guard'].filter(type=>beastCanFight(save,type)||rented).map(type=>`<label><input type="radio" name="${name}" value="${type}"> ${escapeHTML(beastCanFight(save,type)?beastName(save,type):'租借灵兽')} · ${type==='attack'?`追击 +${foundation?'0.80':'0.50'}`:`守护 −${foundation?'0.50':'0.30'}`}</label>`).join('')}</fieldset>`:''};
- const battle=outcome=>showBattle({getSave,activate,actions,onExit:getSave().bossLine?.phase==='ambush'||getSave().bossLine?.rescuePending?renderMonsters:['sect-tournament','sect-senior'].includes(getSave().battle?.kind||getSave().lastBattle?.kind)?onSectBattleExit:FOUNDATION_MONSTERS.some(monster=>monster.id===(getSave().battle?.monsterId||getSave().lastBattle?.monsterId))?renderFoundation:renderMonsters},outcome);
+ const battle=outcome=>showBattle({getSave,activate,actions,onExit:getSave().bossLine?.phase==='ambush'||getSave().bossLine?.rescuePending?renderMonsters:['sect-tournament','sect-senior'].includes(getSave().battle?.kind||getSave().lastBattle?.kind)?onSectBattleExit:(getSave().battle?.kind||getSave().lastBattle?.kind)==='fox-npc'?()=>renderNpc(QI_PEAKS.find(p=>p.id===(getSave().battle?.monsterId||getSave().lastBattle?.monsterId))):FOUNDATION_MONSTERS.some(monster=>monster.id===(getSave().battle?.monsterId||getSave().lastBattle?.monsterId))?renderFoundation:renderMonsters},outcome);
  function heading(title,subtitle){return `<div class="xg-map-heading"><h2>${title}</h2><p>${subtitle}</p></div>`}
  const peaks=(locations,kind)=>`<div class="xg-map-landscape xg-map-${kind}">${locations.map((place,i)=>`<button type="button" class="xg-map-hill${place.locked?' xg-map-locked':''}" style="--hill-x:${place.x}%;--hill-y:${place.y}%;--hill-size:${place.size||1}" ${place.locked?'disabled':''} ${place.id?`data-${kind}="${place.id}"`:''}><span class="xg-map-label">${place.name}</span><span class="xg-map-summit" aria-hidden="true"></span></button>`).join('')}</div>`;
  function render(){
@@ -173,17 +175,33 @@ export function createMapUI({getSave,activate,actions,onSectBattleExit}){
   content().querySelector('[data-challenge-boss]').onclick=async event=>{const button=event.currentTarget;button.disabled=true;try{await actions.startBattle('wounded-boss',content().querySelector('[name="xg-boss-pet"]:checked')?.value||null);battle()}catch(error){content().querySelector('[role=status]').textContent=error.message;button.disabled=false}};
  }
  function renderNpc(peak){
-  activate('map');const met=!!getSave().flags?.metQiNpcs?.[peak.id];
-  content().innerHTML=`<section class="xg-map-sheet"><button class="xg-map-back" type="button">← 返回丰原镇</button>${heading(peak.name,'山中来客')}
-   <div class="xg-map-place xg-map-scene"><span class="xg-map-peak" aria-hidden="true"></span><strong>${peak.npc}</strong><p>${peak.description}</p></div>
-   <div class="xg-card xg-map-monster"><p>${met?'对方已经记得你。':'你们尚未正式结识。'}</p><button type="button" data-meet>${met?'交谈':'上前结识'}</button><small>赠礼、好感与结缘方式待后续设定。</small></div><p role="status" aria-live="polite"></p></section>`;
-  back(renderMonsters);const button=content().querySelector('[data-meet]'),status=content().querySelector('[role=status]');
-  button.onclick=async()=>{
-   if(met){status.textContent=`${peak.npc}与你聊了几句，稍后再来。`;return}
-   button.disabled=true;
-   try{await actions.mutate(save=>{save.flags??={};save.flags.metQiNpcs??={};save.flags.metQiNpcs[peak.id]=true},{message:`在${peak.name}结识了${peak.npc}。`});renderNpc(peak)}
-   catch(error){status.textContent=error.message;button.disabled=false}
-  };
+  if(!peak)return renderMonsters();
+  activate('map');const fox=FOXES[peak.id],state=foxState(getSave(),peak.id),scene=[30,60,90].find(level=>state.affinity>=level&&!state.seen?.includes(level));
+  const text=value=>`<div class="xg-card xg-map-monster">${value.split('\n\n').map(part=>`<p>${escapeHTML(part)}</p>`).join('')}</div>`;
+  const showText=(value,after)=>{content().innerHTML=`<section class="xg-map-sheet"><button class="xg-map-back" type="button">← 返回${escapeHTML(peak.name)}</button>${heading(fox.name,'山中旧事')}${text(value)}</section>`;back(after)};
+  if(state.rejected){content().innerHTML=`<section class="xg-map-sheet"><button class="xg-map-back" type="button">← 返回丰原镇</button>${heading(peak.name,fox.name)}${text('旧人不再，旧事难再。')}</section>`;back(renderMonsters);return}
+  if(!state.met){
+   content().innerHTML=`<section class="xg-map-sheet"><button class="xg-map-back" type="button">← 返回丰原镇</button>${heading(peak.name,fox.name)}${text(fox.intro)}${petChoices(getSave(),'xg-fox-pet')}<button type="button" data-fox-fight>接招</button><p role="status"></p></section>`;
+   back(renderMonsters);content().querySelector('[data-fox-fight]').onclick=async event=>{event.currentTarget.disabled=true;try{await actions.startBattle(peak.id,content().querySelector('[name="xg-fox-pet"]:checked')?.value||null);battle()}catch(error){content().querySelector('[role=status]').textContent=error.message;event.currentTarget.disabled=false}};return;
+  }
+  if(scene){showText(fox['at'+scene],async()=>{try{await actions.mutate(s=>seenFoxScene(s,peak.id,scene));renderNpc(peak)}catch(error){content().querySelector('.xg-map-heading p').textContent=error.message}});return}
+  if(state.bonded){showText(fox.daily[Math.floor(Math.random()*fox.daily.length)],()=>renderFoxMenu());return}
+  renderFoxMenu();
+  function renderFoxMenu(){
+   const current=foxState(getSave(),peak.id),entries=giftableEntries(getSave());
+   content().innerHTML=`<section class="xg-map-sheet"><button class="xg-map-back" type="button">← 返回丰原镇</button>${heading(peak.name,fox.name)}<div class="xg-card"><p>好感 ${current.affinity||0} / 100${current.bonded?' · 道侣':''}</p>${current.bonded?`<button type="button" data-fox-leave>解除道侣</button>`:`<h3>赠礼</h3><p>灵石、符箓、阵盘和损坏阵盘也能送；已装备物品不在赠礼清单。</p><button type="button" data-fox-gift="stones" ${getSave().player.spiritStones<1?'disabled':''}>灵石 ×1</button>${entries.map(entry=>`<button type="button" data-fox-gift="${escapeHTML(entry.uid)}">${escapeHTML(ITEMS[entry.itemId].name)}${(entry.quantity||1)>1?' ×'+entry.quantity:''}${entry.itemId.includes('crafted')&&entry.usesLeft===0?'（损坏）':''}</button>`).join('')}${current.affinity>=100?`<button type="button" data-fox-proposal ${Date.now()<(getSave().companionRejoinAt||0)?'disabled':''}>邀为道侣${Date.now()<(getSave().companionRejoinAt||0)?' · 三日之期未到':''}</button>`:''}`}</div><p role="status" aria-live="polite"></p></section>`;
+   back(renderMonsters);const status=content().querySelector('[role=status]');
+   content().querySelectorAll('[data-fox-gift]').forEach(button=>button.onclick=async()=>{button.disabled=true;try{const {result}=await actions.mutate(s=>giveFoxGift(s,peak.id,button.dataset.foxGift),{message:message=>message});renderFoxMenu();content().querySelector('[role=status]').textContent=result;const next=foxState(getSave(),peak.id);if([30,60,90].some(level=>next.affinity>=level&&!next.seen?.includes(level)))renderNpc(peak)}catch(error){status.textContent=error.message;button.disabled=false}});
+   content().querySelector('[data-fox-proposal]')?.addEventListener('click',()=>{
+    content().innerHTML=`<section class="xg-map-sheet">${heading(peak.name,fox.name)}${text(fox.proposal)}<div class="xg-feature-row"><button type="button" data-answer="accept">答应</button><button type="button" data-answer="later">再想想</button><button type="button" data-answer="reject">婉拒</button></div><p role="status"></p></section>`;
+    content().querySelectorAll('[data-answer]').forEach(button=>button.onclick=async()=>{const choice=button.dataset.answer;content().querySelectorAll('[data-answer]').forEach(b=>b.disabled=true);try{const {result}=await actions.mutate(s=>answerFox(s,peak.id,choice),{message:choice==='accept'?`${fox.name}成为你的道侣。`:undefined});if(choice==='later')renderFoxMenu();else showText(result,()=>choice==='accept'?renderFoxMenu():renderMonsters)}catch(error){content().querySelector('[role=status]').textContent=error.message;content().querySelectorAll('[data-answer]').forEach(b=>b.disabled=false)}});
+   });
+   content().querySelector('[data-fox-leave]')?.addEventListener('click',()=>{
+    content().innerHTML=`<section class="xg-map-sheet">${heading('解除道侣','请再次确认')}<div class="xg-card"><p>解除与${fox.name}的道侣关系，需支付 ${companionBreakupFee(getSave().player)??'待定'} 灵石；此后三天不能结新道侣。</p><button type="button" data-leave-confirm>确认解除</button><button type="button" data-leave-cancel>返回</button></div><p role="status"></p></section>`;
+    content().querySelector('[data-leave-cancel]').onclick=renderFoxMenu;
+    content().querySelector('[data-leave-confirm]').onclick=async event=>{event.currentTarget.disabled=true;try{const {result}=await actions.mutate(s=>leaveFox(s,peak.id),{message:message=>message});showText(result,renderMonsters)}catch(error){content().querySelector('[role=status]').textContent=error.message;event.currentTarget.disabled=false}};
+   });
+  }
  }
  function renderSecret(){
   activate('map');

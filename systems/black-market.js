@@ -4,6 +4,7 @@ const manuals=['one-manual','reset-manual'];
 const manualDropRate=.005;
 const junk=['broken-jade-slip','burnt-talisman','leaky-pill-bottle','broken-whisk'];
 const herbs=['healing-herb','spirit-herb','qi-herb'];
+const gifts=['calming-jade','fox-wine','bamboo-chess','camellia-seeds'];
 const pick=values=>values[Math.floor(Math.random()*values.length)];
 export function drawBlackMarket(save,count,requestId,now=Date.now()){
  if(![1,10].includes(count)||typeof requestId!=='string'||!requestId)throw new Error('抽取参数无效。');
@@ -24,7 +25,7 @@ export function drawBlackMarket(save,count,requestId,now=Date.now()){
    state.pity++;
    if(roll<.305){results.push('摊主掀开空匣：你被骗了，什么也没得到。');continue}
    if(roll<.505)id=pick(junk);
-   else if(roll<.555)id='calming-jade';
+   else if(roll<.555)id=pick(gifts);
    else if(roll<.7775)id='ore';
    else id=pick(herbs);
   }

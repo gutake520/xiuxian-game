@@ -1,5 +1,6 @@
 import {ITEMS} from '../data/items.js';
 import {equipmentStats,maxDurability} from './inventory.js';
+import {recordDailyRepair} from './sect-progression.js';
 
 const round2=value=>Math.round((value+Number.EPSILON)*100)/100;
 export const REPAIR_PER_POINT=.2;
@@ -18,6 +19,7 @@ export function repairEquipment(save,uid){
  if(save.player.spiritStones<price)throw new Error('灵石不足。');
  const before=equipmentStats(save);
  entry.durability=maxDurability(entry);
+ recordDailyRepair(save);
  const after=equipmentStats(save);
  save.player.hp=round2(Math.min(after.maxHp,save.player.hp+after.maxHp-before.maxHp));
  save.player.mp=round2(Math.min(after.maxMp,save.player.mp+after.maxMp-before.maxMp));

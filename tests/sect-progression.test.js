@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {dailyTasks,recordDailyProgress,claimDailyTask,redeemInheritance,craftSectItem,repairOwnEquipment} from '../systems/sect-progression.js';
+import {dailyTasks,recordDailyProgress,recordDailyPractice,recordDailyGift,recordDailyRepair,claimDailyTask,redeemInheritance,craftSectItem,repairOwnEquipment} from '../systems/sect-progression.js';
 import {TECHNIQUES} from '../data/techniques.js';
 import {migrateSave} from '../storage/migrations.js';
 import {startLearning,completeLearning,toggleCombatTechnique} from '../systems/techniques.js';
@@ -13,13 +13,25 @@ function save(sect='丹霞谷',root='火灵根'){
 }
 function learn(s,id){s.sectPoints=9;redeemInheritance(s,id);const p=startLearning(s,id);assert.equal(p.size,5);p.cells=[...p.solution];completeLearning(s,id)}
 test('daily rewards persist, exclude escape charges, reset next day, backfill exploration',()=>{
- const s=save();s.lastQiExploration={completedAt:now};const d=dailyTasks(s,now);assert.equal(d.explored,1);
+ const s=save();s.sectDaily={day:'2026-9-23',kills:0,spent:0,explored:0,claimed:[],selected:['kills','spent','explored']};s.lastQiExploration={completedAt:now};const d=dailyTasks(s,now);assert.equal(d.explored,1);
  for(let i=0;i<3;i++){const before={battleId:s.lastBattle?.id,stones:20};s.lastBattle={id:String(i),outcome:'victory'};recordDailyProgress(s,before,false,now)}
  s.player.spiritStones=17;recordDailyProgress(s,{battleId:s.lastBattle.id,stones:20},false,now);assert.equal(d.spent,0);
  recordDailyProgress(s,{battleId:s.lastBattle.id,stones:20},true,now);assert.equal(d.spent,3);
  for(const id of ['kills','spent','explored'])claimDailyTask(s,id,d.day,now);
- assert.equal(s.sectPoints,9);assert.throws(()=>claimDailyTask(JSON.parse(JSON.stringify(s)),'kills',d.day,now));
+ assert.equal(s.sectPoints,3);assert.throws(()=>claimDailyTask(JSON.parse(JSON.stringify(s)),'kills',d.day,now));
  assert.equal(dailyTasks(s,now+86400000).kills,0);
+});
+test('draw three distinct reachable tasks once per day, count practice, gift and actual repair only',()=>{
+ const s=save();s.foxes={'pine-summit':{met:true,affinity:10}};s.techniques.main='basic-qi-guide';s.techniques.mastered.push('basic-qi-guide');
+ addItem(s,'iron-sword');const sword=s.inventory.at(-1);sword.durability=19;
+ const d=dailyTasks(s,now);assert.equal(d.selected.length,3);assert.equal(new Set(d.selected).size,3);
+ assert.deepEqual(dailyTasks(JSON.parse(JSON.stringify(s)),now).selected,d.selected);
+ d.selected=['practice','gift','repair'];recordDailyPractice(s,25,now);recordDailyPractice(s,35,now);recordDailyGift(s,now);recordDailyRepair(s,now);
+ assert.equal(d.practice,60);assert.equal(d.gift,1);assert.equal(d.repair,1);
+ for(const id of d.selected)claimDailyTask(s,id,d.day,now);
+ assert.equal(s.sectPoints,3);assert.throws(()=>claimDailyTask(s,'kills',d.day,now),/不是今日/);
+ const next=dailyTasks(s,now+86400000);assert.equal(next.claimed.length,0);assert.equal(next.practice,0);assert.equal(next.selected.length,3);
+ const fresh=save();assert.deepEqual([...dailyTasks(fresh,now).selected].sort(),['explored','kills','spent'].sort());
 });
 test('all nine inheritances have five-by-five learning and cost nine points',()=>{
  const methods=Object.values(TECHNIQUES).filter(m=>m.sect);assert.equal(methods.length,9);

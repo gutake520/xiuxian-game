@@ -10,6 +10,7 @@ import {maybeMeetDiviner} from './divination.js';
 import {startSeniorChallenge} from './sect-tournament.js';
 import {BOSS_NAME,bossAttributes,ensureBossLine} from './boss-line.js';
 import {selectBattlePet,beastCanFight,beastName} from './pets.js';
+import {FOXES} from '../data/foxes.js';
 
 export const round2=value=>Math.round((value+Number.EPSILON)*100)/100;
 const herbs=['healing-herb','spirit-herb','qi-herb'];
@@ -54,6 +55,10 @@ function resolveTournamentLoss(save,outcome,messages){
 }
 function resolveVictory(save,now,messages){
  const battle=save.battle,monster=monsters.find(entry=>entry.id===battle.monsterId);
+ if(battle.kind==='fox-npc'){
+  save.foxes??={};save.foxes[battle.monsterId]??={affinity:0,seen:[]};save.foxes[battle.monsterId].met=true;
+  const result=finish(save,'victory',{rewards:[],xp:0});messages.push(`${battle.name}收起招式，愿与你正式结识。`);result.log=[...messages];return result;
+ }
  if(battle.kind==='wounded-boss'){
   const result=finish(save,'victory',{rewards:[],xp:0,kind:'wounded-boss'});
   save.bossLine.phase='defeated';save.bossLine.insight=true;
@@ -105,6 +110,11 @@ export function beginBattle(save,id,pet=null,retaliation=false){
   save.battle={id:crypto.randomUUID(),kind:'wounded-boss',monsterId:null,name:BOSS_NAME,maxHp:foe.maxHp,hp:foe.maxHp,attack:foe.attack,defense:foe.defense,speed:foe.speed,maxMp:foe.maxMp,mp:foe.maxMp,critRate:foe.critRate,dodgeRate:foe.dodgeRate,round:0,pet:chosen,petName:chosen?(beastCanFight(save,chosen)?beastName(save,chosen):'租借灵兽'):null,guard:false,bindRounds:[],arrayRound:0,talismansUsed:0,talismanRound:0,freeArrayUsed:false,criticalFocus:false,skillReady:{},log:['你在山中找到了负伤的仇人。旧怨未了，战斗开始。']};
   return save.battle;
  }
+ if(FOXES[id]){
+  const fox=FOXES[id],chosen=selectBattlePet(save,pet);
+  save.battle={id:crypto.randomUUID(),kind:'fox-npc',monsterId:id,name:fox.name,stage:'炼气',maxHp:fox.hp,hp:fox.hp,attack:fox.attack,defense:.3,speed:5,maxMp:5,mp:5,round:0,pet:chosen,petName:chosen?(beastCanFight(save,chosen)?beastName(save,chosen):'租借灵兽'):null,petStage:String(save.player.realm).startsWith('筑基')?'筑基':'炼气',guard:false,bindRounds:[],arrayRound:0,talismansUsed:0,talismanRound:0,freeArrayUsed:false,criticalFocus:false,skillReady:{},log:[`${fox.name}向你出手。`]};
+  return save.battle;
+ }
  const monster=monsters.find(entry=>entry.id===id);if(!monster)throw new Error('对手不存在。');
  if(monster.stage==='筑基'&&tier<10)throw new Error('需筑基一层方可前往此处。');
  if(monster.stage!=='筑基'&&tier+1<monster.minLevel)throw new Error(`需炼气${['一','二','三','四','五','六','七','八','九','十'][monster.minLevel-1]}层解锁此处。`);
@@ -115,10 +125,11 @@ export function beginBattle(save,id,pet=null,retaliation=false){
 }
 export function playRound(save,action='attack',now=Date.now()){
  const battle=save.battle;if(!battle)throw new Error('没有正在进行的战斗。');
- const tournament=['sect-tournament','sect-senior'].includes(battle.kind),armored=tournament||battle.kind==='wounded-boss';
+ const tournament=['sect-tournament','sect-senior'].includes(battle.kind),foxFight=battle.kind==='fox-npc',armored=tournament||battle.kind==='wounded-boss'||foxFight;
+ if(foxFight&&battle.foxParalyzeRound===battle.round+1)action='skip';
  const skill=TECHNIQUES[action];
  if(!['attack','skip'].includes(action)&&skill?.type!=='combat')throw new Error('请选择可用的行动。');
- if(battle.pendingStrike&&action!=='attack')throw new Error('蓄势攻击将在本轮自动施放。');
+ if(battle.pendingStrike&&action!=='attack'&&!(foxFight&&battle.foxParalyzeRound===battle.round+1))throw new Error('蓄势攻击将在本轮自动施放。');
  const messages=[];let dealt=0,taken=0;
  if(battle.stingRound===battle.round+1){battle.stingRound=0;const dot=round2(2*(hasActiveTechnique(save,'one-sword')?1.1:1));battle.hp=round2(Math.max(0,battle.hp-dot));messages.push(`蛰一下继续生效，对手失去 ${dot.toFixed(2)} 生命。`);if(battle.hp<=0){battle.round++;const result=resolveVictory(save,now,messages);return {messages,dealt,taken,result}}}
  const mpCost=action==='spirit-burn'?save.player.mp:save.techniques.upgraded?.includes(action)?action==='only-once'?3:2:skill?.mpCost??1;
@@ -131,8 +142,8 @@ export function playRound(save,action='attack',now=Date.now()){
   else if((battle.enemySkillReady||0)<=battle.round+1)enemyAction='strengthen-attack';
  }
  const playerTurn=()=>{
-  const prepared=!!battle.pendingStrike;if(prepared)battle.pendingStrike=false;
-  if(action==='skip'){messages.push('你选择跳过本轮。');return}
+  const prepared=!!battle.pendingStrike;if(prepared&&action!=='skip')battle.pendingStrike=false;
+  if(action==='skip'){messages.push(foxFight&&battle.foxParalyzeRound===battle.round+1?'落英缤纷困住了你，本轮无法行动。':'你选择跳过本轮。');return}
   if(skill&&!prepared){save.player.mp=round2(save.player.mp-mpCost);if(skill.cooldown){battle.skillReady??={};battle.skillReady[action]=battle.round+skill.cooldown+2}if(['only-once','empty-hands','gamble-strike'].includes(action)){save.techniques.usage??={};save.techniques.usage[action]=(save.techniques.usage[action]||0)+1}}
   if(action==='wait-then-strike'){battle.pendingStrike=true;messages.push('凝聚攻势，下轮自动出手。');return}
   if(action==='cooldown-reset'){battle.cooldownResetUsed=true;for(const id of save.techniques.combat||[])if(id!==action&&battle.skillReady)delete battle.skillReady[id];messages.push('其他已装备功法的冷却已重置。');return}
@@ -174,15 +185,19 @@ export function playRound(save,action='attack',now=Date.now()){
    if(silenced)enemyAction='attack';
    else if(enemyAction!=='attack'){battle.mp=round2(battle.mp-1);if(enemyAction==='strengthen-attack')battle.enemySkillReady=battle.round+4;messages.push(`${battle.name}使出${enemyAction==='iron-wall'?'铜墙铁壁':'强化普通'}。`)}
   }
+  if(foxFight&&!silenced&&battle.mp>=1){
+   if((battle.foxBloomReady||0)<=battle.round+1){enemyAction='fox-bloom';battle.mp--;battle.foxBloomReady=battle.round+4;battle.foxParalyzeRound=battle.round+2;messages.push(`${battle.name}使出落英缤纷，你下一轮无法行动。`)}
+   else if((battle.enemySkillReady||0)<=battle.round+1){enemyAction='strengthen-attack';battle.mp--;battle.enemySkillReady=battle.round+4;messages.push(`${battle.name}使出强化普通。`)}
+  }
  const monster=monsters.find(entry=>entry.id===battle.monsterId);
   const empowered=!tournament&&!silenced&&monster?.attackBoost&&(battle.mp||0)>0&&(battle.enemySkillReady||0)<=battle.round+1;
   const enemyCrit=armored&&enemyAction!=='iron-wall'&&Math.random()<battle.critRate/100;
-  const rawDamage=round2(armored?(enemyAction==='iron-wall'?1:battle.attack*(enemyAction==='strengthen-attack'?1.1:1)*(enemyCrit?1.5:1)):battle.attack*(empowered?monster.attackBoost:1));
+  const rawDamage=round2(enemyAction==='fox-bloom'?2:armored?(enemyAction==='iron-wall'?1:battle.attack*(enemyAction==='strengthen-attack'?1.1:1)*(enemyCrit?1.5:1)):battle.attack*(empowered?monster.attackBoost:1));
   if(empowered){battle.mp--;battle.enemySkillReady=battle.round+monster.boostCooldown+2;messages.push(`${battle.name}使出强化攻击。`)}
   if(enemyCrit)messages.push(`${battle.name}打出暴击。`);
   if(Math.random()<stats.dodgeRate/100){messages.push('你闪开了对手的攻击。');return}
   if(battle.guard){battle.guard=false;messages.push('护身符抵挡了这次伤害。');return}
-  const afterDefense=Math.max(1,rawDamage-stats.defense-(guarded?1:0));
+  const afterDefense=enemyAction==='fox-bloom'?2:Math.max(1,rawDamage-stats.defense-(guarded?1:0));
   const capped=action==='only-one'&&playerFirst?Math.min(1,afterDefense):afterDefense;
   const guardAmount=battle.pet==='guard'?(battle.petStage==='筑基'?.5:.3):0;
   taken=round2(Math.max(0,capped-guardAmount));save.player.hp=round2(Math.max(0,save.player.hp-taken));

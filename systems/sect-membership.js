@@ -17,7 +17,7 @@ export function leaveSect(save,now=Date.now()){
  if(save.battle)throw new Error('请先结束战斗。');
  if(save.seniorRewardPending)throw new Error('请先领取大比奖励。');
  if(price===null)throw new Error('当前境界的离宗规则尚未开放。');
- if((save.player.companions?.length||0)>1)throw new Error('须先处理多余的道侣关系；相关功能尚未开放。');
+ if((save.player.companions?.length||0)>1)throw new Error('离开合欢宗前，请先解除多余的道侣关系。');
  if(save.player.spiritStones<price)throw new Error('灵石不足，无法离宗。');
  syncAchievements(save);
  save.player.spiritStones=Math.round((save.player.spiritStones-price)*100)/100;

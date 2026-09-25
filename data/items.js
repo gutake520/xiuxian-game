@@ -47,7 +47,10 @@ export const ITEMS={
  'strengthen-manual':{id:'strengthen-manual',name:'强化普通',price:20,kind:'manual',methodId:'strengthen-attack',glyph:'诀',description:'普通战斗功法，参悟后可以装备。'},
  'wall-manual':{id:'wall-manual',name:'铜墙铁壁',price:20,kind:'manual',methodId:'iron-wall',glyph:'诀',description:'普通战斗功法，参悟后可以装备。'},
  'reset-manual':{id:'reset-manual',name:'滴，重置卡',sellPrice:20,blackMarketOnly:true,repeatable:true,stackable:true,kind:'manual',methodId:'cooldown-reset',glyph:'诀',description:'黑市典籍，参悟五阶数阵后学会；每本可出售 20 灵石。'},
- 'calming-jade':{id:'calming-jade',name:'清心玉佩',price:5,sellPrice:4,kind:'gift',stackable:true,glyph:'玉',description:'可用于赠礼的清润玉佩；赠礼功能待开放。'},
+ 'calming-jade':{id:'calming-jade',name:'清心玉佩',price:5,sellPrice:4,kind:'gift',stackable:true,glyph:'玉',description:'可赠给山中故人。'},
+ 'fox-wine':{id:'fox-wine',name:'灵酒',price:5,sellPrice:4,kind:'gift',stackable:true,glyph:'酒',description:'一壶清冽灵酒，可用于赠礼。'},
+ 'bamboo-chess':{id:'bamboo-chess',name:'竹纹棋盒',price:5,sellPrice:4,kind:'gift',stackable:true,glyph:'棋',description:'竹制棋盒，可用于赠礼。'},
+ 'camellia-seeds':{id:'camellia-seeds',name:'山茶种匣',price:5,sellPrice:4,kind:'gift',stackable:true,glyph:'花',description:'收好山茶种子的木匣，可用于赠礼。'},
  'broken-jade-slip':{id:'broken-jade-slip',name:'破裂玉简',kind:'junk',stackable:true,glyph:'简',description:'口诀已随裂痕消散，无法使用或出售。'},
  'burnt-talisman':{id:'burnt-talisman',name:'焦黑符纸',kind:'junk',stackable:true,glyph:'纸',description:'画符失败留下的焦纸，无法使用或出售。'},
  'leaky-pill-bottle':{id:'leaky-pill-bottle',name:'漏底丹瓶',kind:'junk',stackable:true,glyph:'瓶',description:'瓶底破了一个洞，无法使用或出售。'},
@@ -64,6 +67,6 @@ export const ITEMS={
  'spirit-burn-manual':{id:'spirit-burn-manual',name:'灵息尽燃',kind:'manual',methodId:'spirit-burn',glyph:'简',description:'三片玉简拼成的中级战斗功法，参悟四阶数阵后可装备。'}
 };
 for(const item of Object.values(ITEMS))if(item.kind==='manual'&&!item.blackMarketOnly&&!['gamble-manual','steal-manual','only-once-manual','spirit-burn-manual','archive-manual'].includes(item.id)){item.repeatable=true;item.stackable=true;item.sellPrice=10}
-export const SHOP_ITEMS=['iron-sword','cloth-robe','foundation-sword','foundation-robe','qi-manual','strengthen-manual','wall-manual','breath-manual','charged-manual','wait-manual','calming-jade'];
+export const SHOP_ITEMS=['iron-sword','cloth-robe','foundation-sword','foundation-robe','qi-manual','strengthen-manual','wall-manual','breath-manual','charged-manual','wait-manual','calming-jade','fox-wine','bamboo-chess','camellia-seeds'];
 export const SECT_PILLS=['small-heal-pill','spirit-pill','mixed-pill','qi-pill','foundation-heal-pill','foundation-spirit-pill','foundation-mixed-pill','foundation-qi-pill'];
 export const SECT_TALISMANS=['attack-talisman','guard-talisman','foundation-attack-talisman','foundation-guard-talisman'];

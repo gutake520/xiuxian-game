@@ -2,26 +2,52 @@ import {localDay} from './cultivation.js';
 import {TECHNIQUES,techniqueEligible,hasActiveTechnique} from '../data/techniques.js';
 import {ITEMS} from '../data/items.js';
 import {addItem,maxDurability,equipmentStats} from './inventory.js';
-export const DAILY_TASKS=[{id:'kills',name:'击败小怪',target:3},{id:'spent',name:'消费灵石',target:3},{id:'explored',name:'完成秘境探索',target:1}];
+export const DAILY_TASKS=[
+ {id:'kills',name:'击败小怪',target:3},
+ {id:'spent',name:'消费灵石',target:3},
+ {id:'explored',name:'完成秘境探索',target:1},
+ {id:'practice',name:'五色灵境修炼',target:60},
+ {id:'gift',name:'给山中故人送礼',target:1},
+ {id:'repair',name:'修复装备耐久',target:1}
+];
+function chooseTasks(save,claimed=[]){
+ const available=DAILY_TASKS.filter(task=>{
+  if(task.id==='practice')return save.techniques?.mastered?.includes(save.techniques.main);
+  if(task.id==='gift')return Object.values(save.foxes||{}).some(fox=>fox.met&&!fox.rejected&&!fox.bonded);
+  if(task.id==='repair')return (save.player.sect!=='天工阁'||hasActiveTechnique(save,'mending'))&&save.inventory.some(entry=>ITEMS[entry.itemId]?.kind==='equipment'&&(entry.durability??maxDurability(entry))<maxDurability(entry));
+  return true;
+ });
+ const selected=claimed.filter(id=>DAILY_TASKS.some(task=>task.id===id));
+ const choices=available.filter(task=>!selected.includes(task.id));
+ for(let i=choices.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[choices[i],choices[j]]=[choices[j],choices[i]]}
+ return [...selected,...choices.slice(0,Math.max(0,3-selected.length)).map(task=>task.id)].slice(0,3);
+}
 export function dailyTasks(save,now=Date.now()){
  const day=localDay(now);
- if(save.sectDaily?.day!==day)save.sectDaily={day,kills:0,spent:0,explored:0,claimed:[]};
+ if(save.sectDaily?.day!==day)save.sectDaily={day,kills:0,spent:0,explored:0,practice:0,gift:0,repair:0,claimed:[]};
+ if(save.player.sect&&save.player.sect!=='无门无派'&&!Array.isArray(save.sectDaily.selected))save.sectDaily.selected=chooseTasks(save,save.sectDaily.claimed);
  if(save.lastQiExploration?.completedAt&&localDay(save.lastQiExploration.completedAt)===day)save.sectDaily.explored=1;
  return save.sectDaily;
 }
+export function recordDailyPractice(save,earned,now=Date.now()){
+ if(earned>0){const daily=dailyTasks(save,now);daily.practice=Math.min(60,Math.round(((daily.practice||0)+earned)*100)/100)}
+}
+export function recordDailyGift(save,now=Date.now()){const daily=dailyTasks(save,now);daily.gift=1}
+export function recordDailyRepair(save,now=Date.now()){const daily=dailyTasks(save,now);daily.repair=1}
 export function recordDailyProgress(save,before,countSpend=true,now=Date.now()){
  const daily=dailyTasks(save,now);
- if(save.lastBattle?.id!==before.battleId&&save.lastBattle?.outcome==='victory')daily.kills=Math.min(3,daily.kills+1);
+ if(save.lastBattle?.id!==before.battleId&&save.lastBattle?.outcome==='victory'&&!save.lastBattle.kind)daily.kills=Math.min(3,daily.kills+1);
  if(countSpend)daily.spent=Math.min(3,Math.round((daily.spent+Math.max(0,before.stones-save.player.spiritStones))*100)/100);
 }
 export function claimDailyTask(save,id,day,now=Date.now()){
  if(!save.player.sect||save.player.sect==='无门无派')throw new Error('请先加入宗门。');
  const daily=dailyTasks(save,now),task=DAILY_TASKS.find(task=>task.id===id);
  if(day!==daily.day)throw new Error('日课已更新，请重新打开。');
- if(!task||daily[id]<task.target)throw new Error('尚未完成日课。');
+ if(!task||!daily.selected?.includes(id))throw new Error('这项不是今日宗门日课。');
+ if((daily[id]||0)<task.target)throw new Error('尚未完成日课。');
  if(daily.claimed.includes(id))throw new Error('这项奖励已领取。');
- daily.claimed.push(id);save.sectPoints=(save.sectPoints||0)+3;
- return `${task.name}完成，宗门积分 +3。`;
+ daily.claimed.push(id);save.sectPoints=(save.sectPoints||0)+1;
+ return `${task.name}完成，宗门积分 +1。`;
 }
 export function redeemInheritance(save,id){
  const method=TECHNIQUES[id];
@@ -61,6 +87,7 @@ export function repairOwnEquipment(save,uid){
  const before=equipmentStats(save);
  ore.quantity-=cost;if(!ore.quantity)save.inventory=save.inventory.filter(item=>item!==ore);
  entry.durability=limit;
+ recordDailyRepair(save);
  const after=equipmentStats(save);
  save.player.hp=Math.round(Math.min(after.maxHp,save.player.hp+after.maxHp-before.maxHp)*100)/100;
  save.player.mp=Math.round(Math.min(after.maxMp,save.player.mp+after.maxMp-before.maxMp)*100)/100;
