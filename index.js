@@ -14,6 +14,7 @@ import {createMapUI} from './ui/map.js';
 import {showBattle} from './ui/combat.js';
 import {showSectLibrary} from './ui/sect-library.js';
 import {libraryVisits} from './systems/sect-library.js';
+import {showMidAutumn} from './ui/mid-autumn.js';
 const POS_KEY='xiuxian-game-fab-position', LAST_SLOT_KEY='xiuxian-game-last-slot';
 const rollKey=slot=>`xiuxian-game-pending-roots-${slot}`;
 const DB_NAME='xiuxian-game'; const DB_VERSION=1; const SLOTS=['slot1','slot2','slot3','slot4','slot5'];
@@ -21,7 +22,7 @@ let currentSave=null,currentSlot=null;
 async function dbGet(slot){if(!await readSave(slot))return null;return updateSave(slot,s=>{trimEventHistory(s);return migrateSave(s)})}
 async function dbPut(data){trimEventHistory(data);migrateSave(data);return writeSave(data)}
 async function dbDelete(slot){await deleteSave(slot);localStorage.removeItem(rollKey(slot))}
-const game=createActions({getSave:()=>currentSave,setSave:save=>{currentSave=save;currentSlot=save.slot}});
+const game=createActions({getSave:()=>currentSave,setSave:save=>{currentSave=save;currentSlot=save.slot;setTimeout(()=>showMidAutumn({getSave:()=>currentSave,actions:game}),0)}});
 const featureUI=createFeatureUI({getSave:()=>currentSave,actions:game,activate:activatePage,character:renderCharacter});
 const mapUI=createMapUI({getSave:()=>currentSave,activate:activatePage,actions:game,onSectBattleExit:()=>renderSectHall(playerSect(currentSave.player))});
 async function runAction(action){try{return await action()}catch(error){console.error('[xiuxian-game]',error);alert('操作未完成，请重试。存档读取或写入失败。')}}
