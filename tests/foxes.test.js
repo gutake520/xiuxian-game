@@ -13,6 +13,17 @@ test('first fox victory unlocks the NPC without monster rewards; bloom stops nex
  const hp=s.battle.hp;const second=playRound(s,'attack');assert.equal(s.battle.hp,hp);assert.match(second.messages.join(' '),/无法行动/);
  s.battle.hp=1;playRound(s,'attack');assert.equal(foxState(s,'pine-summit').met,true);assert.equal(s.lastBattle.xp,0);assert.deepEqual(s.lastBattle.rewards,[]);
 });
+test('fox bloom waits three full turns before reuse, and defeat keeps its battle log',()=>{
+ const s=save();s.player.combat.hp=100;s.player.hp=100;beginBattle(s,'spring-hill');
+ const actions=Array.from({length:5},()=>playRound(s,'skip').messages.join(' '));
+ assert.match(actions[0],/落英缤纷/);
+ for(const line of actions.slice(1,4))assert.doesNotMatch(line,/使出落英缤纷/);
+ assert.match(actions[4],/使出落英缤纷/);
+ const lost=save();lost.player.hp=1;lost.player.combat.speed=0;beginBattle(lost,'pine-summit');
+ const defeat=playRound(lost,'skip');assert.equal(defeat.result.outcome,'defeat');
+ assert.match(defeat.result.log.join(' '),/战败：修为/);
+ assert.match(defeat.result.log.join(' '),/落英缤纷/);
+});
 test('gifts consume one unit, damaged equipment returns, broken array costs affinity; equipped gear hidden',()=>{
  const s=save();s.foxes={'pine-summit':{met:true,affinity:3,seen:[]}};
  addItem(s,'iron-sword');const sword=s.inventory.at(-1);equipItem(s,sword.uid);assert.ok(!giftableEntries(s).includes(sword));
