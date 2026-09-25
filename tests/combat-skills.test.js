@@ -31,6 +31,20 @@ test('active techniques spend MP before action; recovery works from zero; monste
  for(let i=0;i<10;i++)playRound(t,'skip');
  assert.equal(t.battle.mp,0);assert.equal(playRound(t,'skip').taken,1.5);
 });
+test('筑基双三灵根专属功法耗 2 蓝、按 1.7 倍出手并冷却四轮',()=>{
+ const s=make();s.player.realm='筑基一层';s.player.spiritRoot='金木双灵根';s.player.combat.critRate=0;s.player.combat.defense=20;
+ s.techniques.mastered=['self-as-self'];s.techniques.combat=['self-as-self'];
+ const random=Math.random;try{
+  Math.random=()=>.99;beginBattle(s,'fierce');s.battle.hp=100;
+  assert.equal(playRound(s,'self-as-self').dealt,5.1);
+  assert.equal(s.player.mp,8);
+  assert.throws(()=>playRound(s,'self-as-self'),/冷却/);
+  for(let i=0;i<4;i++)playRound(s,'skip');
+  assert.equal(playRound(s,'self-as-self').dealt,5.1);
+ }finally{Math.random=random}
+ const single=make();single.player.realm='筑基一层';single.techniques.mastered=['self-as-self'];single.techniques.combat=['self-as-self'];beginBattle(single,'fierce');
+ assert.throws(()=>playRound(single,'self-as-self'),/尚未装备/);
+});
 test('later qi stages grant root-dependent combat stats and old saves gain one MP',()=>{
  const single=make(),many=make();single.player.spiritRoot='金灵根';many.player.spiritRoot='金木水火土五灵根';
  for(const s of [single,many]){s.player.realm='炼气十层';s.realmMpBonusApplied=0;applyRealmHp(s)}

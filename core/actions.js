@@ -14,7 +14,7 @@ import {flipDivination} from '../systems/divination.js';
 import {startSectTournament,claimSeniorReward} from '../systems/sect-tournament.js';
 import {ensureBossLine,resolveBossAmbush,acknowledgeBossRescue} from '../systems/boss-line.js';
 import {queueMidAutumn,eatMooncake} from '../systems/mid-autumn.js';
-import {startBreakthrough,rotateMeridian,hintMeridian,retryBreakthrough} from '../systems/breakthrough.js';
+import {startBreakthrough,rotateMeridian,hintMeridian,retryBreakthrough,chooseFoundationAptitude} from '../systems/breakthrough.js';
 export function createActions({getSave,setSave}){
  function settleWorld(save){migrateSave(save);dailyTasks(save);const wait=save.qiSecret||save.qiMeditation;if(wait){const until=Math.min(Date.now(),wait.endsAt);save.idle.lastAt=Math.max(save.idle.lastAt,until);save.recovery??={hpAt:until,mpAt:until};save.recovery.hpAt=Math.max(save.recovery.hpAt,until);save.recovery.mpAt=Math.max(save.recovery.mpAt,until)}settleIdle(save);settleRecovery(save);ensureBossLine(save);queueMidAutumn(save)}
  async function select(slot){const data=await updateSave(slot,s=>{settleWorld(s);return s});setSave(data);return data}
@@ -37,6 +37,7 @@ export function createActions({getSave,setSave}){
   rotateMeridian:(id,index)=>mutate(s=>rotateMeridian(s,id,index),{message:(result,s)=>s.player.realm==='筑基一层'?result:null}),
   hintMeridian:id=>mutate(s=>hintMeridian(s,id),{message:(result,s)=>s.player.realm==='筑基一层'?result:null}),
   retryBreakthrough:id=>mutate(s=>retryBreakthrough(s,id)),
+  chooseFoundationAptitude:key=>mutate(s=>chooseFoundationAptitude(s,key),{message:result=>result}),
   claimSeniorReward:(id,choice)=>mutate(s=>claimSeniorReward(s,id,choice),{message:result=>result}),
   battleTalisman:id=>mutate(s=>useBattleTalisman(s,id),{allowBattle:true}),
   battleArray:()=>mutate(s=>useBattleArray(s),{allowBattle:true}),

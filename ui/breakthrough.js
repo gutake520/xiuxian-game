@@ -1,11 +1,17 @@
 import {createSheet} from './shared.js';
-import {tilePorts,flowingTiles,breakthroughReady} from '../systems/breakthrough.js';
+import {tilePorts,flowingTiles,breakthroughReady,foundationReward,FOUNDATION_APTITUDES} from '../systems/breakthrough.js';
 import {localDay} from '../systems/cultivation.js';
 
 export function showBreakthrough(api,onClose){
  const sheet=document.getElementById('xg-feature-sheet')||createSheet('筑基 · 灵脉凝结',onClose);
  const body=sheet.querySelector('[data-body]'),status=sheet.querySelector('[role=status]');
  const save=api.getSave(),session=save.breakthrough;
+ if(save.foundationAptitudePending){
+  const reward=foundationReward(save.player);
+  body.innerHTML=`<div class="xg-feature-card xg-foundation-reward"><h3>筑基成功</h3><p>生命 +${reward.hp} · 法力 +${reward.mp} · 攻击 +${reward.attack} · 防御 +${reward.defense}<br>速度 +${reward.speed} · 暴击率 +${reward.critRate}% · 闪避率 +${reward.dodgeRate}%${save.techniques?.mastered?.includes('self-as-self')?'<br>领悟《我即我》，可在功法典籍中装备。':''}</p><p>选择一项资质 +1：</p><div class="xg-foundation-aptitudes">${FOUNDATION_APTITUDES.map(key=>`<button type="button" data-aptitude="${key}">${key} · ${save.player.stats?.[key]??0} → ${(Number(save.player.stats?.[key])||0)+1}</button>`).join('')}</div></div>`;
+  body.querySelectorAll('[data-aptitude]').forEach(button=>button.onclick=async()=>{button.disabled=true;try{const {result}=await api.actions.chooseFoundationAptitude(button.dataset.aptitude);if(!sheet.isConnected)return;showBreakthrough(api,onClose);sheet.querySelector('[role=status]').textContent=result}catch(error){status.textContent=error.message;button.disabled=false}});
+  return;
+ }
  if(!breakthroughReady(save)||!session){
   body.innerHTML=save.player.realm==='筑基一层'?'<div class="xg-feature-card"><h3>灵脉贯通</h3><p>你已突破至筑基一层。</p><button type="button" data-finish>返回人物</button></div>':'<div class="xg-feature-card"><h3>灵气不足</h3><p>修为恢复至 1000 后，可继续这次突破。</p><button type="button" data-finish>返回人物</button></div>';
   body.querySelector('[data-finish]').onclick=onClose;

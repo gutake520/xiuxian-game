@@ -1,3 +1,4 @@
+import {rootCount} from './technique-slots.js';
 export const TECHNIQUES={
  'basic-qi-guide':{id:'basic-qi-guide',name:'引气诀',rank:'初级',size:3,type:'cultivation',idlePerMinute:0.5,description:'凝神引气，主修后每分钟积累 0.5 修为。'},
  'archive-meditation':{id:'archive-meditation',name:'藏元诀',rank:'中级',size:4,type:'cultivation',idlePerMinute:0.5,idleHoursByRealm:{炼气:3,筑基:5},description:'主修后每分钟积累 0.5 修为；炼气期每天最多修炼三小时，筑基期提升至五小时。'},
@@ -9,6 +10,7 @@ export const TECHNIQUES={
  'empty-hands':{id:'empty-hands',name:'妙手空空',rank:'普通',type:'combat',cooldown:2,description:'造成固定 2 点伤害；敌人存活时，有 20% 概率额外抽取最多 2 点生命并回复自身。冷却两轮。'},
  'catch-breath':{id:'catch-breath',name:'回一口气',rank:'普通',type:'combat',mpCost:0,description:'不耗法力，占一次行动，造成固定 1 点伤害并恢复 1 点法力。'},
  'charged-strike':{id:'charged-strike',name:'蓄势一击',rank:'普通',type:'combat',mpCost:1,cooldown:4,description:'消耗 1 点法力，单灵根攻击倍率 1.3，双／三灵根 1.2，四／五灵根 1.1；冷却四轮。'},
+ 'self-as-self':{id:'self-as-self',name:'我即我',rank:'特殊',type:'combat',mpCost:2,cooldown:4,rootCounts:[2,3],description:'双／三灵根筑基专属。消耗 2 点法力，本次攻击造成攻击力 1.7 倍伤害，再结算防御；冷却四轮。'},
  'sting':{id:'sting',name:'蛰一下',rank:'普通',type:'combat',mpCost:2,cooldown:3,description:'造成固定 2 点伤害，下一轮敌人再失去 2 点生命；冷却三轮。'},
  'silent-strike':{id:'silent-strike',name:'你怎么什么都没有',rank:'中级',type:'combat',mpCost:2,cooldown:5,description:'攻击倍率随灵根数量为 1.3／1.2／1.1；命中后对方接下来两次行动不能使用技能，但仍可普攻。消耗 2 点法力，冷却五轮。'},
  'wait-then-strike':{id:'wait-then-strike',name:'等等再来',rank:'中级',type:'combat',mpCost:3,cooldown:3,description:'本轮蓄势，下一轮自动攻击并占用行动。单灵根伤害倍率 2.5，双／三灵根 2.4，四／五灵根 2.3；冷却三轮。'},
@@ -31,6 +33,7 @@ export function hintAllowance(spirit){return Number(spirit)>=10?2:Number(spirit)
 
 export function techniqueEligible(player,method){
  if(!method)return false;
+ if(method.rootCounts&&(!method.rootCounts.includes(rootCount(player))||player.realm!=='筑基一层'))return false;
  if(!method.sect)return true;
  if(player.sect!==method.sect)return false;
  const enough=([key,min])=>Number(player.stats?.[key])>=min;

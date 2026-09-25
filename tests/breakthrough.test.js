@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {startBreakthrough,rotateMeridian,hintMeridian,retryBreakthrough,breakthroughHints,SPIRIT_ROUTE} from '../systems/breakthrough.js';
+import {startBreakthrough,rotateMeridian,hintMeridian,retryBreakthrough,breakthroughHints,SPIRIT_ROUTE,chooseFoundationAptitude} from '../systems/breakthrough.js';
 import {realmProgress,addCultivation} from '../data/realms.js';
 import {migrateSave} from '../storage/migrations.js';
 import {equipmentStats} from '../systems/inventory.js';
@@ -74,8 +74,46 @@ test('未完的数阵经旧档迁移仍能继续，筑基存档不退回炼气',
  for(const index of SPIRIT_ROUTE)while(loaded.breakthrough&&loaded.breakthrough.tiles[index].rot!==0)rotateMeridian(loaded,session.id,index);
  migrateSave(loaded);
  assert.equal(loaded.player.realm,'筑基一层');
- assert.deepEqual(equipmentStats(loaded),before);
+ const after=equipmentStats(loaded);
+ assert.equal(after.maxHp,before.maxHp+10);
+ assert.equal(after.maxMp,before.maxMp+2);
+ assert.equal(after.attack,before.attack+1.5);
+ assert.equal(after.defense,before.defense+1);
+ assert.equal(after.speed,before.speed+2);
+ assert.equal(after.critRate,before.critRate+3);
+ assert.equal(after.dodgeRate,before.dodgeRate+2);
+ assert.equal(loaded.foundationAptitudePending,true);
  assert.equal(loaded.achievements.unlocked.includes('immortal-path'),true);
+});
+
+test('单根、双三根、四五根获得对应筑基奖励，选点可超过 10 且重载后不会重复领取',()=>{
+ for(const [spiritRoot,hp,attack,defense,critRate,exclusive] of [
+  ['雷灵根',10,1.5,1,3,false],['金木双灵根',9,1.2,.9,2,true],
+  ['金木水三灵根',9,1.2,.9,2,true],['金木水火四灵根',8,1,.8,1,false],['五灵根',8,1,.8,1,false]
+ ]){
+  const s=save(10);s.player.spiritRoot=spiritRoot;s.player.stats.悟性=10;
+  s.player.combat={hp:20,mp:10,attack:3,defense:.5,speed:2,critRate:5,dodgeRate:5};s.player.hp=24;s.player.mp=11;
+  s.realmHpBonusApplied=4;s.realmMpBonusApplied=1;
+  const before=equipmentStats(s),session=startBreakthrough(s);
+  for(const index of SPIRIT_ROUTE)while(s.breakthrough&&s.breakthrough.tiles[index].rot!==0)rotateMeridian(s,session.id,index);
+  const loaded=migrateSave(structuredClone(s)),after=equipmentStats(loaded);
+  assert.equal(after.maxHp,before.maxHp+hp,spiritRoot);
+  assert.equal(after.maxMp,before.maxMp+2,spiritRoot);
+  assert.ok(Math.abs(after.attack-before.attack-attack)<1e-9,spiritRoot);
+  assert.ok(Math.abs(after.defense-before.defense-defense)<1e-9,spiritRoot);
+  assert.equal(after.speed,before.speed+2,spiritRoot);
+  assert.equal(after.critRate,before.critRate+critRate,spiritRoot);
+  assert.equal(after.dodgeRate,before.dodgeRate+2,spiritRoot);
+  assert.equal(loaded.player.hp,24+hp);
+  assert.equal(loaded.player.mp,13);
+  assert.equal(loaded.techniques.mastered.includes('self-as-self'),exclusive,spiritRoot);
+  assert.equal(loaded.techniques.combat.includes('self-as-self'),false,spiritRoot);
+  assert.throws(()=>chooseFoundationAptitude(loaded,'攻击'),/资质/);
+  assert.match(chooseFoundationAptitude(loaded,'悟性'),/悟性 \+1/);
+  assert.equal(loaded.player.stats.悟性,11);
+  assert.throws(()=>chooseFoundationAptitude(loaded,'悟性'),/待分配/);
+  assert.deepEqual(equipmentStats(migrateSave(loaded)),after);
+ }
 });
 
 test('旧圆满档迁到炼气十层满 1000；扣修为后可以修炼补回，但不会溢出',()=>{
