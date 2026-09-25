@@ -186,7 +186,7 @@ export function playRound(save,action='attack',now=Date.now()){
    else if(enemyAction!=='attack'){battle.mp=round2(battle.mp-1);if(enemyAction==='strengthen-attack')battle.enemySkillReady=battle.round+4;messages.push(`${battle.name}使出${enemyAction==='iron-wall'?'铜墙铁壁':'强化普通'}。`)}
   }
   if(foxFight&&!silenced&&battle.mp>=1){
-   if((battle.foxBloomReady||0)<=battle.round+1){enemyAction='fox-bloom';battle.mp--;battle.foxBloomReady=battle.round+4;battle.foxParalyzeRound=battle.round+2;messages.push(`${battle.name}使出落英缤纷，你下一轮无法行动。`)}
+   if((battle.foxBloomReady||0)<=battle.round+1){enemyAction='fox-bloom';battle.mp--;battle.foxBloomReady=battle.round+5;battle.foxParalyzeRound=battle.round+2;messages.push(`${battle.name}使出落英缤纷，你下一轮无法行动。`)}
    else if((battle.enemySkillReady||0)<=battle.round+1){enemyAction='strengthen-attack';battle.mp--;battle.enemySkillReady=battle.round+4;messages.push(`${battle.name}使出强化普通。`)}
   }
  const monster=monsters.find(entry=>entry.id===battle.monsterId);
@@ -212,7 +212,7 @@ export function playRound(save,action='attack',now=Date.now()){
  battle.round++;
  battle.bindRounds=(battle.bindRounds||[]).filter(round=>round>battle.round);
  if(battle.hp<=0)resolveVictory(save,now,messages);
- else if(save.player.hp<=0){if(tournament)resolveTournamentLoss(save,'defeat',messages);else{save.player.cultivation=round2(save.player.cultivation-50);save.player.hp=5;finish(save,'defeat');messages.push('战败：修为 −50，生命恢复至 5；无战利品。')}}
+ else if(save.player.hp<=0){if(tournament)resolveTournamentLoss(save,'defeat',messages);else{save.player.cultivation=round2(save.player.cultivation-50);save.player.hp=5;messages.push('战败：修为 −50，生命恢复至 5；无战利品。');finish(save,'defeat',{log:[...battle.log,...messages].slice(-10)})}}
  else{battle.log=[...battle.log,...messages].slice(-10)}
  return {messages,dealt,taken,result:save.lastBattle?.id===battle.id?save.lastBattle:null};
 }
