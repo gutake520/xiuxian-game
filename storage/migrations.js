@@ -9,6 +9,7 @@ import {ITEMS} from '../data/items.js';
 import {QI_MONSTERS} from '../data/locations.js';
 import {DURABILITY_MAX} from '../data/balance.js';
 import {expireLoot} from '../systems/inventory.js';
+import {ensureBossLine} from '../systems/boss-line.js';
 export function migrateSave(save,now=Date.now()){
  if(!save?.player)throw new Error('存档缺少人物信息。');
  const p=save.player;
@@ -57,6 +58,7 @@ export function migrateSave(save,now=Date.now()){
  if(!save.idle.day)save.idle.day=localDay(now);
  const progress=realmProgress(p);if(progress.index>=0){p.cultivationRequired=QI_REQUIREMENTS[progress.index]??null;if(progress.required&&p.cultivation>=progress.required){const xp=p.cultivation;p.cultivation=0;addCultivation(save,xp)}}
  applyRealmHp(save);
+ ensureBossLine(save);
  syncAchievements(save);
  save.version=6;return save;
 }

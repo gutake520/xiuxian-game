@@ -11,10 +11,11 @@ import {localDay} from '../systems/cultivation.js';
 import {equipmentStats} from '../systems/inventory.js';
 import {repairPrice,repairEquipment,healAtSect,startMeditation,HEAL_PRICE,MEDITATION_PRICE,MEDITATION_MS} from '../systems/sect-services.js';
 import {escapeHTML,format} from './shared.js';
+import {BOSS_NAME,bossAttributes} from '../systems/boss-line.js';
 
 export function createMapUI({getSave,activate,actions,onSectBattleExit}){
  const content=()=>document.getElementById('xg-content');
- const battle=outcome=>showBattle({getSave,activate,actions,onExit:['sect-tournament','sect-senior'].includes(getSave().battle?.kind||getSave().lastBattle?.kind)?onSectBattleExit:renderMonsters},outcome);
+ const battle=outcome=>showBattle({getSave,activate,actions,onExit:getSave().bossLine?.phase==='ambush'||getSave().bossLine?.rescuePending?renderMonsters:['sect-tournament','sect-senior'].includes(getSave().battle?.kind||getSave().lastBattle?.kind)?onSectBattleExit:renderMonsters},outcome);
  function heading(title,subtitle){return `<div class="xg-map-heading"><h2>${title}</h2><p>${subtitle}</p></div>`}
  const peaks=(locations,kind)=>`<div class="xg-map-landscape xg-map-${kind}">${locations.map((place,i)=>`<button type="button" class="xg-map-hill${place.locked?' xg-map-locked':''}" style="--hill-x:${place.x}%;--hill-y:${place.y}%;--hill-size:${place.size||1}" ${place.locked?'disabled':''} ${place.id?`data-${kind}="${place.id}"`:''}><span class="xg-map-label">${place.name}</span><span class="xg-map-summit" aria-hidden="true"></span></button>`).join('')}</div>`;
  function render(){
@@ -22,6 +23,7 @@ export function createMapUI({getSave,activate,actions,onSectBattleExit}){
   if(getSave().battle||getSave().encounterPending||getSave().seniorRewardPending)return battle();
   if(getSave().qiSecret)return renderSecret();
   if(getSave().qiMeditation)return renderMeditation();
+  if(getSave().bossLine?.phase==='ambush'||getSave().bossLine?.rescuePending)return battle();
   activate('map');
   content().innerHTML=`<section class="xg-map-sheet">${heading('山河图','点一座山，走一段路。')}${peaks([
    {name:'坊市',id:'market',x:12,y:6,size:.8},{name:'黑市',id:'blackmarket',x:68,y:17,size:.76},
@@ -117,12 +119,13 @@ export function createMapUI({getSave,activate,actions,onSectBattleExit}){
  function renderMonsters(){
   activate('map');
   content().innerHTML=`<section class="xg-map-sheet"><button class="xg-map-back" type="button">← 返回地图</button>${heading('丰原镇','妖影、故人和秘境，都藏在山中。')}
-   ${peaks(QI_PEAKS, 'encounter')}</section>`;
+   ${peaks(getSave().bossLine?.phase==='wounded'&&!getSave().bossLine.rescuePending?[...QI_PEAKS,{id:'wounded-ridge',name:'残影峰',kind:'boss',x:37,y:8,size:.78}]:QI_PEAKS, 'encounter')}</section>`;
   content().querySelectorAll('[data-encounter]').forEach(button=>button.onclick=()=>renderEncounter(button.dataset.encounter));
   back(render);
  }
  function renderEncounter(id){
-  if(getSave().battle||getSave().encounterPending)return battle();
+  if(getSave().battle||getSave().encounterPending||getSave().bossLine?.phase==='ambush'||getSave().bossLine?.rescuePending)return battle();
+  if(id==='wounded-ridge'&&getSave().bossLine?.phase==='wounded')return renderWoundedBoss();
   const peak=QI_PEAKS.find(item=>item.id===id);if(!peak)return renderMonsters();
   if(peak.kind==='npc')return renderNpc(peak);
   if(peak.kind==='secret')return renderSecret();
@@ -140,6 +143,13 @@ export function createMapUI({getSave,activate,actions,onSectBattleExit}){
    try{const pet=content().querySelector('[name="xg-pet"]:checked')?.value||null;await actions.startBattle(button.dataset.foe,pet);battle()}
    catch(error){status.textContent=error.message;content().querySelectorAll('[data-foe]').forEach(item=>item.disabled=false)}
  });
+ }
+ function renderWoundedBoss(){
+  const foe=bossAttributes(getSave(),1.1),beast=getSave().petRentals>0||getSave().spiritBeast&&hasActiveTechnique(getSave(),'beast-keeper');
+  activate('map');
+  content().innerHTML=`<section class="xg-map-sheet"><button class="xg-map-back" type="button">← 返回丰原镇</button>${heading('残影峰','仇人躲在此处养伤。')}<div class="xg-card"><h3>${BOSS_NAME}</h3><p>生命 ${foe.maxHp.toFixed(2)} · 攻击 ${foe.attack.toFixed(2)} · 防御 ${foe.defense.toFixed(2)} · 速度 ${foe.speed.toFixed(2)}</p></div>${beast?`<fieldset class="xg-card"><legend>灵兽出战</legend><label><input type="radio" name="xg-boss-pet" value="" checked> 不出战</label><label><input type="radio" name="xg-boss-pet" value="attack"> 追击</label><label><input type="radio" name="xg-boss-pet" value="guard"> 守护</label></fieldset>`:''}<button type="button" data-challenge-boss>迎战</button><p role="status"></p></section>`;
+  back(renderMonsters);
+  content().querySelector('[data-challenge-boss]').onclick=async event=>{const button=event.currentTarget;button.disabled=true;try{await actions.startBattle('wounded-boss',content().querySelector('[name="xg-boss-pet"]:checked')?.value||null);battle()}catch(error){content().querySelector('[role=status]').textContent=error.message;button.disabled=false}};
  }
  function renderNpc(peak){
   activate('map');const met=!!getSave().flags?.metQiNpcs?.[peak.id];

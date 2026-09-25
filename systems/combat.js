@@ -8,6 +8,8 @@ import {TECHNIQUES,hasActiveTechnique} from '../data/techniques.js';
 import {HERBALIST_NAME,maybeMeetHerbalist} from './encounters.js';
 import {maybeMeetDiviner} from './divination.js';
 import {startSeniorChallenge} from './sect-tournament.js';
+import {BOSS_NAME,bossAttributes,ensureBossLine} from './boss-line.js';
+import {selectBattlePet} from './pets.js';
 
 export const round2=value=>Math.round((value+Number.EPSILON)*100)/100;
 const herbs=['healing-herb','spirit-herb','qi-herb'];
@@ -49,6 +51,12 @@ function resolveTournamentLoss(save,outcome,messages){
 }
 function resolveVictory(save,now,messages){
  const battle=save.battle,monster=QI_MONSTERS.find(entry=>entry.id===battle.monsterId);
+ if(battle.kind==='wounded-boss'){
+  const result=finish(save,'victory',{rewards:[],xp:0,kind:'wounded-boss'});
+  save.bossLine.phase='defeated';save.bossLine.insight=true;
+  messages.push('仇人倒下，旧日血仇终于有了了断。你获得突破所需的感悟。');
+  result.log=[...messages];return result;
+ }
  if(battle.kind==='sect-tournament'){
   save.player.spiritStones=round2(save.player.spiritStones+10);
   const result=finish(save,'victory',{rewards:['灵石×10'],xp:0,kind:'sect-tournament'});
@@ -64,9 +72,11 @@ function resolveVictory(save,now,messages){
   result.log=[...messages];return result;
  }
  const result=awardVictory(save,monster,now);
+ ensureBossLine(save);
  finish(save,'victory',result);
  messages.push(`胜利！修为 +${result.xp}，${result.rewards.join('、')}。`);
- if(monster.humanoid&&!battle.retaliation&&save.player.hp>0&&Math.random()<.3){
+ if(save.bossLine?.phase==='ambush')messages.push('你刚踏入炼气十层，故人衣纹忽然在山道尽头出现。');
+ else if(monster.humanoid&&!battle.retaliation&&save.player.hp>0&&Math.random()<.3){
   beginBattle(save,monster.id,null,true);
   save.battle.log=[...messages.slice(-3),'你敢杀我兄弟？对方的同伴冲出，追战开始。'].slice(-10);
  }else{
@@ -82,19 +92,26 @@ export function beginBattle(save,id,pet=null,retaliation=false){
  if(save.divinationPending)throw new Error('请先回应卦师。');
  if(save.encounterPending)throw new Error(`请先回应${HERBALIST_NAME}。`);
  if(save.seniorRewardPending)throw new Error('请先领取大比奖励。');
+ if(save.bossLine?.phase==='ambush'||save.bossLine?.rescuePending)throw new Error('请先走完当前剧情。');
  if(save.player.cultivation< -100)throw new Error('请先去修炼。');
  const tier=realmProgress(save.player).index;if(tier<0)throw new Error('当前境界暂未开放此处战斗。');
  if(save.player.hp<=0)throw new Error('生命不足，无法迎战。');
+ if(id==='wounded-boss'){
+  if(save.bossLine?.phase!=='wounded')throw new Error('这里没有可挑战的仇人。');
+  const foe=bossAttributes(save,1.1),chosen=selectBattlePet(save,pet);
+  save.battle={id:crypto.randomUUID(),kind:'wounded-boss',monsterId:null,name:BOSS_NAME,maxHp:foe.maxHp,hp:foe.maxHp,attack:foe.attack,defense:foe.defense,speed:foe.speed,maxMp:foe.maxMp,mp:foe.maxMp,critRate:foe.critRate,dodgeRate:foe.dodgeRate,round:0,pet:chosen,guard:false,bindRounds:[],arrayRound:0,talismansUsed:0,talismanRound:0,freeArrayUsed:false,criticalFocus:false,skillReady:{},log:['你在山中找到了负伤的仇人。旧怨未了，战斗开始。']};
+  return save.battle;
+ }
  const monster=QI_MONSTERS.find(entry=>entry.id===id);if(!monster)throw new Error('对手不存在。');
  if(tier+1<monster.minLevel)throw new Error(`需炼气${['一','二','三','四','五','六','七','八','九','十'][monster.minLevel-1]}层解锁此处。`);
- if(pet!==null){if(!['attack','guard'].includes(pet))throw new Error('灵兽类型无效。');if(!(save.spiritBeast&&hasActiveTechnique(save,'beast-keeper'))){if((save.petRentals||0)<1)throw new Error('尚未租借灵兽。');save.petRentals--}}
+ selectBattlePet(save,pet);
  const maxHp=monster.hpMin+Math.floor(Math.random()*(monster.hpMax-monster.hpMin+1));
  save.battle={id:crypto.randomUUID(),monsterId:id,name:monster.name,maxHp,hp:maxHp,attack:monster.attack,speed:monster.speed,mp:monster.mp||0,round:0,pet,retaliation,guard:false,bindRounds:[],arrayRound:0,talismansUsed:0,talismanRound:0,freeArrayUsed:false,criticalFocus:false,skillReady:{},log:['狭路相逢，战斗开始。']};
  return save.battle;
 }
 export function playRound(save,action='attack',now=Date.now()){
  const battle=save.battle;if(!battle)throw new Error('没有正在进行的战斗。');
- const tournament=['sect-tournament','sect-senior'].includes(battle.kind);
+ const tournament=['sect-tournament','sect-senior'].includes(battle.kind),armored=tournament||battle.kind==='wounded-boss';
  const skill=TECHNIQUES[action];
  if(!['attack','skip'].includes(action)&&skill?.type!=='combat')throw new Error('请选择可用的行动。');
  if(battle.pendingStrike&&action!=='attack')throw new Error('蓄势攻击将在本轮自动施放。');
@@ -129,7 +146,7 @@ export function playRound(save,action='attack',now=Date.now()){
    damageIntro=`${prepared?'等等再来：':skill?skill.name+'：':''}你${crit?'暴击，':''}造成`;
   }
   if(action==='catch-breath'){const gained=round2(Math.min(1,stats.maxMp-save.player.mp));save.player.mp=round2(save.player.mp+gained);messages.push(`法力恢复 ${gained.toFixed(2)}。`)}
-  if(tournament){
+  if(armored){
    if(Math.random()<battle.dodgeRate/100){messages.push(`${battle.name}避开了这一击。`);dealt=0;return}
    if(action==='silent-strike'&&battle.hp>0&&playerFirst)enemyAction='attack';
    dealt=round2(Math.max(1,dealt-battle.defense-(enemyAction==='iron-wall'?1:0)));
@@ -153,8 +170,8 @@ export function playRound(save,action='attack',now=Date.now()){
   }
   const monster=QI_MONSTERS.find(entry=>entry.id===battle.monsterId);
   const empowered=!tournament&&!silenced&&monster?.attackBoost&&(battle.mp||0)>0&&(battle.enemySkillReady||0)<=battle.round+1;
-  const enemyCrit=tournament&&enemyAction!=='iron-wall'&&Math.random()<battle.critRate/100;
-  const rawDamage=round2(tournament?(enemyAction==='iron-wall'?1:battle.attack*(enemyAction==='strengthen-attack'?1.1:1)*(enemyCrit?1.5:1)):battle.attack*(empowered?monster.attackBoost:1));
+  const enemyCrit=armored&&enemyAction!=='iron-wall'&&Math.random()<battle.critRate/100;
+  const rawDamage=round2(armored?(enemyAction==='iron-wall'?1:battle.attack*(enemyAction==='strengthen-attack'?1.1:1)*(enemyCrit?1.5:1)):battle.attack*(empowered?monster.attackBoost:1));
   if(empowered){battle.mp--;battle.enemySkillReady=battle.round+monster.boostCooldown+2;messages.push(`${battle.name}使出强化攻击。`)}
   if(enemyCrit)messages.push(`${battle.name}打出暴击。`);
   if(Math.random()<stats.dodgeRate/100){messages.push('你闪开了对手的攻击。');return}
