@@ -15,6 +15,7 @@ import {createMapUI} from './ui/map.js';
 import {showBattle} from './ui/combat.js';
 import {showSectLibrary} from './ui/sect-library.js';
 import {libraryVisits} from './systems/sect-library.js';
+import {worldDay} from './systems/cultivation.js';
 import {showMidAutumn} from './ui/mid-autumn.js';
 import {showBreakthrough} from './ui/breakthrough.js';
 import {breakthroughReady} from './systems/breakthrough.js';
@@ -88,7 +89,7 @@ let actionPending=false;
 function renderHome(){
  if((currentSave?.qiSecret||currentSave?.qiMeditation||currentSave?.bossLine?.phase==='ambush'||currentSave?.bossLine?.rescuePending))return mapUI.render();
  activatePage('home');const p=currentSave.player,world=currentSave.world||{};
- const location=world.location||'荒山古道',day=Number.isSafeInteger(world.day)&&world.day>0?world.day:1;
+ const location=world.location||'荒山古道',day=worldDay(currentSave);
  const requirement=p.cultivationRequired,known=Number.isFinite(requirement)&&requirement>0;
  const progress=known?Math.max(0,Math.min(100,(p.cultivation||0)/requirement*100)):0;
  const inSect=p.sect&&p.sect!=='无门无派';
