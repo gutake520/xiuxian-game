@@ -2,6 +2,14 @@ import {IDLE_LIMIT_MS,PRACTICE,PRACTICE_ENTRY_FEES} from '../data/balance.js';
 import {TECHNIQUES} from '../data/techniques.js';
 import {realmProgress,addCultivation} from '../data/realms.js';
 export function localDay(time){const d=new Date(time);return `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`}
+export function worldDay(save,now=Date.now()){
+ const recorded=Number.isSafeInteger(save.world?.day)&&save.world.day>0?save.world.day:1;
+ const created=Number.isFinite(save.createdAt)&&save.createdAt>0;
+ const startedAt=created?save.createdAt:save.world?.dayAnchorAt;
+ if(!Number.isFinite(startedAt)||startedAt<=0)return recorded;
+ const calendarDay=time=>{const date=new Date(time);return Date.UTC(date.getFullYear(),date.getMonth(),date.getDate())/86400000};
+ return Math.max(recorded,(created?1:recorded)+Math.max(0,calendarDay(now)-calendarDay(startedAt)));
+}
 function nextMidnight(time){const d=new Date(time);d.setHours(24,0,0,0);return d.getTime()}
 export function idleRate(save){return save.techniques.mastered.includes(save.techniques.main)?TECHNIQUES[save.techniques.main]?.idlePerMinute||0:0}
 // 新的大境界只需在对应功法的 idleHoursByRealm 中追加上限。
