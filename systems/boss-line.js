@@ -6,7 +6,7 @@ const round2=value=>Math.round((value+Number.EPSILON)*100)/100;
 export const BOSS_NAME='仇人';
 
 export function ensureBossLine(save){
- if(!save.bossLine&&realmProgress(save.player).index>=9)save.bossLine={phase:'ambush'};
+ if(!save.bossLine&&realmProgress(save.player).index===9)save.bossLine={phase:'ambush'};
  return save.bossLine;
 }
 

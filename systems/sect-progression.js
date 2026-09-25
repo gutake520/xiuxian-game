@@ -33,11 +33,16 @@ export function redeemInheritance(save,id){
  return `兑换《${method.name}》，宗门积分 −9。`;
 }
 export function craftSectItem(save,id,herb='healing-herb'){
- const talisman=['attack-talisman','guard-talisman'].includes(id);
- if(!talisman&&id!=='crafted-binding-array')throw new Error('制作配方尚未开放。');
+ const talisman=['attack-talisman','guard-talisman','foundation-attack-talisman','foundation-guard-talisman'].includes(id);
+ if(!talisman&&!['crafted-binding-array','foundation-crafted-array'].includes(id))throw new Error('制作配方尚未开放。');
  if(!hasActiveTechnique(save,talisman?'fairy-painting':'planting-flags'))throw new Error('请先学会本宗制作传承。');
  if(!['healing-herb','spirit-herb','qi-herb'].includes(herb))throw new Error('药草类型无效。');
- const recipe=talisman?{[herb]:1,ore:1}:{ore:20};
+ const stage=ITEMS[id]?.stage==='筑基'?'筑基':'炼气';
+ if(stage==='筑基'&&!String(save.player.realm).startsWith('筑基'))throw new Error('灵力尚浅，无法炼制筑基法器。');
+ const permitted=stage==='筑基'?['foundation-healing-herb','foundation-spirit-herb','foundation-qi-herb']:['healing-herb','spirit-herb','qi-herb'];
+ if(talisman&&!permitted.includes(herb))throw new Error('此草灵气不合，需用相应境界的药草。');
+ const oreId=stage==='筑基'?'foundation-ore':'ore';
+ const recipe=talisman?{[herb]:1,[oreId]:1}:{[oreId]:20};
  for(const [material,count] of Object.entries(recipe))if((save.inventory.find(e=>e.itemId===material)?.quantity||0)<count)throw new Error('材料不足。');
  const freed=Object.entries(recipe).filter(([material,count])=>save.inventory.find(e=>e.itemId===material)?.quantity===count).length;
  if(!save.inventory.some(e=>e.itemId===id)&&save.inventory.length-freed>=save.bagCapacity)throw new Error('储物格已满。');
@@ -51,13 +56,13 @@ export function repairOwnEquipment(save,uid){
  if(item?.kind!=='equipment')throw new Error('找不到这件装备。');
  const limit=maxDurability(entry),cost=Math.ceil(limit/5);
  if(entry.durability>=limit)throw new Error('装备耐久已满。');
- const ore=save.inventory.find(item=>item.itemId==='ore');
- if((ore?.quantity||0)<cost)throw new Error(`修补需 ${cost} 个矿石。`);
+ const oreId=item.stage==='筑基'?'foundation-ore':'ore',ore=save.inventory.find(item=>item.itemId===oreId);
+ if((ore?.quantity||0)<cost)throw new Error(`此石灵性不足，修补${item.name}需 ${cost} 个${ITEMS[oreId].name}。`);
  const before=equipmentStats(save);
  ore.quantity-=cost;if(!ore.quantity)save.inventory=save.inventory.filter(item=>item!==ore);
  entry.durability=limit;
  const after=equipmentStats(save);
  save.player.hp=Math.round(Math.min(after.maxHp,save.player.hp+after.maxHp-before.maxHp)*100)/100;
  save.player.mp=Math.round(Math.min(after.maxMp,save.player.mp+after.maxMp-before.maxMp)*100)/100;
- return `修好${item.name}，消耗 ${cost} 个矿石。`;
+ return `修好${item.name}，消耗 ${cost} 个${ITEMS[oreId].name}。`;
 }

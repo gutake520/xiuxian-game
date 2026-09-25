@@ -21,6 +21,27 @@ export const ITEMS={
  'guard-talisman':{id:'guard-talisman',name:'护身符',price:2.5,kind:'talisman',stackable:true,glyph:'符',description:'免疫下一次受到的伤害，每轮限一张。'},
  'binding-array':{id:'binding-array',name:'定身阵盘',price:3,kind:'array',stackable:true,glyph:'阵',description:'使小妖下一轮无法行动。'},
  'crafted-binding-array':{id:'crafted-binding-array',name:'自制定身阵盘',kind:'array',glyph:'阵',description:'玄机门自制阵盘，制作消耗 20 个矿石，可发动六次。耗尽后保留损坏的阵盘。'},
+ 'foundation-sword':{id:'foundation-sword',name:'青锋剑',price:7.5,stage:'筑基',kind:'equipment',slot:'weapon',attack:1.5,glyph:'剑',description:'坊市青锋剑，攻击 +1.50。'},
+ 'foundation-robe':{id:'foundation-robe',name:'云纹衣',price:7.5,stage:'筑基',kind:'equipment',slot:'armor',defense:.8,glyph:'衣',description:'坊市云纹衣，防御 +0.80。'},
+ 'foundation-wild-sword':{id:'foundation-wild-sword',name:'裂风剑',stage:'筑基',kind:'equipment',slot:'weapon',attack:1.5,stunChance:.1,glyph:'剑',description:'妖兽掉落，攻击 +1.50；攻击命中时可能使先手的敌人当轮无法行动。'},
+ 'foundation-wild-robe':{id:'foundation-wild-robe',name:'护心甲',stage:'筑基',kind:'equipment',slot:'armor',defense:.8,dodgeRate:2,glyph:'甲',description:'妖兽掉落，防御 +0.80、闪避率 +2%。'},
+ 'foundation-shoes':{id:'foundation-shoes',name:'踏风履',stage:'筑基',kind:'equipment',slot:'shoes',speed:3,glyph:'履',description:'妖兽掉落，速度 +3。'},
+ 'foundation-hp-charm':{id:'foundation-hp-charm',name:'长生佩',stage:'筑基',kind:'equipment',slot:'accessoryVital',hp:5,glyph:'佩',description:'妖兽掉落，生命上限 +5。'},
+ 'foundation-mp-charm':{id:'foundation-mp-charm',name:'纳灵佩',stage:'筑基',kind:'equipment',slot:'accessoryVital',mp:3,glyph:'佩',description:'妖兽掉落，法力上限 +3。'},
+ 'foundation-crit-charm':{id:'foundation-crit-charm',name:'破锋佩',stage:'筑基',kind:'equipment',slot:'accessoryFate',critRate:13,glyph:'佩',description:'妖兽掉落，暴击率 +13%。'},
+ 'foundation-dodge-charm':{id:'foundation-dodge-charm',name:'流云佩',stage:'筑基',kind:'equipment',slot:'accessoryFate',dodgeRate:13,glyph:'佩',description:'妖兽掉落，闪避率 +13%。'},
+ 'foundation-healing-herb':{id:'foundation-healing-herb',name:'养脉芝',stage:'筑基',kind:'material',stackable:true,glyph:'芝',description:'筑基丹药材料。'},
+ 'foundation-spirit-herb':{id:'foundation-spirit-herb',name:'凝露草',stage:'筑基',kind:'material',stackable:true,glyph:'草',description:'筑基丹药材料。'},
+ 'foundation-qi-herb':{id:'foundation-qi-herb',name:'蕴灵叶',stage:'筑基',kind:'material',stackable:true,glyph:'叶',description:'筑基丹药材料。'},
+ 'foundation-ore':{id:'foundation-ore',name:'玄纹铁',stage:'筑基',kind:'material',stackable:true,glyph:'铁',description:'筑基炼器材料。'},
+ 'foundation-heal-pill':{id:'foundation-heal-pill',name:'固元丹',stage:'筑基',price:6.75,kind:'pill',stackable:true,hp:18,glyph:'丹',description:'恢复 18 点生命。'},
+ 'foundation-spirit-pill':{id:'foundation-spirit-pill',name:'回澜丹',stage:'筑基',price:6.75,kind:'pill',stackable:true,mp:9,glyph:'丹',description:'恢复 9 点法力。'},
+ 'foundation-mixed-pill':{id:'foundation-mixed-pill',name:'调息丹',stage:'筑基',price:5.25,kind:'pill',stackable:true,hp:10.5,mp:4.5,glyph:'丹',description:'恢复 10.50 点生命与 4.50 点法力。'},
+ 'foundation-qi-pill':{id:'foundation-qi-pill',name:'蕴气丹',stage:'筑基',price:7.5,kind:'pill',stackable:true,glyph:'丹',description:'服用当天的挂机上限增加 45 分钟；当天不可叠加。'},
+ 'foundation-attack-talisman':{id:'foundation-attack-talisman',name:'破锋符',stage:'筑基',price:3.75,kind:'talisman',stackable:true,glyph:'符',damage:3,description:'战斗中额外造成 3 点伤害，每轮限一张。'},
+ 'foundation-guard-talisman':{id:'foundation-guard-talisman',name:'护元符',stage:'筑基',price:3.75,kind:'talisman',stackable:true,glyph:'符',description:'免疫下一次受到的伤害，每轮限一张。'},
+ 'foundation-binding-array':{id:'foundation-binding-array',name:'锁灵阵盘',stage:'筑基',price:4.5,kind:'array',stackable:true,glyph:'阵',description:'可困住筑基及以下的对手一轮。'},
+ 'foundation-crafted-array':{id:'foundation-crafted-array',name:'自制锁灵阵盘',stage:'筑基',kind:'array',glyph:'阵',description:'消耗 20 个玄纹铁，可发动六次，耗尽后保留损坏的阵盘。'},
  'qi-manual':{id:'qi-manual',name:'引气诀',price:10,kind:'manual',methodId:'basic-qi-guide',glyph:'诀',description:'解开三阶数阵后学会，可设为主修。'},
  'archive-manual':{id:'archive-manual',name:'藏元诀',kind:'manual',methodId:'archive-meditation',glyph:'简',description:'三枚藏书阁玉简合成的中级修炼功法，参悟四阶数阵后可设为主修。'},
  'strengthen-manual':{id:'strengthen-manual',name:'强化普通',price:20,kind:'manual',methodId:'strengthen-attack',glyph:'诀',description:'普通战斗功法，参悟后可以装备。'},
@@ -43,6 +64,6 @@ export const ITEMS={
  'spirit-burn-manual':{id:'spirit-burn-manual',name:'灵息尽燃',kind:'manual',methodId:'spirit-burn',glyph:'简',description:'三片玉简拼成的中级战斗功法，参悟四阶数阵后可装备。'}
 };
 for(const item of Object.values(ITEMS))if(item.kind==='manual'&&!item.blackMarketOnly&&!['gamble-manual','steal-manual','only-once-manual','spirit-burn-manual','archive-manual'].includes(item.id)){item.repeatable=true;item.stackable=true;item.sellPrice=10}
-export const SHOP_ITEMS=['iron-sword','cloth-robe','qi-manual','strengthen-manual','wall-manual','breath-manual','charged-manual','wait-manual','calming-jade'];
-export const SECT_PILLS=['small-heal-pill','spirit-pill','mixed-pill','qi-pill'];
-export const SECT_TALISMANS=['attack-talisman','guard-talisman'];
+export const SHOP_ITEMS=['iron-sword','cloth-robe','foundation-sword','foundation-robe','qi-manual','strengthen-manual','wall-manual','breath-manual','charged-manual','wait-manual','calming-jade'];
+export const SECT_PILLS=['small-heal-pill','spirit-pill','mixed-pill','qi-pill','foundation-heal-pill','foundation-spirit-pill','foundation-mixed-pill','foundation-qi-pill'];
+export const SECT_TALISMANS=['attack-talisman','guard-talisman','foundation-attack-talisman','foundation-guard-talisman'];

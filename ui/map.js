@@ -1,6 +1,6 @@
 import {showBlackMarket} from './black-market.js';
 import {beastCanFight,beastName} from '../systems/pets.js';
-import {VISITING_SECTS,QI_MONSTERS,QI_PEAKS} from '../data/locations.js';
+import {VISITING_SECTS,QI_MONSTERS,QI_PEAKS,FOUNDATION_MONSTERS,FOUNDATION_PEAKS} from '../data/locations.js';
 import {realmProgress} from '../data/realms.js';
 import {showBattle} from './combat.js';
 import {ITEMS,SECT_PILLS,SECT_TALISMANS} from '../data/items.js';
@@ -9,14 +9,15 @@ import {showShop,showSell} from './inventory.js';
 import {startQiExploration,QI_EXPLORATION_MS,QI_SCENES} from '../systems/exploration.js';
 import {localDay} from '../systems/cultivation.js';
 import {equipmentStats} from '../systems/inventory.js';
-import {repairPrice,repairEquipment,healAtSect,startMeditation,HEAL_PRICE,MEDITATION_PRICE,MEDITATION_MS} from '../systems/sect-services.js';
+import {repairPrice,repairEquipment,healAtSect,startMeditation,healingService,MEDITATION_MS} from '../systems/sect-services.js';
 import {escapeHTML,format} from './shared.js';
 import {BOSS_NAME,bossAttributes} from '../systems/boss-line.js';
 
 export function createMapUI({getSave,activate,actions,onSectBattleExit}){
  const content=()=>document.getElementById('xg-content');
- const petChoices=(save,name)=>{const rented=save.petRentals>0,attack=beastCanFight(save,'attack'),guard=beastCanFight(save,'guard');return rented||attack||guard?`<fieldset class="xg-card"><legend>灵兽出战</legend><label><input type="radio" name="${name}" value="" checked> 不出战</label>${['attack','guard'].filter(type=>beastCanFight(save,type)||rented).map(type=>`<label><input type="radio" name="${name}" value="${type}"> ${escapeHTML(beastCanFight(save,type)?beastName(save,type):'租借灵兽')} · ${type==='attack'?'追击 +0.50':'守护 −0.30'}</label>`).join('')}</fieldset>`:''};
- const battle=outcome=>showBattle({getSave,activate,actions,onExit:getSave().bossLine?.phase==='ambush'||getSave().bossLine?.rescuePending?renderMonsters:['sect-tournament','sect-senior'].includes(getSave().battle?.kind||getSave().lastBattle?.kind)?onSectBattleExit:renderMonsters},outcome);
+ const foundationPlayer=()=>String(getSave()?.player?.realm||'').startsWith('筑基');
+ const petChoices=(save,name)=>{const foundation=String(save.player.realm).startsWith('筑基'),rented=(foundation?save.foundationPetRentals:save.petRentals)>0,attack=beastCanFight(save,'attack'),guard=beastCanFight(save,'guard');return rented||attack||guard?`<fieldset class="xg-card"><legend>灵兽出战</legend><label><input type="radio" name="${name}" value="" checked> 不出战</label>${['attack','guard'].filter(type=>beastCanFight(save,type)||rented).map(type=>`<label><input type="radio" name="${name}" value="${type}"> ${escapeHTML(beastCanFight(save,type)?beastName(save,type):'租借灵兽')} · ${type==='attack'?`追击 +${foundation?'0.80':'0.50'}`:`守护 −${foundation?'0.50':'0.30'}`}</label>`).join('')}</fieldset>`:''};
+ const battle=outcome=>showBattle({getSave,activate,actions,onExit:getSave().bossLine?.phase==='ambush'||getSave().bossLine?.rescuePending?renderMonsters:['sect-tournament','sect-senior'].includes(getSave().battle?.kind||getSave().lastBattle?.kind)?onSectBattleExit:FOUNDATION_MONSTERS.some(monster=>monster.id===(getSave().battle?.monsterId||getSave().lastBattle?.monsterId))?renderFoundation:renderMonsters},outcome);
  function heading(title,subtitle){return `<div class="xg-map-heading"><h2>${title}</h2><p>${subtitle}</p></div>`}
  const peaks=(locations,kind)=>`<div class="xg-map-landscape xg-map-${kind}">${locations.map((place,i)=>`<button type="button" class="xg-map-hill${place.locked?' xg-map-locked':''}" style="--hill-x:${place.x}%;--hill-y:${place.y}%;--hill-size:${place.size||1}" ${place.locked?'disabled':''} ${place.id?`data-${kind}="${place.id}"`:''}><span class="xg-map-label">${place.name}</span><span class="xg-map-summit" aria-hidden="true"></span></button>`).join('')}</div>`;
  function render(){
@@ -28,13 +29,14 @@ export function createMapUI({getSave,activate,actions,onSectBattleExit}){
   activate('map');
   content().innerHTML=`<section class="xg-map-sheet">${heading('山河图','点一座山，走一段路。')}${peaks([
    {name:'坊市',id:'market',x:12,y:6,size:.8},{name:'黑市',id:'blackmarket',x:68,y:17,size:.76},
-   {name:'远山 · 待定',x:36,y:37,locked:true,size:.85},{name:'九宗山门',id:'sects',x:8,y:69,size:1.08},
+   foundationPlayer()?{name:'望川岭',id:'foundation',x:36,y:37,size:.85}:{name:'远山 · 待定',x:36,y:37,locked:true,size:.85},{name:'九宗山门',id:'sects',x:8,y:69,size:1.08},
    {name:'丰原镇',id:'monsters',x:64,y:62,size:1.04}
   ],'map')}</section>`;
   content().querySelector('[data-map="sects"]').onclick=renderSects;
   content().querySelector('[data-map="monsters"]').onclick=renderMonsters;
   content().querySelector('[data-map="market"]').onclick=renderMarket;
   content().querySelector('[data-map="blackmarket"]').onclick=renderBlackMarket;
+  content().querySelector('[data-map="foundation"]')?.addEventListener('click',renderFoundation);
  }
  function back(fn){content().querySelector('.xg-map-back').onclick=fn}
  function renderMarket(){
@@ -63,12 +65,13 @@ export function createMapUI({getSave,activate,actions,onSectBattleExit}){
   const sect=VISITING_SECTS.find(item=>item.id===id);if(!sect)return renderSects();
   const own=getSave()?.player?.sect===sect.name;
   const gear=getSave().inventory.filter(entry=>ITEMS[entry.itemId]?.kind==='equipment'&&repairPrice(entry)>0);
-  const damaged=getSave().player.hp<equipmentStats(getSave()).maxHp;
-  const serviceActions=id==='tiangong'?(own?'<small class="xg-map-pending">你是天工阁弟子，匠师不会替你修补。</small>':gear.length?gear.map(entry=>`<button type="button" data-repair="${escapeHTML(entry.uid)}">修补 ${escapeHTML(ITEMS[entry.itemId].name)} · ${format(entry.durability)} / ${maxDurability(entry)} · ${format(repairPrice(entry))} 灵石</button>`).join(''):'<small class="xg-map-pending">没有需要修补的装备。</small>'):id==='qinglan'?`<button type="button" data-heal ${damaged?'':'disabled'}>立即疗伤 · ${HEAL_PRICE} 灵石${damaged?'':'（生命已满）'}</button>`:id==='zhenyue'?`<button type="button" data-meditate ${damaged?'':'disabled'}>进入静室 · ${MEDITATION_PRICE} 灵石${damaged?'':'（生命已满）'}</button>`:'';
+  const damaged=getSave().player.hp<equipmentStats(getSave()).maxHp,service=healingService(getSave().player);
+  const detail=foundationPlayer()?id==='danxia'?'炼气丹药与筑基丹药均有出售。':id==='qinglan'?`筑基疗伤 ${service.price} 灵石，恢复至多 ${service.amount} 点生命。`:id==='zhenyue'?`筑基静坐 ${service.meditationPrice} 灵石，三分钟恢复至多 ${service.amount} 点生命。`:id==='wanling'?'筑基灵兽租约每次 1.7 灵石，追击追加 0.80，守护抵挡 0.50。':id==='xuanji'?'锁灵阵盘可困筑基对手；炼气阵盘只可困炼气对手。':id==='taixu'?'筑基破锋符额外造成 3 点伤害，护元符免疫一次伤害。':id==='tiangong'?'按装备境界与缺失耐久收取费用；本宗弟子自行修补。':sect.detail:sect.detail;
+  const serviceActions=id==='tiangong'?(own?'<small class="xg-map-pending">你是天工阁弟子，匠师不会替你修补。</small>':gear.length?gear.map(entry=>`<button type="button" data-repair="${escapeHTML(entry.uid)}">修补 ${escapeHTML(ITEMS[entry.itemId].name)} · ${format(entry.durability)} / ${maxDurability(entry)} · ${format(repairPrice(entry))} 灵石</button>`).join(''):'<small class="xg-map-pending">没有需要修补的装备。</small>'):id==='qinglan'?`<button type="button" data-heal ${damaged?'':'disabled'}>立即疗伤 · ${service.price} 灵石（至多恢复 ${service.amount}）${damaged?'':'（生命已满）'}</button>`:id==='zhenyue'?`<button type="button" data-meditate ${damaged?'':'disabled'}>进入静室 · ${service.meditationPrice} 灵石（恢复 ${service.amount}）${damaged?'':'（生命已满）'}</button>`:'';
   activate('map');
   content().innerHTML=`<section class="xg-map-sheet"><button class="xg-map-back" type="button">← 返回九宗</button>${heading(sect.name,sect.service)}
    <div class="xg-map-place xg-map-scene"><span class="xg-map-peak" aria-hidden="true"></span><strong>${sect.npc}</strong><p>${sect.id==='tiangong'&&own?'“你也是天工阁的人？自己的装备，自己去修。”':`“来者是客，欢迎到${sect.name}坐坐。”`}</p></div>
-   <div class="xg-card"><h3>${sect.service}</h3><p>${sect.detail}</p>${serviceActions}${(id==='danxia'?SECT_PILLS:id==='taixu'?SECT_TALISMANS:id==='xuanji'?['binding-array']:[]).map(itemId=>`<button type="button" data-sect-buy="${itemId}">购买${ITEMS[itemId].name} · ${ITEMS[itemId].price} 灵石</button>`).join('')}${id==='wanling'?`<button type="button" data-rent>租借灵兽 · 1 灵石（已有 ${getSave().petRentals||0} 份）</button>`:''}${['danxia','taixu','xuanji','wanling','tiangong','qinglan','zhenyue'].includes(id)?'':'<small class="xg-map-pending">具体效果或费用待定，暂不扣除灵石。</small>'}</div><p role="status" aria-live="polite"></p>
+   <div class="xg-card"><h3>${sect.service}</h3><p>${detail}</p>${serviceActions}${(id==='danxia'?SECT_PILLS:id==='taixu'?SECT_TALISMANS:id==='xuanji'?['binding-array','foundation-binding-array']:[]).filter(itemId=>!ITEMS[itemId].stage||foundationPlayer()).map(itemId=>`<button type="button" data-sect-buy="${itemId}">购买${ITEMS[itemId].name} · ${ITEMS[itemId].price} 灵石</button>`).join('')}${id==='wanling'?`<button type="button" data-rent>租借灵兽 · ${foundationPlayer()?1.7:1} 灵石（已有 ${foundationPlayer()?getSave().foundationPetRentals||0:getSave().petRentals||0} 份）</button>`:''}${['danxia','taixu','xuanji','wanling','tiangong','qinglan','zhenyue'].includes(id)?'':'<small class="xg-map-pending">具体效果或费用待定，暂不扣除灵石。</small>'}</div><p role="status" aria-live="polite"></p>
   </section>`;
   back(renderSects);
   const status=content().querySelector('[role=status]');
@@ -94,7 +97,7 @@ export function createMapUI({getSave,activate,actions,onSectBattleExit}){
   });
   const rent=content().querySelector('[data-rent]');if(rent)rent.onclick=async()=>{
    rent.disabled=true;
-   try{await actions.mutate(s=>{if(s.player.spiritStones<1)throw new Error('灵石不足。');s.player.spiritStones=Math.round((s.player.spiritStones-1)*100)/100;s.petRentals=(s.petRentals||0)+1;return '租下一次灵兽出战。'},{message:result=>result});renderVisit(id)}
+   try{await actions.mutate(s=>{const foundation=String(s.player.realm).startsWith('筑基'),price=foundation?1.7:1,key=foundation?'foundationPetRentals':'petRentals';if(s.player.spiritStones<price)throw new Error('灵石不足。');s.player.spiritStones=Math.round((s.player.spiritStones-price)*100)/100;s[key]=(s[key]||0)+1;return '租下一次灵兽出战。'},{message:result=>result});renderVisit(id)}
    catch(error){status.textContent=error.message;rent.disabled=false}
   };
  }
@@ -102,7 +105,7 @@ export function createMapUI({getSave,activate,actions,onSectBattleExit}){
   activate('map');
   const pending=getSave().qiMeditation;
   if(!pending)return renderVisit('zhenyue');
-  content().innerHTML=`<section class="xg-map-sheet"><div class="xg-card xg-secret-wait"><h3>镇岳宗 · 静室</h3><p>你盘膝静坐，缓缓调匀气息。三分钟结束后恢复至多 12 点生命。</p><div class="xg-progress"><i data-meditation-progress></i></div><strong data-meditation-clock>03:00</strong><p>静坐期间无法进行其他游戏操作。关闭面板后，进度仍会保留。</p><button type="button" data-finish-meditation hidden>结束静坐</button></div><p role="status" aria-live="polite"></p></section>`;
+  content().innerHTML=`<section class="xg-map-sheet"><div class="xg-card xg-secret-wait"><h3>镇岳宗 · 静室</h3><p>你盘膝静坐，缓缓调匀气息。三分钟结束后恢复至多 ${pending.amount??12} 点生命。</p><div class="xg-progress"><i data-meditation-progress></i></div><strong data-meditation-clock>03:00</strong><p>静坐期间无法进行其他游戏操作。关闭面板后，进度仍会保留。</p><button type="button" data-finish-meditation hidden>结束静坐</button></div><p role="status" aria-live="polite"></p></section>`;
   const slot=getSave().slot,clock=content().querySelector('[data-meditation-clock]'),progress=content().querySelector('[data-meditation-progress]'),status=content().querySelector('[role=status]'),button=content().querySelector('[data-finish-meditation]');
   let finishing=false,failed=false;
   const finish=async()=>{if(finishing||!getSave()?.qiMeditation)return;finishing=true;button.disabled=true;try{const {result}=await actions.finishMeditation();clearInterval(timer);renderVisit('zhenyue');content().querySelector('[role=status]').textContent=result}catch(error){failed=true;status.textContent=error.message;button.hidden=false;button.disabled=false;finishing=false}};
@@ -123,6 +126,23 @@ export function createMapUI({getSave,activate,actions,onSectBattleExit}){
    ${peaks(getSave().bossLine?.phase==='wounded'&&!getSave().bossLine.rescuePending?[...QI_PEAKS,{id:'wounded-ridge',name:'残影峰',kind:'boss',x:37,y:8,size:.78}]:QI_PEAKS, 'encounter')}</section>`;
   content().querySelectorAll('[data-encounter]').forEach(button=>button.onclick=()=>renderEncounter(button.dataset.encounter));
   back(render);
+ }
+ function renderFoundation(){
+  if(!foundationPlayer())return render();
+  activate('map');
+  content().innerHTML=`<section class="xg-map-sheet"><button class="xg-map-back" type="button">← 返回地图</button>${heading('望川岭','筑基修士出没的山岭。')}${peaks(FOUNDATION_PEAKS,'foundation')}</section>`;
+  back(render);
+  content().querySelectorAll('[data-foundation]').forEach(button=>button.onclick=()=>renderFoundationPeak(button.dataset.foundation));
+ }
+ function renderFoundationPeak(id){
+  if(!foundationPlayer())return render();
+  const peak=FOUNDATION_PEAKS.find(place=>place.id===id),monster=FOUNDATION_MONSTERS.find(entry=>entry.id===peak?.monsterId);
+  if(!monster)return renderFoundation();
+  activate('map');
+  content().innerHTML=`<section class="xg-map-sheet"><button class="xg-map-back" type="button">← 返回望川岭</button>${heading(peak.name,'山中对手')}${petChoices(getSave(),'xg-foundation-pet')}<div class="xg-card xg-map-monster"><h3>${monster.name}</h3><p>生命 ${monster.hp} · 攻击 ${monster.attack} · 速度 ${monster.speed}</p><small>主要掉落：${monster.drop}</small><button type="button" data-foundation-foe>迎战</button></div><p role="status" aria-live="polite"></p></section>`;
+  back(renderFoundation);
+  const button=content().querySelector('[data-foundation-foe]');
+  button.onclick=async()=>{button.disabled=true;try{const pet=content().querySelector('[name="xg-foundation-pet"]:checked')?.value||null;await actions.startBattle(monster.id,pet);battle()}catch(error){content().querySelector('[role=status]').textContent=error.message;button.disabled=false}};
  }
  function renderEncounter(id){
   if(getSave().battle||getSave().encounterPending||getSave().bossLine?.phase==='ambush'||getSave().bossLine?.rescuePending)return battle();

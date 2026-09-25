@@ -18,7 +18,7 @@ export function settleIdle(save,now=Date.now()){
   const day=localDay(start);if(idle.day!==day){idle.day=day;idle.usedMs=0}
   const end=Math.min(now,nextMidnight(start));
   if(rate>0&&realmProgress(save.player).index>=0&&!realmProgress(save.player).complete){
-   const dailyLimit=idleLimitMs(save)+(save.qiPillDay===day?30*60*1000:0);
+   const dailyLimit=idleLimitMs(save)+(save.qiPillDay===day?(save.foundationPillDay===day?45:30)*60*1000:save.foundationPillDay===day?45*60*1000:0);
    const counted=Math.min(end-start,Math.max(0,dailyLimit-idle.usedMs));
    idle.usedMs+=counted;earned+=counted/60000*rate;
   }
@@ -30,7 +30,7 @@ export function settleIdle(save,now=Date.now()){
  return actual;
 }
 export function paddleWidth(root){return Math.min(PRACTICE.maxPaddle,Math.max(PRACTICE.minPaddle,(Number(root)||0)*PRACTICE.paddlePerRoot))}
-export function practiceReward(bricks){return Math.max(0,Math.min(PRACTICE.rows*PRACTICE.columns,Math.floor(bricks)))*PRACTICE.rewardPerBrick}
+export function practiceReward(bricks,player){return Math.round(Math.max(0,Math.min(PRACTICE.rows*PRACTICE.columns,Math.floor(bricks)))*(String(player?.realm||'').startsWith('筑基')?100/30:PRACTICE.rewardPerBrick)*100)/100}
 export function practiceEntryFee(player){return PRACTICE_ENTRY_FEES[String(player.realm||'').slice(0,2)]??null}
 export function beginPracticeSession(save,now=Date.now()){
  const progress=realmProgress(save.player),fee=practiceEntryFee(save.player);

@@ -1,3 +1,4 @@
+import {ITEMS} from '../data/items.js';
 import {equipmentStats} from '../systems/inventory.js';
 import {escapeHTML} from './shared.js';
 import {TECHNIQUES} from '../data/techniques.js';
@@ -23,16 +24,16 @@ export function showBattle({getSave,actions,activate,onExit},endResult=null){
   return;
  }
  const stats=equipmentStats(save);
- const arrays=save.inventory.filter(item=>item.itemId==='binding-array'||item.itemId==='crafted-binding-array'&&item.usesLeft>0);
- const talismans=['attack-talisman','guard-talisman'].filter(id=>save.inventory.some(item=>item.itemId===id));
+ const arrays=save.inventory.filter(item=>['binding-array','foundation-binding-array'].includes(item.itemId)||['crafted-binding-array','foundation-crafted-array'].includes(item.itemId)&&item.usesLeft>0);
+ const talismans=['attack-talisman','guard-talisman','foundation-attack-talisman','foundation-guard-talisman'].filter(id=>save.inventory.some(item=>item.itemId===id));
  content.innerHTML=`<section class="xg-map-sheet xg-battle-sheet"><h2>${escapeHTML(battle.name)}</h2><p>第 ${battle.round+1} 轮 · ${stats.speed>=battle.speed?'你先手':'对手先手'}</p>
   <div class="xg-battle-bars"><div>你的生命 <strong>${save.player.hp.toFixed(2)} / ${stats.maxHp.toFixed(2)}</strong></div><div>对手生命 <strong>${battle.hp.toFixed(2)} / ${battle.maxHp.toFixed(2)}</strong></div></div>${battle.pet?`<p>出战灵兽：${escapeHTML(battle.petName||'灵兽')} · ${battle.pet==='attack'?'追击':'守护'}</p>`:''}
   ${['sect-tournament','sect-senior','wounded-boss'].includes(battle.kind)?`<p>对手法力 ${battle.mp.toFixed(2)} / ${battle.maxMp.toFixed(2)} · 防御 ${battle.defense.toFixed(2)}${battle.silencedTurns?' · 沉默 '+battle.silencedTurns+' 次行动':''}</p>`:''}
   <div class="xg-card xg-battle-log" aria-live="polite">${battle.log.map(line=>`<p>${escapeHTML(line)}</p>`).join('')}</div>
   <div class="xg-battle-action-panel"><h3>本轮行动</h3>${battle.pendingStrike?'<p>攻势已成，本轮自动攻击。</p>':''}${(save.techniques?.combat||[]).filter(id=>TECHNIQUES[id]?.passive).map(id=>`<small>${TECHNIQUES[id].name} · 被动生效</small>`).join('')}<div class="xg-battle-main-actions"><button type="button" data-fight="attack">${battle.pendingStrike?'释放蓄势攻击':'普攻'}</button><button type="button" data-fight="skip" ${battle.pendingStrike?'disabled':''}>跳过</button></div>
   ${(save.techniques?.combat||[]).length?`<div class="xg-battle-talisman"><strong>战斗功法</strong>${battle.criticalFocus?`<small>凝神中 · 本场暴击率 +${save.techniques.upgraded?.includes('only-once')?20:15}%</small>`:''}<div class="xg-battle-talisman-actions">${save.techniques.combat.filter(id=>!TECHNIQUES[id]?.passive).map(id=>{const skill=TECHNIQUES[id],wait=Math.max(0,(battle.skillReady?.[id]||0)-battle.round-1),used=id==='only-once'&&battle.criticalFocus||id==='cooldown-reset'&&battle.cooldownResetUsed,cost=id==='spirit-burn'?save.player.mp:save.techniques.upgraded?.includes(id)?id==='only-once'?3:2:skill?.mpCost??1;return skill?`<button type="button" data-fight="${id}" ${battle.pendingStrike||used||wait||save.player.mp<cost||id==='spirit-burn'&&save.player.mp<=0?'disabled':''}>${skill.name}${used?' · 本场已用':wait?' · 冷却 '+wait+' 轮':''}</button>`:''}).join('')}</div></div>`:''}
-  ${arrays.length?`<div class="xg-battle-talisman"><div class="xg-battle-subheading"><strong>阵盘</strong><small>使用后仍可行动</small></div>${arrays.map(entry=>`<button type="button" data-array="${escapeHTML(entry.uid)}" ${battle.arrayRound===battle.round+1?'disabled':''}>${entry.itemId==='crafted-binding-array'?'自制定身阵盘 · 剩余 '+entry.usesLeft+' 次':'定身阵盘 · '+entry.quantity+' 枚'}</button>`).join('')}</div>`:''}
-  ${talismans.length?`<div class="xg-battle-talisman"><div class="xg-battle-subheading"><strong>符箓</strong><small>${battle.talismansUsed||0} / 2 · 不占行动</small></div><div class="xg-battle-talisman-actions">${talismans.map(id=>`<button type="button" data-talisman="${id}" ${battle.talismansUsed>=2||battle.talismanRound===battle.round+1?'disabled':''}>${id==='attack-talisman'?'攻击符 · +2':'护身符 · 免伤'}</button>`).join('')}</div></div>`:''}
+  ${arrays.length?`<div class="xg-battle-talisman"><div class="xg-battle-subheading"><strong>阵盘</strong><small>使用后仍可行动</small></div>${arrays.map(entry=>`<button type="button" data-array="${escapeHTML(entry.uid)}" ${battle.arrayRound===battle.round+1?'disabled':''}>${entry.itemId.includes('crafted')?ITEMS[entry.itemId].name+' · 剩余 '+entry.usesLeft+' 次':ITEMS[entry.itemId].name+' · '+entry.quantity+' 枚'}</button>`).join('')}</div>`:''}
+  ${talismans.length?`<div class="xg-battle-talisman"><div class="xg-battle-subheading"><strong>符箓</strong><small>${battle.talismansUsed||0} / 2 · 不占行动</small></div><div class="xg-battle-talisman-actions">${talismans.map(id=>`<button type="button" data-talisman="${id}" ${battle.talismansUsed>=2||battle.talismanRound===battle.round+1?'disabled':''}>${ITEMS[id].name} · ${ITEMS[id].damage?'+'+ITEMS[id].damage:'免伤'}</button>`).join('')}</div></div>`:''}
   <button class="xg-battle-flee" type="button" data-fight="flee">脱离战斗</button></div><p role="status" aria-live="polite"></p></section>`;
  const status=content.querySelector('[role=status]');
  const controls=[...content.querySelectorAll('[data-fight],[data-talisman],[data-array]')];

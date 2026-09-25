@@ -37,8 +37,8 @@ export function feedBeast(save,type,herbId,now=Date.now()){
  const beast=ensureSpiritBeasts(save)[type],stage=stageFor(save.player);
  if(!stage)throw new Error('这个境界的灵兽喂养尚未开放。');
  if(beast.fedDay===localDay(now))throw new Error('这只灵兽今天已经喂过。');
- if(stage==='筑基')throw new Error('需要筑基期灵草；筑基草药尚未开放。');
- if(!['healing-herb','spirit-herb','qi-herb'].includes(herbId))throw new Error('需使用对应境界的药草。');
+ const permitted=stage==='筑基'?['foundation-healing-herb','foundation-spirit-herb','foundation-qi-herb']:['healing-herb','spirit-herb','qi-herb'];
+ if(!permitted.includes(herbId))throw new Error(`此草灵气不合，需用${stage}期灵草。`);
  const entry=save.inventory.find(item=>item.itemId===herbId);
  if((entry?.quantity||0)<3)throw new Error('每只灵兽需要三株药草。');
  entry.quantity-=3;if(!entry.quantity)save.inventory=save.inventory.filter(item=>item!==entry);
@@ -50,8 +50,9 @@ export function selectBattlePet(save,pet,now=Date.now()){
  if(pet===null)return null;
  if(!BEAST_TYPES.includes(pet))throw new Error('灵兽类型无效。');
  if(!beastCanFight(save,pet,now)){
-  if((save.petRentals||0)<1)throw new Error('灵兽今天尚未喂养，也没有租借灵兽。');
-  save.petRentals--;
+  const key=stageFor(save.player)==='筑基'?'foundationPetRentals':'petRentals';
+  if((save[key]||0)<1)throw new Error('灵兽今天尚未喂养，也没有对应境界的租借灵兽。');
+  save[key]--;
  }
  return pet;
 }
