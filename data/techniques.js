@@ -1,4 +1,5 @@
 import {rootCount} from './technique-slots.js';
+import {realmProgress} from './realms.js';
 export const TECHNIQUES={
  'basic-qi-guide':{id:'basic-qi-guide',name:'引气诀',rank:'初级',size:3,type:'cultivation',idlePerMinute:0.5,description:'凝神引气，主修后每分钟积累 0.5 修为。'},
  'archive-meditation':{id:'archive-meditation',name:'藏元诀',rank:'中级',size:4,type:'cultivation',idlePerMinute:0.5,idleHoursByRealm:{炼气:3,筑基:5},description:'主修后每分钟积累 0.5 修为；炼气期每天最多修炼三小时，筑基期提升至五小时。'},
@@ -33,7 +34,7 @@ export function hintAllowance(spirit){return Number(spirit)>=10?2:Number(spirit)
 
 export function techniqueEligible(player,method){
  if(!method)return false;
- if(method.rootCounts&&(!method.rootCounts.includes(rootCount(player))||player.realm!=='筑基一层'))return false;
+ if(method.rootCounts&&(!method.rootCounts.includes(rootCount(player))||realmProgress(player).index<10))return false;
  if(!method.sect)return true;
  if(player.sect!==method.sect)return false;
  const enough=([key,min])=>Number(player.stats?.[key])>=min;
