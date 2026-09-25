@@ -1,6 +1,7 @@
 import {localDay} from './cultivation.js';
 import {TECHNIQUES,techniqueEligible,hasActiveTechnique} from '../data/techniques.js';
-import {addItem} from './inventory.js';
+import {ITEMS} from '../data/items.js';
+import {addItem,maxDurability,equipmentStats} from './inventory.js';
 export const DAILY_TASKS=[{id:'kills',name:'击败小怪',target:3},{id:'spent',name:'消费灵石',target:3},{id:'explored',name:'完成秘境探索',target:1}];
 export function dailyTasks(save,now=Date.now()){
  const day=localDay(now);
@@ -19,8 +20,8 @@ export function claimDailyTask(save,id,day,now=Date.now()){
  if(day!==daily.day)throw new Error('日课已更新，请重新打开。');
  if(!task||daily[id]<task.target)throw new Error('尚未完成日课。');
  if(daily.claimed.includes(id))throw new Error('这项奖励已领取。');
- daily.claimed.push(id);save.sectPoints=(save.sectPoints||0)+1;
- return `${task.name}完成，宗门积分 +1。`;
+ daily.claimed.push(id);save.sectPoints=(save.sectPoints||0)+3;
+ return `${task.name}完成，宗门积分 +3。`;
 }
 export function redeemInheritance(save,id){
  const method=TECHNIQUES[id];
@@ -33,13 +34,30 @@ export function redeemInheritance(save,id){
 }
 export function craftSectItem(save,id,herb='healing-herb'){
  const talisman=['attack-talisman','guard-talisman'].includes(id);
- if(!talisman&&id!=='binding-array')throw new Error('制作配方尚未开放。');
+ if(!talisman&&id!=='crafted-binding-array')throw new Error('制作配方尚未开放。');
  if(!hasActiveTechnique(save,talisman?'fairy-painting':'planting-flags'))throw new Error('请先学会本宗制作传承。');
  if(!['healing-herb','spirit-herb','qi-herb'].includes(herb))throw new Error('药草类型无效。');
- const recipe=talisman?{[herb]:1,ore:1}:{ore:18};
+ const recipe=talisman?{[herb]:1,ore:1}:{ore:20};
  for(const [material,count] of Object.entries(recipe))if((save.inventory.find(e=>e.itemId===material)?.quantity||0)<count)throw new Error('材料不足。');
  const freed=Object.entries(recipe).filter(([material,count])=>save.inventory.find(e=>e.itemId===material)?.quantity===count).length;
  if(!save.inventory.some(e=>e.itemId===id)&&save.inventory.length-freed>=save.bagCapacity)throw new Error('储物格已满。');
  for(const [material,count] of Object.entries(recipe)){const entry=save.inventory.find(e=>e.itemId===material);entry.quantity-=count;if(!entry.quantity)save.inventory=save.inventory.filter(e=>e!==entry)}
  addItem(save,id);return '制作完成，物品已收入储物。';
+}
+export function repairOwnEquipment(save,uid){
+ if(!hasActiveTechnique(save,'mending'))throw new Error('请先学会天工阁修补传承。');
+ if(save.battle)throw new Error('战斗中不能修补装备。');
+ const entry=save.inventory.find(item=>item.uid===uid),item=ITEMS[entry?.itemId];
+ if(item?.kind!=='equipment')throw new Error('找不到这件装备。');
+ const limit=maxDurability(entry),cost=Math.ceil(limit/5);
+ if(entry.durability>=limit)throw new Error('装备耐久已满。');
+ const ore=save.inventory.find(item=>item.itemId==='ore');
+ if((ore?.quantity||0)<cost)throw new Error(`修补需 ${cost} 个矿石。`);
+ const before=equipmentStats(save);
+ ore.quantity-=cost;if(!ore.quantity)save.inventory=save.inventory.filter(item=>item!==ore);
+ entry.durability=limit;
+ const after=equipmentStats(save);
+ save.player.hp=Math.round(Math.min(after.maxHp,save.player.hp+after.maxHp-before.maxHp)*100)/100;
+ save.player.mp=Math.round(Math.min(after.maxMp,save.player.mp+after.maxMp-before.maxMp)*100)/100;
+ return `修好${item.name}，消耗 ${cost} 个矿石。`;
 }

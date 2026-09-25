@@ -1,5 +1,5 @@
 import {showBlackMarket} from './black-market.js';
-import {hasActiveTechnique} from '../data/techniques.js';
+import {beastCanFight,beastName} from '../systems/pets.js';
 import {VISITING_SECTS,QI_MONSTERS,QI_PEAKS} from '../data/locations.js';
 import {realmProgress} from '../data/realms.js';
 import {showBattle} from './combat.js';
@@ -15,6 +15,7 @@ import {BOSS_NAME,bossAttributes} from '../systems/boss-line.js';
 
 export function createMapUI({getSave,activate,actions,onSectBattleExit}){
  const content=()=>document.getElementById('xg-content');
+ const petChoices=(save,name)=>{const rented=save.petRentals>0,attack=beastCanFight(save,'attack'),guard=beastCanFight(save,'guard');return rented||attack||guard?`<fieldset class="xg-card"><legend>灵兽出战</legend><label><input type="radio" name="${name}" value="" checked> 不出战</label>${['attack','guard'].filter(type=>beastCanFight(save,type)||rented).map(type=>`<label><input type="radio" name="${name}" value="${type}"> ${escapeHTML(beastCanFight(save,type)?beastName(save,type):'租借灵兽')} · ${type==='attack'?'追击 +0.50':'守护 −0.30'}</label>`).join('')}</fieldset>`:''};
  const battle=outcome=>showBattle({getSave,activate,actions,onExit:getSave().bossLine?.phase==='ambush'||getSave().bossLine?.rescuePending?renderMonsters:['sect-tournament','sect-senior'].includes(getSave().battle?.kind||getSave().lastBattle?.kind)?onSectBattleExit:renderMonsters},outcome);
  function heading(title,subtitle){return `<div class="xg-map-heading"><h2>${title}</h2><p>${subtitle}</p></div>`}
  const peaks=(locations,kind)=>`<div class="xg-map-landscape xg-map-${kind}">${locations.map((place,i)=>`<button type="button" class="xg-map-hill${place.locked?' xg-map-locked':''}" style="--hill-x:${place.x}%;--hill-y:${place.y}%;--hill-size:${place.size||1}" ${place.locked?'disabled':''} ${place.id?`data-${kind}="${place.id}"`:''}><span class="xg-map-label">${place.name}</span><span class="xg-map-summit" aria-hidden="true"></span></button>`).join('')}</div>`;
@@ -133,7 +134,7 @@ export function createMapUI({getSave,activate,actions,onSectBattleExit}){
   const monsters=QI_MONSTERS.filter(item=>(item.id===peak.monsterId||item.id===peak.monsterId+'-mid'||item.id===peak.monsterId+'-human')&&tier+1>=item.minLevel);if(!monsters.length)return renderMonsters();
   activate('map');
   content().innerHTML=`<section class="xg-map-sheet"><button class="xg-map-back" type="button">← 返回丰原镇</button>${heading(peak.name,'山中对手')}
-   ${getSave().petRentals>0||getSave().spiritBeast&&hasActiveTechnique(getSave(),'beast-keeper')?`<fieldset class="xg-card"><legend>灵兽出战（${getSave().spiritBeast&&hasActiveTechnique(getSave(),'beast-keeper')?'自养灵兽 · 无需租约':'租约余 '+getSave().petRentals+' 次'}）</legend><label><input type="radio" name="xg-pet" value="" checked> 不出战</label><label><input type="radio" name="xg-pet" value="attack"> 追击：每次 +0.50 伤害</label><label><input type="radio" name="xg-pet" value="guard"> 守护：每次挡 0.30 伤害</label></fieldset>`:''}
+   ${petChoices(getSave(),'xg-pet')}
    ${monsters.map(monster=>`<div class="xg-card xg-map-monster"><h3>${monster.name}</h3><p>生命 ${monster.hp} · 攻击 ${monster.attack} · 速度 ${monster.speed}</p><small>主要掉落：${monster.drop}</small><button type="button" data-foe="${monster.id}">迎战</button></div>`).join('')}
    <p role="status" aria-live="polite"></p></section>`;
   back(renderMonsters);
@@ -145,9 +146,9 @@ export function createMapUI({getSave,activate,actions,onSectBattleExit}){
  });
  }
  function renderWoundedBoss(){
-  const foe=bossAttributes(getSave(),1.1),beast=getSave().petRentals>0||getSave().spiritBeast&&hasActiveTechnique(getSave(),'beast-keeper');
+  const foe=bossAttributes(getSave(),1.1);
   activate('map');
-  content().innerHTML=`<section class="xg-map-sheet"><button class="xg-map-back" type="button">← 返回丰原镇</button>${heading('残影峰','仇人躲在此处养伤。')}<div class="xg-card"><h3>${BOSS_NAME}</h3><p>生命 ${foe.maxHp.toFixed(2)} · 攻击 ${foe.attack.toFixed(2)} · 防御 ${foe.defense.toFixed(2)} · 速度 ${foe.speed.toFixed(2)}</p></div>${beast?`<fieldset class="xg-card"><legend>灵兽出战</legend><label><input type="radio" name="xg-boss-pet" value="" checked> 不出战</label><label><input type="radio" name="xg-boss-pet" value="attack"> 追击</label><label><input type="radio" name="xg-boss-pet" value="guard"> 守护</label></fieldset>`:''}<button type="button" data-challenge-boss>迎战</button><p role="status"></p></section>`;
+  content().innerHTML=`<section class="xg-map-sheet"><button class="xg-map-back" type="button">← 返回丰原镇</button>${heading('残影峰','仇人躲在此处养伤。')}<div class="xg-card"><h3>${BOSS_NAME}</h3><p>生命 ${foe.maxHp.toFixed(2)} · 攻击 ${foe.attack.toFixed(2)} · 防御 ${foe.defense.toFixed(2)} · 速度 ${foe.speed.toFixed(2)}</p></div>${petChoices(getSave(),'xg-boss-pet')}<button type="button" data-challenge-boss>迎战</button><p role="status"></p></section>`;
   back(renderMonsters);
   content().querySelector('[data-challenge-boss]').onclick=async event=>{const button=event.currentTarget;button.disabled=true;try{await actions.startBattle('wounded-boss',content().querySelector('[name="xg-boss-pet"]:checked')?.value||null);battle()}catch(error){content().querySelector('[role=status]').textContent=error.message;button.disabled=false}};
  }

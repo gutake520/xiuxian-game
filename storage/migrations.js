@@ -10,6 +10,7 @@ import {QI_MONSTERS} from '../data/locations.js';
 import {DURABILITY_MAX} from '../data/balance.js';
 import {expireLoot} from '../systems/inventory.js';
 import {ensureBossLine} from '../systems/boss-line.js';
+import {ensureSpiritBeasts} from '../systems/pets.js';
 export function migrateSave(save,now=Date.now()){
  if(!save?.player)throw new Error('存档缺少人物信息。');
  const p=save.player;
@@ -47,7 +48,7 @@ export function migrateSave(save,now=Date.now()){
  save.techniques.mastered??=[];save.techniques.puzzles??={};
  save.techniques.combat=Array.isArray(save.techniques.combat)?save.techniques.combat.filter(id=>TECHNIQUES[id]?.type==='combat'&&techniqueEligible(p,TECHNIQUES[id])&&save.techniques.mastered.includes(id)).slice(0,combatSlots(p)):[];
  save.techniques.sectManuals??=[];
- if(save.techniques.mastered.includes('beast-keeper'))save.spiritBeast??={name:'伴生灵兽',stage:'炼气'};
+ if(p.sect==='万灵山'||save.spiritBeast||save.spiritBeasts)ensureSpiritBeasts(save);
  save.sectPoints=Number.isFinite(save.sectPoints)?Math.max(0,save.sectPoints):0;
  save.pillCooldowns??={};
  save.itemSerial=Math.max(save.itemSerial||0,save.inventory.length);

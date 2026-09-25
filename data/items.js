@@ -20,6 +20,7 @@ export const ITEMS={
  'attack-talisman':{id:'attack-talisman',name:'攻击符',price:2.5,kind:'talisman',stackable:true,glyph:'符',description:'战斗中额外造成 2 点伤害，每轮限一张。'},
  'guard-talisman':{id:'guard-talisman',name:'护身符',price:2.5,kind:'talisman',stackable:true,glyph:'符',description:'免疫下一次受到的伤害，每轮限一张。'},
  'binding-array':{id:'binding-array',name:'定身阵盘',price:3,kind:'array',stackable:true,glyph:'阵',description:'使小妖下一轮无法行动。'},
+ 'crafted-binding-array':{id:'crafted-binding-array',name:'自制定身阵盘',kind:'array',glyph:'阵',description:'玄机门自制阵盘，制作消耗 20 个矿石，可发动六次。耗尽后保留损坏的阵盘。'},
  'qi-manual':{id:'qi-manual',name:'引气诀',price:10,kind:'manual',methodId:'basic-qi-guide',glyph:'诀',description:'解开三阶数阵后学会，可设为主修。'},
  'archive-manual':{id:'archive-manual',name:'藏元诀',kind:'manual',methodId:'archive-meditation',glyph:'简',description:'三枚藏书阁玉简合成的中级修炼功法，参悟四阶数阵后可设为主修。'},
  'strengthen-manual':{id:'strengthen-manual',name:'强化普通',price:20,kind:'manual',methodId:'strengthen-attack',glyph:'诀',description:'普通战斗功法，参悟后可以装备。'},

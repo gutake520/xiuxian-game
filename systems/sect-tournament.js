@@ -1,6 +1,6 @@
 import {equipmentStats,awardItem} from './inventory.js';
 import {UPGRADEABLE_TECHNIQUES,TECHNIQUES} from '../data/techniques.js';
-import {selectBattlePet} from './pets.js';
+import {selectBattlePet,beastCanFight,beastName} from './pets.js';
 
 export const SECT_TOURNAMENT_INTERVAL=3*24*60*60*1000;
 export const SECT_TOURNAMENT_NAMES={
@@ -55,7 +55,7 @@ export function startSectTournament(save,now=Date.now(),pet=null){
  const names=roster[gender],name=names[Math.floor(Math.random()*names.length)];
  const scaled=value=>round2(value*1.1);
  const chosen=selectBattlePet(save,pet);
- save.battle={id:crypto.randomUUID(),kind:'sect-tournament',monsterId:null,name,maxHp:scaled(stats.maxHp),hp:scaled(stats.maxHp),attack:scaled(stats.attack),defense:scaled(stats.defense),speed:stats.speed,maxMp:scaled(stats.maxMp),mp:scaled(stats.maxMp),critRate:scaled(stats.critRate),dodgeRate:scaled(stats.dodgeRate),round:0,pet:chosen,retaliation:false,guard:false,bindRounds:[],arrayRound:0,talismansUsed:0,talismanRound:0,freeArrayUsed:false,criticalFocus:false,skillReady:{},log:[`${name}上场与你切磋，你先出手。`]};
+ save.battle={id:crypto.randomUUID(),kind:'sect-tournament',monsterId:null,name,maxHp:scaled(stats.maxHp),hp:scaled(stats.maxHp),attack:scaled(stats.attack),defense:scaled(stats.defense),speed:stats.speed,maxMp:scaled(stats.maxMp),mp:scaled(stats.maxMp),critRate:scaled(stats.critRate),dodgeRate:scaled(stats.dodgeRate),round:0,pet:chosen,petName:chosen?(beastCanFight(save,chosen)?beastName(save,chosen):'租借灵兽'):null,retaliation:false,guard:false,bindRounds:[],arrayRound:0,talismansUsed:0,talismanRound:0,freeArrayUsed:false,criticalFocus:false,skillReady:{},log:[`${name}上场与你切磋，你先出手。`]};
  save.sectTournamentNextAt=now+SECT_TOURNAMENT_INTERVAL;
  return save.battle;
 }

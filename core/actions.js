@@ -40,7 +40,7 @@ export function createActions({getSave,setSave}){
   chooseFoundationAptitude:key=>mutate(s=>chooseFoundationAptitude(s,key),{message:result=>result}),
   claimSeniorReward:(id,choice)=>mutate(s=>claimSeniorReward(s,id,choice),{message:result=>result}),
   battleTalisman:id=>mutate(s=>useBattleTalisman(s,id),{allowBattle:true}),
-  battleArray:()=>mutate(s=>useBattleArray(s),{allowBattle:true}),
+  battleArray:uid=>mutate(s=>useBattleArray(s,uid),{allowBattle:true}),
   battleRound:action=>mutate(s=>playRound(s,action),{allowBattle:true,message:(result)=>result.result?`${result.result.monster}：${result.result.outcome==='victory'?'胜利': '战败'}。`:null}),
   flee:()=>mutate(s=>fleeBattle(s),{allowBattle:true,message:result=>`脱离${result.monster}的战斗，${result.cost}。`}),
   respondToHerbalist:(id,give)=>mutate(s=>resolveHerbalist(s,id,give),{allowBossStory:true,message:result=>result}),

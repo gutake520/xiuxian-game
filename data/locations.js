@@ -6,7 +6,7 @@ export const VISITING_SECTS = [
  {id:'hehuan',name:'合欢宗',service:'山门拜访',detail:'其他对外事务待定。',npc:'迎客弟子'},
  {id:'wanling',name:'万灵山',service:'租借灵兽',detail:'1 灵石一份租约，战前选择追击或守护；出战消耗一份。',npc:'御兽师'},
  {id:'lingxiao',name:'凌霄剑宗',service:'山门拜访',detail:'其他对外事务待定。',npc:'守山弟子'},
- {id:'xuanji',name:'玄机门',service:'购买阵盘',detail:'定身阵盘使对手下一轮无法行动；本宗弟子每场可免费使用一次。',npc:'阵师'},
+ {id:'xuanji',name:'玄机门',service:'购买阵盘',detail:'定身阵盘使对手下一轮无法行动；本宗弟子可习得制作六次使用的阵盘。',npc:'阵师'},
  {id:'taixu',name:'太虚符宗',service:'购买符箓',detail:'攻击符额外造成 2 点伤害；护身符免疫下一次伤害。每场最多使用两张。',npc:'符师'},
  {id:'zhenyue',name:'镇岳宗',service:'静室打坐',detail:'花费 2 灵石静坐三分钟，结束后恢复至多 12 点生命；期间只能等待。',npc:'静室管事'}
 ];

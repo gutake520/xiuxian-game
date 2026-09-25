@@ -9,7 +9,7 @@ import {HERBALIST_NAME,maybeMeetHerbalist} from './encounters.js';
 import {maybeMeetDiviner} from './divination.js';
 import {startSeniorChallenge} from './sect-tournament.js';
 import {BOSS_NAME,bossAttributes,ensureBossLine} from './boss-line.js';
-import {selectBattlePet} from './pets.js';
+import {selectBattlePet,beastCanFight,beastName} from './pets.js';
 
 export const round2=value=>Math.round((value+Number.EPSILON)*100)/100;
 const herbs=['healing-herb','spirit-herb','qi-herb'];
@@ -99,14 +99,14 @@ export function beginBattle(save,id,pet=null,retaliation=false){
  if(id==='wounded-boss'){
   if(save.bossLine?.phase!=='wounded')throw new Error('这里没有可挑战的仇人。');
   const foe=bossAttributes(save,1.1),chosen=selectBattlePet(save,pet);
-  save.battle={id:crypto.randomUUID(),kind:'wounded-boss',monsterId:null,name:BOSS_NAME,maxHp:foe.maxHp,hp:foe.maxHp,attack:foe.attack,defense:foe.defense,speed:foe.speed,maxMp:foe.maxMp,mp:foe.maxMp,critRate:foe.critRate,dodgeRate:foe.dodgeRate,round:0,pet:chosen,guard:false,bindRounds:[],arrayRound:0,talismansUsed:0,talismanRound:0,freeArrayUsed:false,criticalFocus:false,skillReady:{},log:['你在山中找到了负伤的仇人。旧怨未了，战斗开始。']};
+  save.battle={id:crypto.randomUUID(),kind:'wounded-boss',monsterId:null,name:BOSS_NAME,maxHp:foe.maxHp,hp:foe.maxHp,attack:foe.attack,defense:foe.defense,speed:foe.speed,maxMp:foe.maxMp,mp:foe.maxMp,critRate:foe.critRate,dodgeRate:foe.dodgeRate,round:0,pet:chosen,petName:chosen?(beastCanFight(save,chosen)?beastName(save,chosen):'租借灵兽'):null,guard:false,bindRounds:[],arrayRound:0,talismansUsed:0,talismanRound:0,freeArrayUsed:false,criticalFocus:false,skillReady:{},log:['你在山中找到了负伤的仇人。旧怨未了，战斗开始。']};
   return save.battle;
  }
  const monster=QI_MONSTERS.find(entry=>entry.id===id);if(!monster)throw new Error('对手不存在。');
  if(tier+1<monster.minLevel)throw new Error(`需炼气${['一','二','三','四','五','六','七','八','九','十'][monster.minLevel-1]}层解锁此处。`);
  selectBattlePet(save,pet);
  const maxHp=monster.hpMin+Math.floor(Math.random()*(monster.hpMax-monster.hpMin+1));
- save.battle={id:crypto.randomUUID(),monsterId:id,name:monster.name,maxHp,hp:maxHp,attack:monster.attack,speed:monster.speed,mp:monster.mp||0,round:0,pet,retaliation,guard:false,bindRounds:[],arrayRound:0,talismansUsed:0,talismanRound:0,freeArrayUsed:false,criticalFocus:false,skillReady:{},log:['狭路相逢，战斗开始。']};
+ save.battle={id:crypto.randomUUID(),monsterId:id,name:monster.name,maxHp,hp:maxHp,attack:monster.attack,speed:monster.speed,mp:monster.mp||0,round:0,pet,petName:pet?(beastCanFight(save,pet)?beastName(save,pet):'租借灵兽'):null,retaliation,guard:false,bindRounds:[],arrayRound:0,talismansUsed:0,talismanRound:0,freeArrayUsed:false,criticalFocus:false,skillReady:{},log:['狭路相逢，战斗开始。']};
  return save.battle;
 }
 export function playRound(save,action='attack',now=Date.now()){
@@ -179,10 +179,11 @@ export function playRound(save,action='attack',now=Date.now()){
   const afterDefense=Math.max(1,rawDamage-stats.defense-(guarded?1:0));
   const capped=action==='only-one'&&playerFirst?Math.min(1,afterDefense):afterDefense;
   taken=round2(Math.max(0,capped-(battle.pet==='guard'?.3:0)));save.player.hp=round2(Math.max(0,save.player.hp-taken));
+  if(battle.pet==='guard')messages.push(`${battle.petName||'灵兽'}抵挡 0.30 伤害。`);
   messages.push(`你受到 ${taken.toFixed(2)} 伤害。`);
   if(taken>0&&save.player.hp>0&&hasActiveTechnique(save,'resentment')){const reflected=round2(rawDamage*.1);battle.hp=round2(Math.max(0,battle.hp-reflected));messages.push(`以怨报怨，反弹 ${reflected.toFixed(2)} 伤害。`)}
  };
- const playerAction=()=>{playerTurn();if(battle.pet==='attack'&&battle.hp>0){battle.hp=round2(Math.max(0,battle.hp-.5));messages.push('灵兽追加 0.50 伤害。')}};
+ const playerAction=()=>{playerTurn();if(battle.pet==='attack'&&battle.hp>0){battle.hp=round2(Math.max(0,battle.hp-.5));messages.push(`${battle.petName||'灵兽'}追加 0.50 伤害。`)}};
  if(playerFirst){playerAction();if(battle.hp>0)enemyTurn()}
  else{enemyTurn();if(save.player.hp>0&&battle.hp>0)playerAction()}
  if(battle.regenRounds>0&&save.player.hp>0&&battle.hp>0){const heal=round2(Math.min(2,stats.maxHp-save.player.hp));save.player.hp=round2(save.player.hp+heal);battle.regenRounds--;messages.push(`妙手回春恢复 ${heal.toFixed(2)} 生命。`)}
@@ -198,15 +199,18 @@ function consumeItem(save,id){
  if(!entry)throw new Error('储物中没有对应道具。');
  if(entry.quantity>1)entry.quantity--;else save.inventory=save.inventory.filter(item=>item!==entry);
 }
-export function useBattleArray(save){
+export function useBattleArray(save,uid){
  const battle=save.battle;if(!battle)throw new Error('没有正在进行的战斗。');
  if(battle.arrayRound===battle.round+1)throw new Error('本轮已经使用过阵盘。');
- const own=save.player.sect==='玄机门'&&!battle.freeArrayUsed;
- if(own)battle.freeArrayUsed=true;
- else consumeItem(save,'binding-array');
+ const entry=uid?save.inventory.find(item=>item.uid===uid):save.inventory.find(item=>item.itemId==='binding-array')||save.inventory.find(item=>item.itemId==='crafted-binding-array'&&item.usesLeft>0);
+ if(!entry||!['binding-array','crafted-binding-array'].includes(entry.itemId))throw new Error('储物中没有可用的阵盘。');
+ if(entry.itemId==='crafted-binding-array'){
+  if(!Number.isInteger(entry.usesLeft)||entry.usesLeft<=0)throw new Error('这枚阵盘已经损坏。');
+  entry.usesLeft--;
+ }else if(entry.quantity>1)entry.quantity--;else save.inventory=save.inventory.filter(item=>item!==entry);
  battle.arrayRound=battle.round+1;
  battle.bindRounds??=[];battle.bindRounds.push(battle.round+2);
- const message='阵盘发动，对手下一轮无法行动；你仍可进行本轮行动。';
+ const message=`阵盘发动，对手下一轮无法行动；你仍可进行本轮行动。${entry.itemId==='crafted-binding-array'?entry.usesLeft?'剩余 '+entry.usesLeft+' 次。':'阵盘已损坏。':''}`;
  battle.log=[...battle.log,message].slice(-10);
  return message;
 }
