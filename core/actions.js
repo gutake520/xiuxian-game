@@ -13,8 +13,9 @@ import {resolveHerbalist} from '../systems/encounters.js';
 import {flipDivination} from '../systems/divination.js';
 import {startSectTournament,claimSeniorReward} from '../systems/sect-tournament.js';
 import {ensureBossLine,resolveBossAmbush,acknowledgeBossRescue} from '../systems/boss-line.js';
+import {queueMidAutumn,eatMooncake} from '../systems/mid-autumn.js';
 export function createActions({getSave,setSave}){
- function settleWorld(save){migrateSave(save);dailyTasks(save);const wait=save.qiSecret||save.qiMeditation;if(wait){const until=Math.min(Date.now(),wait.endsAt);save.idle.lastAt=Math.max(save.idle.lastAt,until);save.recovery??={hpAt:until,mpAt:until};save.recovery.hpAt=Math.max(save.recovery.hpAt,until);save.recovery.mpAt=Math.max(save.recovery.mpAt,until)}settleIdle(save);settleRecovery(save);ensureBossLine(save)}
+ function settleWorld(save){migrateSave(save);dailyTasks(save);const wait=save.qiSecret||save.qiMeditation;if(wait){const until=Math.min(Date.now(),wait.endsAt);save.idle.lastAt=Math.max(save.idle.lastAt,until);save.recovery??={hpAt:until,mpAt:until};save.recovery.hpAt=Math.max(save.recovery.hpAt,until);save.recovery.mpAt=Math.max(save.recovery.mpAt,until)}settleIdle(save);settleRecovery(save);ensureBossLine(save);queueMidAutumn(save)}
  async function select(slot){const data=await updateSave(slot,s=>{settleWorld(s);return s});setSave(data);return data}
  async function mutate(change,{message,slot=getSave()?.slot,allowBattle=false,allowDebt=false,allowWait=false,allowDivination=false,allowBossStory=false}={}){
   if(!slot)throw new Error('请先选择存档。');
@@ -22,7 +23,7 @@ export function createActions({getSave,setSave}){
   const data=await updateSave(slot,s=>{settleWorld(s);if(change&&(s.qiSecret||s.qiMeditation)&&!allowWait)throw new Error('正在等待探索或静坐结束，请稍候。');if(change&&s.battle&&!allowBattle)throw new Error('请先结束当前战斗。');if(change&&s.divinationPending&&!allowDivination)throw new Error('请先回应卦师。');if(change&&(s.bossLine?.phase==='ambush'||s.bossLine?.rescuePending)&&!allowBossStory&&!allowBattle&&!allowWait&&!allowDivination)throw new Error('请先走完当前剧情。');if(change&&s.player.cultivation< -100&&!allowDebt)throw new Error('请先去修炼。');const before={stones:s.player.spiritStones,battleId:s.lastBattle?.id};result=change?.(s);if(result?.then)throw new Error('操作结算不能包含异步任务。');ensureBossLine(s);recordDailyProgress(s,before,!allowBattle);syncAchievements(s);const entry=typeof message==='function'?message(result,s):message;if(entry)appendEvent(s,entry);s.updatedAt=Date.now();return s});
   if(getSave()?.slot===slot)setSave(data);return{save:data,result};
  }
- async function create(data){migrateSave(data);await writeSave(data);setSave(data);return data}
+ async function create(data){migrateSave(data);queueMidAutumn(data);await writeSave(data);setSave(data);return data}
  return{select,mutate,create,read:readSave,refresh:()=>mutate(),
   finishExploration:()=>mutate(s=>finishQiExploration(s),{allowWait:true,allowDebt:true,message:result=>result}),
   finishMeditation:()=>mutate(s=>finishMeditation(s),{allowWait:true,allowDebt:true,message:result=>result}),
@@ -30,6 +31,7 @@ export function createActions({getSave,setSave}){
   startSectTournament:pet=>mutate(s=>startSectTournament(s,Date.now(),pet)),
   resolveBossAmbush:()=>mutate(s=>resolveBossAmbush(s),{allowBossStory:true,message:result=>result}),
   acknowledgeBossRescue:()=>mutate(s=>acknowledgeBossRescue(s),{allowBossStory:true,message:result=>result}),
+  eatMooncake:year=>mutate(s=>eatMooncake(s,year),{allowDebt:true,allowBossStory:true,message:result=>result}),
   claimSeniorReward:(id,choice)=>mutate(s=>claimSeniorReward(s,id,choice),{message:result=>result}),
   battleTalisman:id=>mutate(s=>useBattleTalisman(s,id),{allowBattle:true}),
   battleArray:()=>mutate(s=>useBattleArray(s),{allowBattle:true}),
