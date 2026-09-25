@@ -6,17 +6,18 @@ import {migrateSave} from '../storage/migrations.js';
 import {equipmentStats} from '../systems/inventory.js';
 
 const save=(wisdom=5)=>({slot:'breakthrough',version:7,player:{name:'测试',realm:'炼气十层',cultivation:1000,sect:'无门无派',stats:{悟性:wisdom}},bossLine:{phase:'defeated',insight:true},inventory:[],events:[],flags:{}});
+const day=new Date(2026,8,25,12).getTime();
 
 test('击败仇人且炼气十层满 1000 才可入场；悟性 5/10 分别给一次/两次提示',()=>{
  for(const [wisdom,hints] of [[4,0],[5,1],[9,1],[10,2]])assert.equal(breakthroughHints(save(wisdom).player),hints);
  const s=save();s.bossLine.insight=false;assert.throws(()=>startBreakthrough(s),/感悟/);
  s.bossLine.insight=true;s.player.cultivation=999;assert.throws(()=>startBreakthrough(s),/1000/);
- s.player.cultivation=1000;const session=startBreakthrough(s);assert.equal(startBreakthrough(s).id,session.id);
+ s.player.cultivation=1000;const session=startBreakthrough(s,day);assert.equal(startBreakthrough(s,day).id,session.id);
  assert.equal(session.tiles.length,25);assert.equal(session.remaining,24);
 });
 
 test('提示摆正一格、每次旋转写入进度，失败后才可重试',()=>{
- const s=save(10),session=startBreakthrough(s),index=SPIRIT_ROUTE[0];
+ const s=save(10),session=startBreakthrough(s,day),index=SPIRIT_ROUTE[0];
  assert.throws(()=>retryBreakthrough(s,session.id),/不能重试/);
  const initial=session.tiles[index].rot;
  hintMeridian(s,session.id);
@@ -28,8 +29,22 @@ test('提示摆正一格、每次旋转写入进度，失败后才可重试',()=
  assert.throws(()=>rotateMeridian(s,'other',24),/结束/);
  while(session.remaining)rotateMeridian(s,session.id,24);
  assert.equal(s.player.realm,'炼气十层');
- const next=retryBreakthrough(s,session.id);assert.notEqual(next.id,session.id);assert.equal(next.remaining,24);
+ assert.throws(()=>retryBreakthrough(s,session.id,day),/明天/);
+ const next=retryBreakthrough(s,session.id,day+86400000);assert.notEqual(next.id,session.id);assert.equal(next.remaining,24);
+ assert.equal(startBreakthrough(s,day+86400000).id,next.id);
  assert.notEqual(initial,0);
+});
+
+test('退出不会判失败；当天回来继续原盘，次数耗尽才能在次日重开',()=>{
+ const s=save(),old=startBreakthrough(s,day);
+ rotateMeridian(s,old.id,24);
+ const loaded=structuredClone(s);
+ assert.equal(startBreakthrough(loaded,day).id,old.id);
+ assert.equal(loaded.breakthrough.remaining,23);
+ assert.equal(startBreakthrough(loaded,day+86400000).id,old.id);
+ while(loaded.breakthrough.remaining)rotateMeridian(loaded,old.id,24);
+ assert.throws(()=>retryBreakthrough(loaded,old.id,day),/明天/);
+ assert.equal(retryBreakthrough(loaded,old.id,day+86400000).remaining,24);
 });
 
 test('每一盘都能在 24 步内接通，成功原子写入筑基并禁止重复领奖',()=>{

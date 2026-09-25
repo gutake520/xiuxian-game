@@ -1,12 +1,13 @@
 import {createSheet} from './shared.js';
 import {tilePorts,flowingTiles,breakthroughReady} from '../systems/breakthrough.js';
+import {localDay} from '../systems/cultivation.js';
 
 export function showBreakthrough(api,onClose){
  const sheet=document.getElementById('xg-feature-sheet')||createSheet('筑基 · 灵脉凝结',onClose);
  const body=sheet.querySelector('[data-body]'),status=sheet.querySelector('[role=status]');
  const save=api.getSave(),session=save.breakthrough;
  if(!breakthroughReady(save)||!session){
-  body.innerHTML='<div class="xg-feature-card"><h3>灵脉贯通</h3><p>你已突破至筑基一层。</p><button type="button" data-finish>返回人物</button></div>';
+  body.innerHTML=save.player.realm==='筑基一层'?'<div class="xg-feature-card"><h3>灵脉贯通</h3><p>你已突破至筑基一层。</p><button type="button" data-finish>返回人物</button></div>':'<div class="xg-feature-card"><h3>灵气不足</h3><p>修为恢复至 1000 后，可继续这次突破。</p><button type="button" data-finish>返回人物</button></div>';
   body.querySelector('[data-finish]').onclick=onClose;
   return;
  }
@@ -20,7 +21,7 @@ export function showBreakthrough(api,onClose){
   const label=index===10?'入口':index===12?'丹田':'';
   return `<button class="xg-breakthrough-tile" type="button" data-tile="${index}" data-lit="${flowing.has(index)}" data-end="${Boolean(label)}" aria-label="第${Math.floor(index/5)+1}行第${index%5+1}列${label?'，'+label:''}，点击旋转" ${exhausted?'disabled':''}><svg viewBox="0 0 100 100" aria-hidden="true">${paths}<circle cx="50" cy="50" r="6"></circle></svg>${label?`<span>${label}</span>`:''}</button>`
  }).join('')}</div>
- <div class="xg-breakthrough-footer"><span>${exhausted?'灵气散去，暂未突破。':'灵气尚未贯通。'}</span>${exhausted?'<button type="button" data-retry>重试</button>':session.hintLimit>session.hintsUsed?`<button type="button" data-hint>悟性提示 ${session.hintLimit-session.hintsUsed}/${session.hintLimit}</button>`:''}</div></div>`;
+ <div class="xg-breakthrough-footer"><span>${exhausted?save.breakthroughDay===localDay(Date.now())?'灵气散去，明天再试。':'灵气散去，可以再试。':'灵气尚未贯通。'}</span>${exhausted?`<button type="button" data-retry ${save.breakthroughDay===localDay(Date.now())?'disabled':''}>重试</button>`:session.hintLimit>session.hintsUsed?`<button type="button" data-hint>悟性提示 ${session.hintLimit-session.hintsUsed}/${session.hintLimit}</button>`:''}</div></div>`;
  const act=async(button,run)=>{
   button.disabled=true;
   try{const {result}=await run();if(!sheet.isConnected)return;showBreakthrough(api,onClose);sheet.querySelector('[role=status]').textContent=typeof result==='string'?result:''}

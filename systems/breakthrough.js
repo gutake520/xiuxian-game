@@ -1,5 +1,6 @@
 // The nine connected tiles match the playable preview. Other tiles are dead ends.
 import {realmBattleBonus} from '../data/realms.js';
+import {localDay} from './cultivation.js';
 export const SPIRIT_ROUTE=[10,5,6,1,2,3,8,13,12];
 const directions=[[-1,0],[0,1],[1,0],[0,-1]];
 const direction=(from,to)=>directions.findIndex(([r,c])=>Math.floor(to/5)-Math.floor(from/5)===r&&to%5-from%5===c);
@@ -17,10 +18,13 @@ function createSession(save){
  return{id:crypto.randomUUID(),tiles,remaining:24,hintsUsed:0,hintLimit:breakthroughHints(save.player)};
 }
 
-export function startBreakthrough(save){
+export function startBreakthrough(save,now=Date.now()){
  if(!breakthroughReady(save))throw new Error('需要炼气十层、修为达到 1000，并击败仇人取得感悟。');
  if(save.battle||save.qiSecret||save.qiMeditation||save.divinationPending||save.encounterPending||save.seniorRewardPending)throw new Error('请先结束当前事件。');
- return save.breakthrough??(save.breakthrough=createSession(save));
+ if(save.breakthrough)return save.breakthrough;
+ if(save.breakthroughDay===localDay(now))throw new Error('今天已经尝试过突破，明天再来。');
+ save.breakthroughDay=localDay(now);
+ return save.breakthrough=createSession(save);
 }
 
 export function tilePorts(tile){return tile.ports.map(port=>(port+tile.rot)%4)}
@@ -71,8 +75,10 @@ export function hintMeridian(save,id){
  return completeIfConnected(save)?'灵脉贯通，突破至筑基一层！':`提示：第 ${Math.floor(index/5)+1} 行第 ${index%5+1} 列的经脉已归位。`;
 }
 
-export function retryBreakthrough(save,id){
+export function retryBreakthrough(save,id,now=Date.now()){
  if(!breakthroughReady(save)||!save.breakthrough||save.breakthrough.id!==id||save.breakthrough.remaining>0)throw new Error('当前不能重试。');
+ if(save.breakthroughDay===localDay(now))throw new Error('今天已经尝试过突破，明天再来。');
+ save.breakthroughDay=localDay(now);
  save.breakthrough=createSession(save);
  return save.breakthrough;
 }
