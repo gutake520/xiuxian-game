@@ -16,7 +16,7 @@ test('reaching qi ten queues one forced ambush and saves the elder rescue',()=>{
  assert.throws(()=>beginBattle(s,'tough'),/剧情/);
  const expected=bossAttributes(s,2),before=s.player.cultivation;
  const scene=resolveBossAmbush(s);
- assert.match(scene,/沈听溪/);assert.deepEqual(s.bossLine.firstFight,expected);
+ assert.match(scene,/沈听溪师叔/);assert.deepEqual(s.bossLine.firstFight,expected);
  assert.equal(s.player.hp,5);assert.equal(s.player.cultivation,before);
  assert.throws(()=>resolveBossAmbush(s),/结束/);
  assert.equal(s.bossLine.rescuePending,true);
@@ -32,6 +32,7 @@ test('injured enemy snapshots equipment stats, can be challenged with a beast an
  s.battle.hp=1;const random=Math.random;let outcome;
  try{Math.random=()=>.99;outcome=playRound(s,'attack').result}finally{Math.random=random}
  assert.equal(outcome.kind,'wounded-boss');assert.equal(s.bossLine.insight,true);assert.equal(s.bossLine.phase,'defeated');
+ assert.equal(s.battle,null);assert.match(outcome.log.join(''),/陆仁嘉死了/);assert.match(outcome.log.join(''),/养伤时就已经上报/);
  assert.throws(()=>beginBattle(s,'wounded-boss'),/没有可挑战/);
 });
 
