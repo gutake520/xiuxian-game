@@ -33,3 +33,12 @@ test('散修由闻照送月饼，奇遇在存档中等候领取',()=>{
  eatMooncake(s,2026);
  assert.equal(s.player.cultivation,20);
 });
+
+test('炼气十层也记下完整 50 点，旧年未领的邀请由新年取代',()=>{
+ const s=save();s.player.realm='炼气十层';s.player.cultivation=100;
+ queueMidAutumn(s,at(2025,10,6,20));
+ queueMidAutumn(s,at(2026,9,25,20));
+ assert.equal(s.midAutumnPending.year,2026);
+ eatMooncake(s,2026);
+ assert.equal(s.player.cultivation,150);
+});
