@@ -22,6 +22,7 @@
 #xg-panel .xg-map-pending,#xg-panel .xg-map-monster small{display:block;color:#b6c4b7!important;font-size:11px;margin:10px 0 2px}
 #xg-panel .xg-map-monster button,#xg-panel .xg-battle-sheet button{border:1px solid #866f47;border-radius:7px;background:#1a3028;color:#eddbb5;padding:8px 12px;font:inherit}
 #xg-panel .xg-map-monster button{margin-top:10px}
+#xg-panel .xg-map-sheet [data-fox-fight]{display:block;margin-top:14px;padding:9px 18px;border:1px solid #866f47;border-radius:7px;background:#1a3028;color:#eddbb5!important;font:inherit}
 #xg-panel .xg-map-sheet [data-fox-gift]{display:block;width:100%;margin:9px 0;padding:9px 12px;text-align:left;border:1px solid #866f47;border-radius:7px;background:#1a3028;color:#eddbb5;font:inherit}
 #xg-panel .xg-map-sheet [data-fox-proposal],#xg-panel .xg-map-sheet [data-fox-leave]{display:block;margin-top:18px}
 #xg-panel .xg-map-scene+.xg-card button{display:block;width:100%;margin:8px 0;border:1px solid #866f47;border-radius:7px;background:#193129;color:#eddbb5;padding:8px;font:inherit;text-align:left}
@@ -42,6 +43,7 @@
 #xg-panel .xg-battle-log p{margin:4px 0}
 #xg-panel .xg-battle-action-panel{margin-top:16px;padding:14px;border:1px solid #554c3a;border-radius:12px;background:#0c1c19cc}
 #xg-panel .xg-battle-action-panel h3{font-size:15px;color:#e9cc92;margin:0 0 12px}
+#xg-panel .xg-battle-action-panel>small{display:block;margin:0 0 10px;color:#c7d4c5!important;font-size:12px;line-height:1.5}
 #xg-panel .xg-battle-main-actions,#xg-panel .xg-battle-talisman-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
 #xg-panel .xg-battle-action-panel button{min-width:0;min-height:40px;white-space:normal;line-height:1.35}
 #xg-panel .xg-battle-main-actions [data-fight=attack]{background:#294237;border-color:#bd9f64}
