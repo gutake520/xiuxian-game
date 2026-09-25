@@ -11,7 +11,7 @@ export function dailyTasks(save,now=Date.now()){
 }
 export function recordDailyProgress(save,before,countSpend=true,now=Date.now()){
  const daily=dailyTasks(save,now);
- if(save.lastBattle?.id!==before.battleId&&save.lastBattle?.outcome==='victory')daily.kills=Math.min(3,daily.kills+1);
+ if(save.lastBattle?.id!==before.battleId&&save.lastBattle?.outcome==='victory'&&!save.lastBattle.kind)daily.kills=Math.min(3,daily.kills+1);
  if(countSpend)daily.spent=Math.min(3,Math.round((daily.spent+Math.max(0,before.stones-save.player.spiritStones))*100)/100);
 }
 export function claimDailyTask(save,id,day,now=Date.now()){

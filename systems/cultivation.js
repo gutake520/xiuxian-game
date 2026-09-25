@@ -7,9 +7,10 @@ export function idleRate(save){return save.techniques.mastered.includes(save.tec
 // 新的大境界只需在对应功法的 idleHoursByRealm 中追加上限。
 export function idleLimitMs(save){
  const method=TECHNIQUES[save.techniques.main],hours=method?.idleHoursByRealm;
- if(!hours)return IDLE_LIMIT_MS;
+ const companionBonus=(save.player.companions?.length||0)>0?30*60*1000:0;
+ if(!hours)return IDLE_LIMIT_MS+companionBonus;
  const major=String(save.player.realm||'').match(/^[^一二三四五六七八九十圆满]+/)?.[0];
- return (hours[major]??hours.筑基)*60*60*1000;
+ return (hours[major]??hours.筑基)*60*60*1000+companionBonus;
 }
 export function settleIdle(save,now=Date.now()){
  const idle=save.idle;if(now<=idle.lastAt)return 0;

@@ -22,6 +22,8 @@
 #xg-panel .xg-map-pending,#xg-panel .xg-map-monster small{display:block;color:#b6c4b7!important;font-size:11px;margin:10px 0 2px}
 #xg-panel .xg-map-monster button,#xg-panel .xg-battle-sheet button{border:1px solid #866f47;border-radius:7px;background:#1a3028;color:#eddbb5;padding:8px 12px;font:inherit}
 #xg-panel .xg-map-monster button{margin-top:10px}
+#xg-panel .xg-map-sheet [data-fox-gift]{display:block;width:100%;margin:9px 0;padding:9px 12px;text-align:left;border:1px solid #866f47;border-radius:7px;background:#1a3028;color:#eddbb5;font:inherit}
+#xg-panel .xg-map-sheet [data-fox-proposal],#xg-panel .xg-map-sheet [data-fox-leave]{display:block;margin-top:18px}
 #xg-panel .xg-map-scene+.xg-card button{display:block;width:100%;margin:8px 0;border:1px solid #866f47;border-radius:7px;background:#193129;color:#eddbb5;padding:8px;font:inherit;text-align:left}
 #xg-panel .xg-map-trade-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:16px}
 #xg-panel .xg-map-trade-actions button{border:1px solid #866f47;border-radius:8px;background:#193129;color:#eddbb5;min-height:46px;padding:10px;font:inherit}

@@ -16,7 +16,7 @@ test('ten draws cost eighteen, pity persists and forced rewards reset it; replay
  random(.1,()=>drawBlackMarket(s,1,'next'));assert.equal(s.blackMarket.pity,10);assert.equal(s.player.spiritStones,80);
 });
 test('draw category boundaries, duplicate manuals and temporary storage',()=>{
- for(const [roll,id] of [[0,'one-manual'],[.305,'burnt-talisman'],[.505,'calming-jade'],[.555,'ore'],[.7775,'qi-herb']]){
+ for(const [roll,id] of [[0,'one-manual'],[.305,'burnt-talisman'],[.505,'bamboo-chess'],[.555,'ore'],[.7775,'qi-herb']]){
   const s=save();random(roll,()=>drawBlackMarket(s,1,'a'));assert.equal(s.inventory[0].itemId,id);
  }
  const s=save();s.techniques.mastered.push('only-one');random(0,()=>{drawBlackMarket(s,1,'a');drawBlackMarket(s,1,'b')});
