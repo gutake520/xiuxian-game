@@ -29,7 +29,8 @@ test('injured enemy snapshots equipment stats, can be challenged with a beast an
  s.petRentals=1;s.player.hp=20;
  const stats=bossAttributes(s,1.1);beginBattle(s,'wounded-boss','attack');
  assert.equal(s.petRentals,0);assert.equal(s.battle.attack,stats.attack);assert.equal(s.battle.defense,stats.defense);assert.equal(s.battle.speed,stats.speed);
- s.battle.hp=1;const outcome=playRound(s,'attack').result;
+ s.battle.hp=1;const random=Math.random;let outcome;
+ try{Math.random=()=>.99;outcome=playRound(s,'attack').result}finally{Math.random=random}
  assert.equal(outcome.kind,'wounded-boss');assert.equal(s.bossLine.insight,true);assert.equal(s.bossLine.phase,'defeated');
  assert.throws(()=>beginBattle(s,'wounded-boss'),/没有可挑战/);
 });

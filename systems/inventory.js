@@ -11,7 +11,7 @@ export function addItem(save,id,quantity=1){
  if(item.kind==='manual'&&!item.repeatable&&ownsTechnique(save,item.methodId))return false;
  if(item.stackable){const stack=save.inventory.find(entry=>entry.itemId===id);if(stack){stack.quantity=(stack.quantity||1)+quantity;return true}}
  if(save.inventory.length>=save.bagCapacity)throw new Error('储物格已满，暂时无法收下物品。');
- save.itemSerial=(save.itemSerial||0)+1;save.inventory.push({uid:'item-'+save.itemSerial,itemId:id,quantity,...(item.kind==='equipment'?{durability:item.maxDurability??DURABILITY_MAX}:{})});return true;
+ save.itemSerial=(save.itemSerial||0)+1;save.inventory.push({uid:'item-'+save.itemSerial,itemId:id,quantity,...(item.kind==='equipment'?{durability:item.maxDurability??DURABILITY_MAX}:id==='crafted-binding-array'?{usesLeft:6}:{})});return true;
 }
 export function purchase(save,id,sectDiscount=false){
  const item=ITEMS[id];if(!item)throw new Error('商品不存在。');
@@ -74,7 +74,7 @@ export function sellExtra(save,uid,quantity=1){
 }
 export function discardJunk(save,uid){
  const entry=save.inventory.find(e=>e.uid===uid);
- if(ITEMS[entry?.itemId]?.kind!=='junk')throw new Error('这不是杂物。');
+ if(ITEMS[entry?.itemId]?.kind!=='junk'&&!(entry?.itemId==='crafted-binding-array'&&entry.usesLeft===0))throw new Error('这不是可丢弃的杂物。');
  if(save.battle)throw new Error('请先结束战斗。');
  save.inventory=save.inventory.filter(e=>e!==entry);
 }

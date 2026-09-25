@@ -1,6 +1,7 @@
 import {combatSlots} from '../data/technique-slots.js';
 import {ITEMS} from '../data/items.js';
 import {TECHNIQUES,PUZZLE_SIZES,UPGRADEABLE_TECHNIQUES,hintAllowance,techniqueEligible} from '../data/techniques.js';
+import {ensureSpiritBeasts} from './pets.js';
 import {hasManual} from './inventory.js';
 const canStudy=(save,id)=>id.startsWith('upgrade:')?UPGRADEABLE_TECHNIQUES.includes(id.slice(8))&&save.techniques.mastered.includes(id.slice(8))&&Boolean(save.techniques.puzzles?.[id])&&!save.techniques.upgraded?.includes(id.slice(8)):techniqueEligible(save.player,TECHNIQUES[id])&&(hasManual(save,id)||save.techniques.sectManuals?.includes(id));
 const shuffle=values=>{for(let i=values.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[values[i],values[j]]=[values[j],values[i]]}return values};
@@ -58,7 +59,7 @@ export function completeLearning(save,id){
  if(puzzle.cells.some((v,i)=>v!==puzzle.solution[i]))throw new Error('数阵尚未解开，请检查每一行、每一列。');
  if(upgrade){save.techniques.upgraded??=[];save.techniques.upgraded.push(id.slice(8));delete save.techniques.puzzles[id];return}
  save.techniques.mastered.push(id);
- if(id==='beast-keeper')save.spiritBeast??={name:'伴生灵兽',stage:'炼气'};
+ if(id==='beast-keeper')ensureSpiritBeasts(save);
  const at=save.inventory.findIndex(entry=>ITEMS[entry.itemId]?.methodId===id);if(at>=0){if((save.inventory[at].quantity||1)>1)save.inventory[at].quantity--;else save.inventory.splice(at,1)}
  delete save.techniques.puzzles[id];
 }
