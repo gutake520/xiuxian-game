@@ -43,6 +43,7 @@ export function migrateSave(save,now=Date.now()){
  for(const entry of save.inventory)if(ITEMS[entry.itemId]?.kind==='equipment'&&!Number.isFinite(entry.durability))entry.durability=ITEMS[entry.itemId].maxDurability??DURABILITY_MAX;
  expireLoot(save,now);
  save.petRentals=Number.isSafeInteger(save.petRentals)?Math.max(0,save.petRentals):0;
+ save.foundationPetRentals=Number.isSafeInteger(save.foundationPetRentals)?Math.max(0,save.foundationPetRentals):0;
  if(save.battle){save.battle.talismansUsed??=0;save.battle.talismanRound??=0;save.battle.bindRounds??=save.battle.bindRound?[save.battle.bindRound]:[];save.battle.arrayRound??=0;save.battle.freeArrayUsed??=false;save.battle.guard??=false;save.battle.pet??=null;save.battle.mp??=Math.max(0,(QI_MONSTERS.find(monster=>monster.id===save.battle.monsterId)?.mp||0)-(save.battle.enemySkillReady?1:0))}
  save.techniques??={mastered:[],main:null,puzzles:{}};
  save.techniques.mastered??=[];save.techniques.puzzles??={};
@@ -63,8 +64,9 @@ export function migrateSave(save,now=Date.now()){
  if(!Number.isFinite(save.idle.lastAt))save.idle.lastAt=now;
  if(!Number.isFinite(save.idle.usedMs))save.idle.usedMs=0;
  if(!save.idle.day)save.idle.day=localDay(now);
- const progress=realmProgress(p);if(progress.index>=0){p.cultivationRequired=QI_REQUIREMENTS[progress.index]??null;if(progress.required&&p.cultivation>=progress.required){const xp=p.cultivation;p.cultivation=0;addCultivation(save,xp)}}
+ const progress=realmProgress(p);if(progress.index>=0){p.cultivationRequired=progress.required;if(progress.required&&p.cultivation>=progress.required){const xp=p.cultivation;p.cultivation=0;addCultivation(save,xp)}}
  applyRealmHp(save);
+ if(String(p.realm).startsWith('筑基')&&save.bossLine?.phase==='ambush')save.bossLine={phase:'defeated',insight:true};
  ensureBossLine(save);
  syncAchievements(save);
  save.version=7;return save;

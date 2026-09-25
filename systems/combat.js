@@ -1,5 +1,5 @@
 import {chargedMultiplier,rootCount} from '../data/technique-slots.js';
-import {QI_MONSTERS} from '../data/locations.js';
+import {QI_MONSTERS,FOUNDATION_MONSTERS} from '../data/locations.js';
 import {ITEMS} from '../data/items.js';
 import {COMBAT_REWARD_XP} from '../data/balance.js';
 import {equipmentStats,awardItem,maxDurability} from './inventory.js';
@@ -13,19 +13,22 @@ import {selectBattlePet,beastCanFight,beastName} from './pets.js';
 
 export const round2=value=>Math.round((value+Number.EPSILON)*100)/100;
 const herbs=['healing-herb','spirit-herb','qi-herb'];
+const foundationHerbs=['foundation-healing-herb','foundation-spirit-herb','foundation-qi-herb'];
+const monsters=[...QI_MONSTERS,...FOUNDATION_MONSTERS];
 const pick=array=>array[Math.floor(Math.random()*array.length)];
 function grant(save,id,quantity,rewards,now,loot){const place=awardItem(save,id,quantity,now);rewards.push(`${ITEMS[id].name}×${quantity}${place==='temporary'?'（临时储物）':''}`);loot.push({itemId:id,quantity,place,uid:place==='bag'?(ITEMS[id].stackable?save.inventory.find(entry=>entry.itemId===id):save.inventory.at(-1))?.uid:save.temporaryLoot.at(-1)?.id})}
 function awardVictory(save,monster,now){
  const rewards=[],loot=[];const count=Math.random()<(monster.twoDropChance??.6)?2:3;
+ const foundation=monster.stage==='筑基',herbPool=foundation?foundationHerbs:herbs,ore=foundation?'foundation-ore':'ore';
  if(monster.resource==='stones'){save.player.spiritStones=round2(save.player.spiritStones+count);rewards.push(`灵石×${count}`);loot.push({itemId:'stones',quantity:count})}
- else grant(save,monster.resource==='herbs'?pick(herbs):'ore',count,rewards,now,loot);
+ else grant(save,monster.resource==='herbs'?pick(herbPool):ore,count,rewards,now,loot);
  const other=pick(monster.resource==='stones'?['herbs','ore']:monster.resource==='herbs'?['stones','ore']:['stones','herbs']);
  if(other==='stones'){save.player.spiritStones=round2(save.player.spiritStones+1);rewards.push('灵石×1');loot.push({itemId:'stones',quantity:1})}
- else grant(save,other==='herbs'?pick(herbs):'ore',1,rewards,now,loot);
- for(const [id,chance] of [['wild-shoes',.08],['wild-sword',.04],['wild-robe',.04]])if(Math.random()<chance)grant(save,id,1,rewards,now,loot);
- if(Math.random()<.04)grant(save,pick(['hp-charm','mp-charm','crit-charm','dodge-charm']),1,rewards,now,loot);
- if(monster.minLevel>=4&&Math.random()<.02)grant(save,'sting-manual',1,rewards,now,loot);
- const xp=addCultivation(save,COMBAT_REWARD_XP);
+ else grant(save,other==='herbs'?pick(herbPool):ore,1,rewards,now,loot);
+ for(const [id,chance] of [[foundation?'foundation-shoes':'wild-shoes',.08],[foundation?'foundation-wild-sword':'wild-sword',.04],[foundation?'foundation-wild-robe':'wild-robe',.04]])if(Math.random()<chance)grant(save,id,1,rewards,now,loot);
+ if(Math.random()<.04)grant(save,pick(foundation?['foundation-hp-charm','foundation-mp-charm','foundation-crit-charm','foundation-dodge-charm']:['hp-charm','mp-charm','crit-charm','dodge-charm']),1,rewards,now,loot);
+ if(!foundation&&monster.minLevel>=4&&Math.random()<.02)grant(save,'sting-manual',1,rewards,now,loot);
+ const xp=addCultivation(save,monster.xp??COMBAT_REWARD_XP);
  return {rewards,xp,loot};
 }
 function wearEquipment(save){
@@ -37,7 +40,7 @@ function wearEquipment(save){
 }
 function finish(save,outcome,details={}){
  wearEquipment(save);
- save.lastBattle={id:save.battle.id,monster:save.battle.name,kind:save.battle.kind,outcome,round:save.battle.round,...details};save.battle=null;
+ save.lastBattle={id:save.battle.id,monsterId:save.battle.monsterId,monster:save.battle.name,kind:save.battle.kind,outcome,round:save.battle.round,...details};save.battle=null;
  return save.lastBattle;
 }
 function refillTournament(save){const stats=equipmentStats(save);save.player.hp=round2(stats.maxHp);save.player.mp=round2(stats.maxMp)}
@@ -50,7 +53,7 @@ function resolveTournamentLoss(save,outcome,messages){
  result.log=[...messages];return result;
 }
 function resolveVictory(save,now,messages){
- const battle=save.battle,monster=QI_MONSTERS.find(entry=>entry.id===battle.monsterId);
+ const battle=save.battle,monster=monsters.find(entry=>entry.id===battle.monsterId);
  if(battle.kind==='wounded-boss'){
   const result=finish(save,'victory',{rewards:[],xp:0,kind:'wounded-boss'});
   save.bossLine.phase='defeated';save.bossLine.insight=true;
@@ -102,11 +105,12 @@ export function beginBattle(save,id,pet=null,retaliation=false){
   save.battle={id:crypto.randomUUID(),kind:'wounded-boss',monsterId:null,name:BOSS_NAME,maxHp:foe.maxHp,hp:foe.maxHp,attack:foe.attack,defense:foe.defense,speed:foe.speed,maxMp:foe.maxMp,mp:foe.maxMp,critRate:foe.critRate,dodgeRate:foe.dodgeRate,round:0,pet:chosen,petName:chosen?(beastCanFight(save,chosen)?beastName(save,chosen):'租借灵兽'):null,guard:false,bindRounds:[],arrayRound:0,talismansUsed:0,talismanRound:0,freeArrayUsed:false,criticalFocus:false,skillReady:{},log:['你在山中找到了负伤的仇人。旧怨未了，战斗开始。']};
   return save.battle;
  }
- const monster=QI_MONSTERS.find(entry=>entry.id===id);if(!monster)throw new Error('对手不存在。');
- if(tier+1<monster.minLevel)throw new Error(`需炼气${['一','二','三','四','五','六','七','八','九','十'][monster.minLevel-1]}层解锁此处。`);
+ const monster=monsters.find(entry=>entry.id===id);if(!monster)throw new Error('对手不存在。');
+ if(monster.stage==='筑基'&&tier<10)throw new Error('需筑基一层方可前往此处。');
+ if(monster.stage!=='筑基'&&tier+1<monster.minLevel)throw new Error(`需炼气${['一','二','三','四','五','六','七','八','九','十'][monster.minLevel-1]}层解锁此处。`);
  selectBattlePet(save,pet);
  const maxHp=monster.hpMin+Math.floor(Math.random()*(monster.hpMax-monster.hpMin+1));
- save.battle={id:crypto.randomUUID(),monsterId:id,name:monster.name,maxHp,hp:maxHp,attack:monster.attack,speed:monster.speed,mp:monster.mp||0,round:0,pet,petName:pet?(beastCanFight(save,pet)?beastName(save,pet):'租借灵兽'):null,retaliation,guard:false,bindRounds:[],arrayRound:0,talismansUsed:0,talismanRound:0,freeArrayUsed:false,criticalFocus:false,skillReady:{},log:['狭路相逢，战斗开始。']};
+ save.battle={id:crypto.randomUUID(),monsterId:id,name:monster.name,stage:monster.stage||'炼气',maxHp,hp:maxHp,attack:monster.attack,speed:monster.speed,mp:monster.mp||0,round:0,pet,petName:pet?(beastCanFight(save,pet)?beastName(save,pet):'租借灵兽'):null,petStage:String(save.player.realm).startsWith('筑基')?'筑基':'炼气',retaliation,guard:false,bindRounds:[],arrayRound:0,talismansUsed:0,talismanRound:0,freeArrayUsed:false,criticalFocus:false,skillReady:{},log:['狭路相逢，战斗开始。']};
  return save.battle;
 }
 export function playRound(save,action='attack',now=Date.now()){
@@ -155,20 +159,22 @@ export function playRound(save,action='attack',now=Date.now()){
   messages.push(`${damageIntro} ${dealt.toFixed(2)} 伤害。`);
   const actual=Math.min(battle.hp,dealt);
   battle.hp=round2(Math.max(0,battle.hp-dealt));
+  const weapon=save.inventory.find(entry=>entry.uid===save.equipment?.weapon);
+  if(playerFirst&&battle.hp>0&&weapon?.durability>0&&ITEMS[weapon.itemId]?.stunChance&&Math.random()<ITEMS[weapon.itemId].stunChance){battle.stunnedRound=battle.round+1;messages.push('裂风剑震乱对手气息，对手本轮无法行动。')}
   if(action==='silent-strike'&&battle.hp>0){battle.silencedTurns=2;messages.push(`${battle.name}接下来两次行动无法使用技能。`)}
   if(action==='sting'&&battle.hp>0)battle.stingRound=battle.round+2;
   if(hasActiveTechnique(save,'life-steal')){const heal=round2(Math.min(stats.maxHp-save.player.hp,actual*.1));save.player.hp=round2(save.player.hp+heal);if(heal>0)messages.push(`吸取生命 ${heal.toFixed(2)}。`)}
   if(action==='empty-hands'&&battle.hp>0&&Math.random()<(save.techniques.upgraded?.includes(action)?.3:.2)){const stolen=round2(Math.min(round2((save.techniques.upgraded?.includes(action)?5:2)*(hasActiveTechnique(save,'one-sword')?1.1:1)),battle.hp)),healed=round2(Math.min(stolen,stats.maxHp-save.player.hp));battle.hp=round2(battle.hp-stolen);save.player.hp=round2(save.player.hp+healed);dealt=round2(dealt+stolen);messages.push(`妙手空空抽取 ${stolen.toFixed(2)} 生命，恢复 ${healed.toFixed(2)}。`)}
  };
  const enemyTurn=()=>{
-  if(battle.bindRounds?.includes(battle.round+1)){messages.push('对手被阵盘困住，无法行动。');return}
+  if(battle.bindRounds?.includes(battle.round+1)||battle.stunnedRound===battle.round+1){messages.push(battle.stunnedRound===battle.round+1?'对手被裂风剑震晕，本轮无法行动。':'对手被阵盘困住，无法行动。');return}
   const silenced=(battle.silencedTurns||0)>0;
   if(silenced){battle.silencedTurns--;messages.push(`${battle.name}被压制，只能普攻。`)}
   if(tournament){
    if(silenced)enemyAction='attack';
    else if(enemyAction!=='attack'){battle.mp=round2(battle.mp-1);if(enemyAction==='strengthen-attack')battle.enemySkillReady=battle.round+4;messages.push(`${battle.name}使出${enemyAction==='iron-wall'?'铜墙铁壁':'强化普通'}。`)}
   }
-  const monster=QI_MONSTERS.find(entry=>entry.id===battle.monsterId);
+ const monster=monsters.find(entry=>entry.id===battle.monsterId);
   const empowered=!tournament&&!silenced&&monster?.attackBoost&&(battle.mp||0)>0&&(battle.enemySkillReady||0)<=battle.round+1;
   const enemyCrit=armored&&enemyAction!=='iron-wall'&&Math.random()<battle.critRate/100;
   const rawDamage=round2(armored?(enemyAction==='iron-wall'?1:battle.attack*(enemyAction==='strengthen-attack'?1.1:1)*(enemyCrit?1.5:1)):battle.attack*(empowered?monster.attackBoost:1));
@@ -178,12 +184,13 @@ export function playRound(save,action='attack',now=Date.now()){
   if(battle.guard){battle.guard=false;messages.push('护身符抵挡了这次伤害。');return}
   const afterDefense=Math.max(1,rawDamage-stats.defense-(guarded?1:0));
   const capped=action==='only-one'&&playerFirst?Math.min(1,afterDefense):afterDefense;
-  taken=round2(Math.max(0,capped-(battle.pet==='guard'?.3:0)));save.player.hp=round2(Math.max(0,save.player.hp-taken));
-  if(battle.pet==='guard')messages.push(`${battle.petName||'灵兽'}抵挡 0.30 伤害。`);
+  const guardAmount=battle.pet==='guard'?(battle.petStage==='筑基'?.5:.3):0;
+  taken=round2(Math.max(0,capped-guardAmount));save.player.hp=round2(Math.max(0,save.player.hp-taken));
+  if(battle.pet==='guard')messages.push(`${battle.petName||'灵兽'}抵挡 ${guardAmount.toFixed(2)} 伤害。`);
   messages.push(`你受到 ${taken.toFixed(2)} 伤害。`);
   if(taken>0&&save.player.hp>0&&hasActiveTechnique(save,'resentment')){const reflected=round2(rawDamage*.1);battle.hp=round2(Math.max(0,battle.hp-reflected));messages.push(`以怨报怨，反弹 ${reflected.toFixed(2)} 伤害。`)}
  };
- const playerAction=()=>{playerTurn();if(battle.pet==='attack'&&battle.hp>0){battle.hp=round2(Math.max(0,battle.hp-.5));messages.push(`${battle.petName||'灵兽'}追加 0.50 伤害。`)}};
+ const playerAction=()=>{playerTurn();if(battle.pet==='attack'&&battle.hp>0){const bonus=battle.petStage==='筑基'?.8:.5;battle.hp=round2(Math.max(0,battle.hp-bonus));messages.push(`${battle.petName||'灵兽'}追加 ${bonus.toFixed(2)} 伤害。`)}};
  if(playerFirst){playerAction();if(battle.hp>0)enemyTurn()}
  else{enemyTurn();if(save.player.hp>0&&battle.hp>0)playerAction()}
  if(battle.regenRounds>0&&save.player.hp>0&&battle.hp>0){const heal=round2(Math.min(2,stats.maxHp-save.player.hp));save.player.hp=round2(save.player.hp+heal);battle.regenRounds--;messages.push(`妙手回春恢复 ${heal.toFixed(2)} 生命。`)}
@@ -202,26 +209,32 @@ function consumeItem(save,id){
 export function useBattleArray(save,uid){
  const battle=save.battle;if(!battle)throw new Error('没有正在进行的战斗。');
  if(battle.arrayRound===battle.round+1)throw new Error('本轮已经使用过阵盘。');
- const entry=uid?save.inventory.find(item=>item.uid===uid):save.inventory.find(item=>item.itemId==='binding-array')||save.inventory.find(item=>item.itemId==='crafted-binding-array'&&item.usesLeft>0);
- if(!entry||!['binding-array','crafted-binding-array'].includes(entry.itemId))throw new Error('储物中没有可用的阵盘。');
- if(entry.itemId==='crafted-binding-array'){
+ const ids=['binding-array','crafted-binding-array','foundation-binding-array','foundation-crafted-array'];
+ const targetFoundation=battle.stage==='筑基'||battle.kind==='wounded-boss'||String(save.player.realm).startsWith('筑基')&&['sect-tournament','sect-senior'].includes(battle.kind);
+ const entry=uid?save.inventory.find(item=>item.uid===uid):save.inventory.find(item=>ids.includes(item.itemId)&&(!item.itemId.includes('crafted')||item.usesLeft>0)&&(!targetFoundation||ITEMS[item.itemId]?.stage==='筑基'));
+ if(!entry||!ids.includes(entry.itemId))throw new Error('储物中没有可用的阵盘。');
+ if(targetFoundation&&ITEMS[entry.itemId].stage!=='筑基')throw new Error('此阵灵力不足，困不住筑基修士。');
+ if(ITEMS[entry.itemId].stage==='筑基'&&!String(save.player.realm).startsWith('筑基'))throw new Error('灵力尚浅，无法催动这枚阵盘。');
+ const crafted=entry.itemId.includes('crafted');
+ if(crafted){
   if(!Number.isInteger(entry.usesLeft)||entry.usesLeft<=0)throw new Error('这枚阵盘已经损坏。');
   entry.usesLeft--;
  }else if(entry.quantity>1)entry.quantity--;else save.inventory=save.inventory.filter(item=>item!==entry);
  battle.arrayRound=battle.round+1;
  battle.bindRounds??=[];battle.bindRounds.push(battle.round+2);
- const message=`阵盘发动，对手下一轮无法行动；你仍可进行本轮行动。${entry.itemId==='crafted-binding-array'?entry.usesLeft?'剩余 '+entry.usesLeft+' 次。':'阵盘已损坏。':''}`;
+ const message=`阵盘发动，对手下一轮无法行动；你仍可进行本轮行动。${crafted?entry.usesLeft?'剩余 '+entry.usesLeft+' 次。':'阵盘已损坏。':''}`;
  battle.log=[...battle.log,message].slice(-10);
  return message;
 }
 export function useBattleTalisman(save,id){
  const battle=save.battle;if(!battle)throw new Error('没有正在进行的战斗。');
- if(!['attack-talisman','guard-talisman'].includes(id))throw new Error('符箓不存在。');
+ if(!['attack-talisman','guard-talisman','foundation-attack-talisman','foundation-guard-talisman'].includes(id))throw new Error('符箓不存在。');
+ if(ITEMS[id].stage==='筑基'&&!String(save.player.realm).startsWith('筑基'))throw new Error('灵力尚浅，无法催动这张符箓。');
  if(battle.talismansUsed>=2)throw new Error('每场最多使用两张符箓。');
  if(battle.talismanRound===battle.round+1)throw new Error('本轮已经使用过符箓。');
  consumeItem(save,id);battle.talismansUsed++;battle.talismanRound=battle.round+1;
- const message=id==='attack-talisman'?'攻击符额外造成 2.00 伤害。':'护身符准备抵挡下一次伤害。';
- if(id==='attack-talisman')battle.hp=round2(Math.max(0,battle.hp-2));else battle.guard=true;
+ const damage=ITEMS[id].damage||(id==='attack-talisman'?2:0),message=damage?`${ITEMS[id].name}额外造成 ${damage.toFixed(2)} 伤害。`:`${ITEMS[id].name}准备抵挡下一次伤害。`;
+ if(damage)battle.hp=round2(Math.max(0,battle.hp-damage));else battle.guard=true;
  battle.log=[...battle.log,message].slice(-10);
  if(battle.hp<=0)resolveVictory(save,Date.now(),[message]);
  return message;

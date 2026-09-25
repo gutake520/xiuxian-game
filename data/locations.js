@@ -32,3 +32,13 @@ export const QI_PEAKS = [
  {id:'spring-hill',name:'听泉岭',kind:'npc',npc:'云枝',description:'在山间采药的年轻药师。',x:5,y:61,size:.77},
  {id:'star-realm',name:'星落秘境',kind:'secret',x:58,y:70,size:.82}
 ];
+export const FOUNDATION_MONSTERS=[
+ {id:'rock-ape',name:'岩背猿',hp:'24～28',hpMin:24,hpMax:28,attack:2.8,speed:3,drop:'灵石 2～3',resource:'stones',minLevel:1,stage:'筑基',xp:30},
+ {id:'claw-wolf',name:'裂爪狼',hp:'13～16',hpMin:13,hpMax:16,attack:4.2,speed:4,drop:'草药 2～3',resource:'herbs',minLevel:1,stage:'筑基',xp:30},
+ {id:'cloud-falcon',name:'掠云隼',hp:'16～19',hpMin:16,hpMax:19,attack:3.5,speed:6,drop:'矿石 2～3',resource:'ore',minLevel:1,stage:'筑基',xp:30}
+];
+export const FOUNDATION_PEAKS=[
+ {id:'rock-hollow',name:'磐石坳',kind:'monster',monsterId:'rock-ape',x:7,y:12,size:.83},
+ {id:'cloud-gorge',name:'穿云涧',kind:'monster',monsterId:'cloud-falcon',x:61,y:8,size:.78},
+ {id:'blade-slope',name:'断刃坡',kind:'monster',monsterId:'claw-wolf',x:33,y:55,size:.84}
+];

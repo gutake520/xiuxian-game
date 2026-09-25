@@ -11,12 +11,13 @@ export function addItem(save,id,quantity=1){
  if(item.kind==='manual'&&!item.repeatable&&ownsTechnique(save,item.methodId))return false;
  if(item.stackable){const stack=save.inventory.find(entry=>entry.itemId===id);if(stack){stack.quantity=(stack.quantity||1)+quantity;return true}}
  if(save.inventory.length>=save.bagCapacity)throw new Error('储物格已满，暂时无法收下物品。');
- save.itemSerial=(save.itemSerial||0)+1;save.inventory.push({uid:'item-'+save.itemSerial,itemId:id,quantity,...(item.kind==='equipment'?{durability:item.maxDurability??DURABILITY_MAX}:id==='crafted-binding-array'?{usesLeft:6}:{})});return true;
+ save.itemSerial=(save.itemSerial||0)+1;save.inventory.push({uid:'item-'+save.itemSerial,itemId:id,quantity,...(item.kind==='equipment'?{durability:item.maxDurability??DURABILITY_MAX}:['crafted-binding-array','foundation-crafted-array'].includes(id)?{usesLeft:6}:{})});return true;
 }
 export function purchase(save,id,sectDiscount=false){
  const item=ITEMS[id];if(!item)throw new Error('商品不存在。');
  if(item.blackMarketOnly)throw new Error('这部典籍只能从黑市抽取。');
  if(!Number.isFinite(item.price))throw new Error('此物品不供出售。');
+ if(item.stage==='筑基'&&!String(save.player.realm).startsWith('筑基'))throw new Error('灵力尚浅，尚不能购买筑基货品。');
  const sectOnly=['gamble-manual','steal-manual','only-once-manual'];
  if(sectOnly.includes(id)&&!sectDiscount)throw new Error('这部功法仅在宗门商店出售。');
  if(id==='one-manual'&&sectDiscount)throw new Error('这部功法只在黑市出售。');
@@ -30,6 +31,7 @@ export function purchase(save,id,sectDiscount=false){
 export function equipItem(save,uid){
  const entry=save.inventory.find(entry=>entry.uid===uid),item=ITEMS[entry?.itemId];
  if(!item||item.kind!=='equipment')throw new Error('无法装备这件物品。');
+ if(item.stage==='筑基'&&!String(save.player.realm).startsWith('筑基'))throw new Error('灵力尚浅，无法驾驭这件法器。');
  if(save.battle)throw new Error('战斗中不能换装。');
  if(save.equipment[item.slot]!==uid&&entry.durability<=0)throw new Error('装备已损坏，需修补后使用。');
  const before=equipmentStats(save);
@@ -60,8 +62,9 @@ export function claimLoot(save,id,now=Date.now()){
  expireLoot(save,now);const index=save.temporaryLoot.findIndex(entry=>entry.id===id);if(index<0)throw new Error('战利品已过期或已领取。');
  const entry=save.temporaryLoot[index];addItem(save,entry.itemId,entry.quantity);save.temporaryLoot.splice(index,1);
 }
-export function equipmentSalePrice(item){return ['iron-sword','cloth-robe'].includes(item?.id)?2:['wild-sword','wild-robe'].includes(item?.id)?2.5:3}
+export function equipmentSalePrice(item){if(item?.stage==='筑基')return ['foundation-sword','foundation-robe'].includes(item.id)?3:['foundation-wild-sword','foundation-wild-robe'].includes(item.id)?3.75:4.5;return ['iron-sword','cloth-robe'].includes(item?.id)?2:['wild-sword','wild-robe'].includes(item?.id)?2.5:3}
 export const MATERIAL_SALE_PRICE=.8;
+export const materialSalePrice=item=>item?.stage==='筑基'?1.2:MATERIAL_SALE_PRICE;
 export function sellExtra(save,uid,quantity=1){
  const entry=save.inventory.find(e=>e.uid===uid),item=ITEMS[entry?.itemId];
  if(!entry||!['gift','manual'].includes(item?.kind)||!Number.isFinite(item.sellPrice))throw new Error('此物品不能出售。');
@@ -74,7 +77,7 @@ export function sellExtra(save,uid,quantity=1){
 }
 export function discardJunk(save,uid){
  const entry=save.inventory.find(e=>e.uid===uid);
- if(ITEMS[entry?.itemId]?.kind!=='junk'&&!(entry?.itemId==='crafted-binding-array'&&entry.usesLeft===0))throw new Error('这不是可丢弃的杂物。');
+ if(ITEMS[entry?.itemId]?.kind!=='junk'&&!(['crafted-binding-array','foundation-crafted-array'].includes(entry?.itemId)&&entry.usesLeft===0))throw new Error('这不是可丢弃的杂物。');
  if(save.battle)throw new Error('请先结束战斗。');
  save.inventory=save.inventory.filter(e=>e!==entry);
 }
@@ -95,7 +98,7 @@ export function sellMaterial(save,uid,quantity){
  if(!entry||item?.kind!=='material')throw new Error('只能出售矿石或药草。');
  if(!Number.isSafeInteger(quantity)||quantity<1||quantity>(entry.quantity||1))throw new Error('出售数量无效。');
  if(save.battle)throw new Error('战斗中不能出售物品。');
- const price=Math.round(quantity*MATERIAL_SALE_PRICE*100)/100;
+ const price=Math.round(quantity*materialSalePrice(item)*100)/100;
  if(quantity===entry.quantity)save.inventory=save.inventory.filter(candidate=>candidate!==entry);
  else entry.quantity-=quantity;
  save.player.spiritStones=Math.round((save.player.spiritStones+price)*100)/100;
@@ -123,12 +126,13 @@ export function discardEquipment(save,uid){
 export function usePill(save,uid,now=Date.now()){
  const entry=save.inventory.find(entry=>entry.uid===uid),item=ITEMS[entry?.itemId];
  if(!entry||item?.kind!=='pill')throw new Error('丹药不存在。');
+ if(item.stage==='筑基'&&!String(save.player.realm).startsWith('筑基'))throw new Error('此丹药力太盛，暂不能服用。');
  save.pillCooldowns??={};
  if((save.pillCooldowns[item.id]||0)>now)throw new Error(`此丹药仍在冷却，还需 ${Math.ceil((save.pillCooldowns[item.id]-now)/1000)} 秒。`);
  const p=save.player,stats=equipmentStats(save);
- if(item.id==='qi-pill'){
-  if(save.qiPillDay===localDay(now))throw new Error('今天已经服用过聚气丹。');
-  save.qiPillDay=localDay(now);
+ if(['qi-pill','foundation-qi-pill'].includes(item.id)){
+  if(save.qiPillDay===localDay(now)||save.foundationPillDay===localDay(now))throw new Error('今天已经服用过增益打坐的丹药。');
+  save[item.id==='qi-pill'?'qiPillDay':'foundationPillDay']=localDay(now);
  }else{
   const hp=Math.min(stats.maxHp,Math.round((p.hp+(item.hp||0))*100)/100),mp=Math.min(stats.maxMp,Math.round((p.mp+(item.mp||0))*100)/100);
   if(hp===p.hp&&mp===p.mp)throw new Error('生命与法力已满，无需服药。');
@@ -143,10 +147,15 @@ export const PILL_RECIPES={
  'spirit-pill':{'spirit-herb':5},
  'mixed-pill':{'healing-herb':2,'spirit-herb':1},
  'qi-pill':{'qi-herb':5}
+ ,'foundation-heal-pill':{'foundation-healing-herb':5}
+ ,'foundation-spirit-pill':{'foundation-spirit-herb':5}
+ ,'foundation-mixed-pill':{'foundation-healing-herb':2,'foundation-spirit-herb':1}
+ ,'foundation-qi-pill':{'foundation-qi-herb':5}
 };
 export function brewPill(save,id){
  if(save.player.sect!=='丹霞谷'||!save.techniques?.mastered?.includes('divine-pharmacopoeia'))throw new Error('须先学会丹霞谷《神药谱》。');
  const recipe=PILL_RECIPES[id];if(!recipe)throw new Error('丹方不存在。');
+ if(ITEMS[id].stage==='筑基'&&!String(save.player.realm).startsWith('筑基'))throw new Error('灵力尚浅，无法炼制筑基丹药。');
  for(const [material,amount] of Object.entries(recipe))if((save.inventory.find(item=>item.itemId===material)?.quantity||0)<amount)throw new Error('药草不足。');
  const stack=save.inventory.some(entry=>entry.itemId===id);
  const freed=Object.entries(recipe).filter(([material,amount])=>save.inventory.find(entry=>entry.itemId===material)?.quantity===amount).length;
