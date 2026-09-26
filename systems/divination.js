@@ -17,8 +17,8 @@ export function maybeMeetDiviner(save,battleId,loot,now=Date.now()){
 function priority(entry){
  if(ITEMS[entry.itemId]?.kind==='equipment')return 0;
  if(entry.itemId==='stones')return 1;
- if(entry.itemId==='ore')return 2;
- if(['healing-herb','spirit-herb','qi-herb'].includes(entry.itemId))return 3;
+ if(['ore','foundation-ore'].includes(entry.itemId))return 2;
+ if(['healing-herb','spirit-herb','qi-herb','foundation-healing-herb','foundation-spirit-herb','foundation-qi-herb'].includes(entry.itemId))return 3;
  return 4;
 }
 
