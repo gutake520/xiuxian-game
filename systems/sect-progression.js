@@ -62,7 +62,6 @@ export function craftSectItem(save,id,herb='healing-herb'){
  const talisman=['attack-talisman','guard-talisman','foundation-attack-talisman','foundation-guard-talisman'].includes(id);
  if(!talisman&&!['crafted-binding-array','foundation-crafted-array'].includes(id))throw new Error('制作配方尚未开放。');
  if(!hasActiveTechnique(save,talisman?'fairy-painting':'planting-flags'))throw new Error('请先学会本宗制作传承。');
- if(!['healing-herb','spirit-herb','qi-herb'].includes(herb))throw new Error('药草类型无效。');
  const stage=ITEMS[id]?.stage==='筑基'?'筑基':'炼气';
  if(stage==='筑基'&&!String(save.player.realm).startsWith('筑基'))throw new Error('灵力尚浅，无法炼制筑基法器。');
  const permitted=stage==='筑基'?['foundation-healing-herb','foundation-spirit-herb','foundation-qi-herb']:['healing-herb','spirit-herb','qi-herb'];
