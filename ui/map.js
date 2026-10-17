@@ -14,17 +14,20 @@ import {escapeHTML,format} from './shared.js';
 import {BOSS_NAME,bossAttributes} from '../systems/boss-line.js';
 import {FOXES} from '../data/foxes.js';
 import {foxState,giftableEntries,giveFoxGift,seenFoxScene,answerFox,leaveFox,companionBreakupFee} from '../systems/foxes.js';
+import {YAN_NAME,YAN_HILL,YAN_SCENES} from '../data/yan-tingyun.js';
+import {yanState,yanEncounterText,giveYanGift,seenYanIntro,seenYanScene,answerYan,leaveYan} from '../systems/yan-tingyun.js';
 
 export function createMapUI({getSave,activate,actions,onSectBattleExit}){
  const content=()=>document.getElementById('xg-content');
  const foundationPlayer=()=>String(getSave()?.player?.realm||'').startsWith('筑基');
  const petChoices=(save,name)=>{const foundation=String(save.player.realm).startsWith('筑基'),rented=(foundation?save.foundationPetRentals:save.petRentals)>0,attack=beastCanFight(save,'attack'),guard=beastCanFight(save,'guard');return rented||attack||guard?`<fieldset class="xg-card"><legend>灵兽出战</legend><label><input type="radio" name="${name}" value="" checked> 不出战</label>${['attack','guard'].filter(type=>beastCanFight(save,type)||rented).map(type=>`<label><input type="radio" name="${name}" value="${type}"> ${escapeHTML(beastCanFight(save,type)?beastName(save,type):'租借灵兽')} · ${type==='attack'?`追击 +${foundation?'0.80':'0.50'}`:`守护 −${foundation?'0.50':'0.30'}`}</label>`).join('')}</fieldset>`:''};
- const battle=outcome=>showBattle({getSave,activate,actions,onExit:getSave().bossLine?.phase==='ambush'||getSave().bossLine?.rescuePending?renderMonsters:['sect-tournament','sect-senior'].includes(getSave().battle?.kind||getSave().lastBattle?.kind)?onSectBattleExit:(getSave().battle?.kind||getSave().lastBattle?.kind)==='fox-npc'?()=>renderNpc(QI_PEAKS.find(p=>p.id===(getSave().battle?.monsterId||getSave().lastBattle?.monsterId))):FOUNDATION_MONSTERS.some(monster=>monster.id===(getSave().battle?.monsterId||getSave().lastBattle?.monsterId))?renderFoundation:renderMonsters},outcome);
+ const battle=outcome=>showBattle({getSave,activate,actions,onYanEncounter:renderYanEncounter,onExit:getSave().bossLine?.phase==='ambush'||getSave().bossLine?.rescuePending?renderMonsters:['sect-tournament','sect-senior'].includes(getSave().battle?.kind||getSave().lastBattle?.kind)?onSectBattleExit:(getSave().battle?.kind||getSave().lastBattle?.kind)==='fox-npc'?()=>renderNpc(QI_PEAKS.find(p=>p.id===(getSave().battle?.monsterId||getSave().lastBattle?.monsterId))):FOUNDATION_MONSTERS.some(monster=>monster.id===(getSave().battle?.monsterId||getSave().lastBattle?.monsterId))?renderFoundation:renderMonsters},outcome);
  function heading(title,subtitle){return `<div class="xg-map-heading"><h2>${title}</h2><p>${subtitle}</p></div>`}
  const peaks=(locations,kind)=>`<div class="xg-map-landscape xg-map-${kind}">${locations.map((place,i)=>`<button type="button" class="xg-map-hill${place.locked?' xg-map-locked':''}" style="--hill-x:${place.x}%;--hill-y:${place.y}%;--hill-size:${place.size||1}" ${place.locked?'disabled':''} ${place.id?`data-${kind}="${place.id}"`:''}><span class="xg-map-label">${place.name}</span><span class="xg-map-summit" aria-hidden="true"></span></button>`).join('')}</div>`;
  function render(){
   if(!getSave())return;
-  if(getSave().battle||getSave().encounterPending||getSave().seniorRewardPending)return battle();
+  if(getSave().battle||getSave().encounterPending||getSave().divinationPending||getSave().seniorRewardPending)return battle();
+  if(getSave().yanEncounterPending||getSave().yanAftermath)return renderYanEncounter();
   if(getSave().qiSecret)return renderSecret();
   if(getSave().qiMeditation)return renderMeditation();
   if(getSave().bossLine?.phase==='ambush'||getSave().bossLine?.rescuePending)return battle();
@@ -32,15 +35,57 @@ export function createMapUI({getSave,activate,actions,onSectBattleExit}){
   content().innerHTML=`<section class="xg-map-sheet">${heading('山河图','点一座山，走一段路。')}${peaks([
    {name:'坊市',id:'market',x:12,y:6,size:.8},{name:'黑市',id:'blackmarket',x:68,y:17,size:.76},
    foundationPlayer()?{name:'望川岭',id:'foundation',x:36,y:37,size:.85}:{name:'远山 · 待定',x:36,y:37,locked:true,size:.85},{name:'九宗山门',id:'sects',x:8,y:69,size:1.08},
-   {name:'丰原镇',id:'monsters',x:64,y:62,size:1.04}
+   {name:'丰原镇',id:'monsters',x:64,y:62,size:1.04},
+   ...(yanState(getSave()).unlocked?[{name:YAN_HILL,id:'yan-hill',x:74,y:39,size:.72}]:[])
   ],'map')}</section>`;
   content().querySelector('[data-map="sects"]').onclick=renderSects;
   content().querySelector('[data-map="monsters"]').onclick=renderMonsters;
   content().querySelector('[data-map="market"]').onclick=renderMarket;
   content().querySelector('[data-map="blackmarket"]').onclick=renderBlackMarket;
   content().querySelector('[data-map="foundation"]')?.addEventListener('click',renderFoundation);
+  content().querySelector('[data-map="yan-hill"]')?.addEventListener('click',renderYanHill);
  }
  function back(fn){content().querySelector('.xg-map-back').onclick=fn}
+ function yanText(value){return `<div class="xg-card xg-map-monster">${value.split('\n\n').map(part=>`<p>${escapeHTML(part)}</p>`).join('')}</div>`}
+ function renderYanEncounter(){
+  activate('map');const save=getSave(),pending=save.yanEncounterPending,aftermath=save.yanAftermath;
+  if(!pending&&!aftermath)return battle();
+  content().innerHTML=`<section class="xg-map-sheet xg-battle-sheet">${heading('山路相逢',YAN_NAME)}${yanText(aftermath?.text||yanEncounterText(pending))}<div class="xg-feature-row">${aftermath?'<button type="button" data-yan-finish>继续赶路</button>':pending.step<3?'<button type="button" data-yan-answer="continue">继续赶路</button>':'<button type="button" data-yan-answer="stones">要三十灵石</button><button type="button" data-yan-answer="together">以身相许</button>'}</div><p role="status" aria-live="polite"></p></section>`;
+  const status=content().querySelector('[role=status]');
+  content().querySelector('[data-yan-finish]')?.addEventListener('click',async event=>{event.currentTarget.disabled=true;try{await actions.acknowledgeYan(aftermath.id);render()}catch(error){status.textContent=error.message;event.currentTarget.disabled=false}});
+  content().querySelectorAll('[data-yan-answer]').forEach(button=>button.onclick=async()=>{content().querySelectorAll('[data-yan-answer]').forEach(item=>item.disabled=true);try{await actions.respondToYan(pending.id,button.dataset.yanAnswer);if(getSave().yanAftermath)renderYanEncounter();else battle()}catch(error){status.textContent=error.message;content().querySelectorAll('[data-yan-answer]').forEach(item=>item.disabled=false)}});
+ }
+ function renderYanHill(){
+  if(!yanState(getSave()).unlocked)return render();
+  activate('map');content().innerHTML=`<section class="xg-map-sheet"><button class="xg-map-back" type="button">← 返回地图</button>${heading(YAN_HILL,'山间小院，亦可容纳往后相遇的人与事。')}<div class="xg-map-place xg-map-scene"><span class="xg-map-peak" aria-hidden="true"></span><strong>${YAN_NAME}的山居</strong><p>院门虚掩着。</p></div><div class="xg-feature-row"><button type="button" data-yan-visit>拜访燕停云</button></div></section>`;
+  back(render);content().querySelector('[data-yan-visit]').onclick=renderYanHome;
+ }
+ function renderYanHome(){
+  if(!yanState(getSave()).unlocked)return render();
+  activate('map');const state=yanState(getSave());
+  const show=(value,after)=>{content().innerHTML=`<section class="xg-map-sheet"><button class="xg-map-back" type="button">← 返回${YAN_HILL}</button>${heading(YAN_NAME,'山居旧事')}${yanText(value)}<p role="status" aria-live="polite"></p></section>`;back(after)};
+  if(state.rejected){show('院门紧闭，山风吹得门符轻响。燕停云已不在这里。',renderYanHill);return}
+  if(!state.introSeen){show(YAN_SCENES.intro,async()=>{try{await actions.mutate(seenYanIntro);renderYanHome()}catch(error){content().querySelector('[role=status]').textContent=error.message}});return}
+  const scene=[30,60,90].find(level=>state.affinity>=level&&!state.seen?.includes(level));
+  if(scene){show(YAN_SCENES['at'+scene],async()=>{try{await actions.mutate(s=>seenYanScene(s,scene));renderYanHome()}catch(error){content().querySelector('[role=status]').textContent=error.message}});return}
+  if(state.bonded){show(YAN_SCENES.daily[Math.floor(Math.random()*YAN_SCENES.daily.length)],renderYanMenu);return}
+  renderYanMenu();
+  function renderYanMenu(){
+   const current=yanState(getSave()),entries=giftableEntries(getSave());
+   content().innerHTML=`<section class="xg-map-sheet"><button class="xg-map-back" type="button">← 返回${YAN_HILL}</button>${heading(YAN_NAME,'山间小院')}<div class="xg-card"><p>好感 ${current.affinity||0} / 100${current.bonded?' · 道侣':''}</p>${current.bonded?'<button type="button" data-yan-leave>解除道侣</button>':`<h3>赠礼</h3><p>灵石、物品都可以赠送；已装备物品不能赠送。</p><button type="button" data-yan-gift="stones" ${getSave().player.spiritStones<1?'disabled':''}>灵石 ×1</button>${entries.map(entry=>`<button type="button" data-yan-gift="${escapeHTML(entry.uid)}">${escapeHTML(ITEMS[entry.itemId].name)}${(entry.quantity||1)>1?' ×'+entry.quantity:''}${entry.itemId.includes('crafted')&&entry.usesLeft===0?'（损坏）':''}</button>`).join('')}${current.affinity>=100?`<button type="button" data-yan-proposal ${Date.now()<(getSave().companionRejoinAt||0)?'disabled':''}>邀为道侣${Date.now()<(getSave().companionRejoinAt||0)?' · 三日之期未到':''}</button>`:''}`}</div><p role="status" aria-live="polite"></p></section>`;
+   back(renderYanHill);const status=content().querySelector('[role=status]');
+   content().querySelectorAll('[data-yan-gift]').forEach(button=>button.onclick=async()=>{button.disabled=true;try{const {result}=await actions.mutate(s=>giveYanGift(s,button.dataset.yanGift),{message:result=>result});renderYanMenu();content().querySelector('[role=status]').textContent=result;const next=yanState(getSave());if([30,60,90].some(level=>next.affinity>=level&&!next.seen?.includes(level)))renderYanHome()}catch(error){status.textContent=error.message;button.disabled=false}});
+   content().querySelector('[data-yan-proposal]')?.addEventListener('click',()=>{
+    content().innerHTML=`<section class="xg-map-sheet">${heading(YAN_NAME,'结缘')}${yanText(YAN_SCENES.proposal)}<div class="xg-feature-row"><button type="button" data-yan-choice="accept">答应</button><button type="button" data-yan-choice="later">再想想</button><button type="button" data-yan-choice="reject">婉拒</button></div><p role="status"></p></section>`;
+    content().querySelectorAll('[data-yan-choice]').forEach(button=>button.onclick=async()=>{const choice=button.dataset.yanChoice;content().querySelectorAll('[data-yan-choice]').forEach(item=>item.disabled=true);try{const {result}=await actions.mutate(s=>answerYan(s,choice),{message:choice==='accept'?`${YAN_NAME}成为你的道侣。`:undefined});show(result,()=>choice==='reject'?renderYanHill:renderYanMenu)}catch(error){content().querySelector('[role=status]').textContent=error.message;content().querySelectorAll('[data-yan-choice]').forEach(item=>item.disabled=false)}});
+   });
+   content().querySelector('[data-yan-leave]')?.addEventListener('click',()=>{
+    content().innerHTML=`<section class="xg-map-sheet">${heading('解除道侣','请再次确认')}<div class="xg-card"><p>解除与${YAN_NAME}的道侣关系，需支付 ${companionBreakupFee(getSave().player)??'待定'} 灵石；此后三天不能结新道侣。</p><button type="button" data-yan-leave-confirm>确认解除</button><button type="button" data-yan-leave-cancel>返回</button></div><p role="status"></p></section>`;
+    content().querySelector('[data-yan-leave-cancel]').onclick=renderYanMenu;
+    content().querySelector('[data-yan-leave-confirm]').onclick=async event=>{event.currentTarget.disabled=true;try{const {result}=await actions.mutate(s=>leaveYan(s),{message:result=>result});show(result,renderYanHill)}catch(error){content().querySelector('[role=status]').textContent=error.message;event.currentTarget.disabled=false}};
+   });
+  }
+ }
  function renderMarket(){
   activate('map');
   content().innerHTML=`<section class="xg-map-sheet"><button class="xg-map-back" type="button">← 返回地图</button>${heading('坊市','买卖货物，整顿行囊。')}

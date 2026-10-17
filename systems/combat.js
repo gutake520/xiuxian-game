@@ -11,6 +11,7 @@ import {startSeniorChallenge} from './sect-tournament.js';
 import {BOSS_NAME,bossAttributes,ensureBossLine} from './boss-line.js';
 import {selectBattlePet,beastCanFight,beastName} from './pets.js';
 import {FOXES} from '../data/foxes.js';
+import {queueYanAfterVictory} from './yan-tingyun.js';
 
 export const round2=value=>Math.round((value+Number.EPSILON)*100)/100;
 const herbs=['healing-herb','spirit-herb','qi-herb'];
@@ -92,6 +93,7 @@ function resolveVictory(save,now,messages){
   if(maybeMeetDiviner(save,battle.id,result.loot,now))messages.push('归途中遇见卦师，他请你抛一枚铜钱。');
   if(maybeMeetHerbalist(save,battle.id))messages.push(`归途中遇见受伤的${HERBALIST_NAME}，他向你讨一株回血草。`);
  }
+ if(!save.battle&&save.bossLine?.phase!=='ambush')queueYanAfterVictory(save,battle.id);
  delete save.lastBattle.loot;
  save.lastBattle.log=[...messages];
  return save.lastBattle;
@@ -100,6 +102,7 @@ export function beginBattle(save,id,pet=null,retaliation=false){
  if(save.battle)throw new Error('尚有未结束的战斗。');
  if(save.divinationPending)throw new Error('请先回应卦师。');
  if(save.encounterPending)throw new Error(`请先回应${HERBALIST_NAME}。`);
+ if(save.yanEncounterPending||save.yanAftermath)throw new Error('请先回应燕停云。');
  if(save.seniorRewardPending)throw new Error('请先领取大比奖励。');
  if(save.bossLine?.phase==='ambush'||save.bossLine?.rescuePending)throw new Error('请先走完当前剧情。');
  if(save.player.cultivation< -100)throw new Error('请先去修炼。');
