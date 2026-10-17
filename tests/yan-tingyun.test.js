@@ -65,3 +65,24 @@ test('pending third choice and its aftermath survive reload through atomic actio
  await actions.acknowledgeYan(current.yanAftermath.id);
  assert.equal((await readSave('yan-persist')).yanAftermath,null);
 });
+
+for(const stage of ['first','third','aftermath'])test(`offline qi-ten ambush cannot deadlock Yan ${stage}`,async()=>{
+ let current=make(8,'yan-ambush-'+stage);
+ current.player.realm='炼气九层';current.player.cultivation=749;
+ current.techniques.mastered=['basic-qi-guide'];current.techniques.main='basic-qi-guide';
+ current.idle.lastAt=Date.now()-3*60000;current.idle.usedMs=0;
+ if(stage==='aftermath'){
+  current.yanTingyun={rescues:3,affinity:0,seen:[],unlocked:true};
+  current.yanAftermath={id:'ending',text:'山路相逢'};
+ }else{
+  current.yanTingyun={rescues:stage==='first'?0:2,affinity:0,seen:[]};
+  current.yanEncounterPending={id:'meeting',step:stage==='first'?1:3,highCharm:true};
+ }
+ await writeSave(current);const actions=createActions({getSave:()=>current,setSave:s=>current=s});
+ await actions.select(current.slot);assert.equal(current.player.realm,'炼气十层');assert.equal(current.bossLine.phase,'ambush');
+ await assert.rejects(actions.resolveBossAmbush(),/请先回应燕停云/);
+ if(stage!=='aftermath')await actions.respondToYan('meeting',stage==='first'?'continue':'together');
+ if(current.yanAftermath)await actions.acknowledgeYan(current.yanAftermath.id);
+ await actions.resolveBossAmbush();await actions.acknowledgeBossRescue();
+ assert.equal(current.bossLine.phase,'wounded');assert.equal(current.bossLine.rescuePending,false);
+});

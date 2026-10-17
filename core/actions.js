@@ -46,8 +46,8 @@ export function createActions({getSave,setSave}){
   flee:()=>mutate(s=>fleeBattle(s),{allowBattle:true,message:result=>`脱离${result.monster}的战斗，${result.cost}。`}),
   respondToHerbalist:(id,give)=>mutate(s=>resolveHerbalist(s,id,give),{allowBossStory:true,message:result=>result}),
   flipDivination:id=>mutate(s=>flipDivination(s,id),{allowDivination:true,allowBattle:true,message:result=>result.message}),
-  respondToYan:(id,choice)=>mutate(s=>resolveYanEncounter(s,id,choice),{allowYan:true,allowDebt:true,message:(result,s)=>s.yanAftermath?`与燕停云的第三次相遇已经结束。`:result}),
-  acknowledgeYan:id=>mutate(s=>acknowledgeYanAftermath(s,id),{allowYan:true,allowDebt:true}),
+  respondToYan:(id,choice)=>mutate(s=>resolveYanEncounter(s,id,choice),{allowYan:true,allowDebt:true,allowBossStory:true,message:(result,s)=>s.yanAftermath?`与燕停云的第三次相遇已经结束。`:result}),
+  acknowledgeYan:id=>mutate(s=>acknowledgeYanAftermath(s,id),{allowYan:true,allowDebt:true,allowBossStory:true}),
   startPractice:()=>mutate(s=>beginPracticeSession(s),{allowDebt:true}),
   finishPractice:(id,bricks,slot)=>mutate(s=>{if(s.practiceSession?.id!==id)throw new Error('这一局已结算或已失效。');const amount=s.practiceSession.hasMain?practiceReward(bricks,s.player):(bricks>0?1:0);const earned=addCultivation(s,amount);recordDailyPractice(s,earned);s.practiceSession=null;return earned},{slot,allowDebt:true,message:earned=>`主动修炼结束，获得 ${earned} 修为。`})
  };
