@@ -5,6 +5,7 @@ import {ITEMS} from '../data/items.js';
 import {createSheet,escapeHTML} from './shared.js';
 export function showSpiritPeak(api,onClose,selected=null,scene=false){
  const save=api.getSave(),slot=save.slot,sheet=createSheet('灵兽峰',()=>{sheet.remove();onClose()}),body=sheet.querySelector('[data-body]'),status=sheet.querySelector('[role=status]');
+ sheet.classList.add('xg-spirit-peak-sheet');
  const beast=SPIRIT_PEAK_BEASTS.find(b=>b.id===selected),value=save.spiritPeak?.feeding?.[selected]||0,den=SPIRIT_DENS[selected];
  const name=id=>escapeHTML(peakBeastName(save,id));
  const progress=id=>(save.spiritPeak?.feeding?.[id]||0)>=SPIRIT_PEAK_GOAL?'圆满':`${save.spiritPeak?.feeding?.[id]||0} / ${SPIRIT_PEAK_GOAL}`;
