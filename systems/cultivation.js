@@ -1,6 +1,7 @@
 import {IDLE_LIMIT_MS,PRACTICE,PRACTICE_ENTRY_FEES} from '../data/balance.js';
 import {TECHNIQUES} from '../data/techniques.js';
 import {realmProgress,addCultivation} from '../data/realms.js';
+import {appendEvent} from './events.js';
 export function localDay(time){const d=new Date(time);return `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`}
 export function worldDay(save,now=Date.now()){
  const recorded=Number.isSafeInteger(save.world?.day)&&save.world.day>0?save.world.day:1;
@@ -20,6 +21,18 @@ export function idleLimitMs(save){
  const major=String(save.player.realm||'').match(/^[^一二三四五六七八九十圆满]+/)?.[0];
  return (hours[major]??hours.筑基)*60*60*1000+companionBonus;
 }
+function rollIdleLightning(save,day){
+ const idle=save.idle;
+ if(idle.lightningCheckedDay===day)return;
+ idle.lightningCheckedDay=day;
+ const fortune=Number(save.player.stats?.福缘);
+ // The final implemented realm cannot earn cultivation to recover a loss.
+ if(!Number.isFinite(fortune)||fortune>=4||realmProgress(save.player).index>=12||Math.random()>=.05)return;
+ const loss=20+Math.floor(Math.random()*11);
+ save.player.cultivation=Math.round((save.player.cultivation-loss)*100)/100;
+ save.events??=[];
+ appendEvent(save,`你正凝神吐纳，窗外忽然落下一道惊雷。屋顶完好无损，偏偏劈中了你。修为 −${loss}。`);
+}
 export function settleIdle(save,now=Date.now()){
  const idle=save.idle;if(now<=idle.lastAt)return 0;
  const rate=idleRate(save);let start=idle.lastAt,earned=0;
@@ -29,14 +42,17 @@ export function settleIdle(save,now=Date.now()){
   if(rate>0&&realmProgress(save.player).index>=0&&!realmProgress(save.player).complete){
    const dailyLimit=idleLimitMs(save)+(save.qiPillDay===day?(save.foundationPillDay===day?45:30)*60*1000:save.foundationPillDay===day?45*60*1000:0);
    const counted=Math.min(end-start,Math.max(0,dailyLimit-idle.usedMs));
-   idle.usedMs+=counted;earned+=counted/60000*rate;
+   idle.usedMs+=counted;
+   // Settle each day before its mishap, including multi-day offline sessions.
+   earned+=addCultivation(save,counted/60000*rate);
+   if(counted>0&&idle.usedMs>=dailyLimit)rollIdleLightning(save,day);
   }
   start=end;
  }
  if(idle.day!==localDay(now)){idle.day=localDay(now);idle.usedMs=0}
  idle.lastAt=now;
- const actual=addCultivation(save,earned);idle.totalEarned=Math.round(((idle.totalEarned||0)+actual)*100)/100;
- return actual;
+ idle.totalEarned=Math.round(((idle.totalEarned||0)+earned)*100)/100;
+ return Math.round(earned*100)/100;
 }
 export function paddleWidth(root){return Math.min(PRACTICE.maxPaddle,Math.max(PRACTICE.minPaddle,(Number(root)||0)*PRACTICE.paddlePerRoot))}
 export function practiceReward(bricks,player){return Math.round(Math.max(0,Math.min(PRACTICE.rows*PRACTICE.columns,Math.floor(bricks)))*(String(player?.realm||'').startsWith('筑基')?100/30:PRACTICE.rewardPerBrick)*100)/100}
