@@ -109,11 +109,42 @@ export function sellEquipment(save,uid){
  if(!entry||item?.kind!=='equipment')throw new Error('只能出售装备。');
  if(entry.durability!==maxDurability(entry))throw new Error('耐久未满，不能出售；可以丢弃或以后修补。');
  if(save.battle)throw new Error('战斗中不能出售。');
- if(save.equipment[item.slot]===uid)equipItem(save,uid);
+ if(Object.values(save.equipment||{}).includes(uid))throw new Error('请先卸下装备，再出售。');
  const price=equipmentSalePrice(item);
  save.inventory=save.inventory.filter(item=>item.uid!==uid);
  save.player.spiritStones=Math.round((save.player.spiritStones+price)*100)/100;
  return `出售${item.name}，获得 ${price} 灵石。`;
+}
+export function saleUnitPrice(save,entry){
+ const item=ITEMS[entry?.itemId];
+ if(!entry||!item||Object.values(save.equipment||{}).includes(entry.uid))return null;
+ if(item.kind==='equipment')return entry.durability===maxDurability(entry)?equipmentSalePrice(item):null;
+ if(item.kind==='material')return materialSalePrice(item);
+ if(item.kind==='pill'&&Number.isFinite(item.price))return pillSalePrice(item);
+ if(['manual','gift'].includes(item.kind)&&Number.isFinite(item.sellPrice))return item.sellPrice;
+ return null;
+}
+export function sellInventoryBatch(save,selections){
+ if(save.battle)throw new Error('战斗中不能出售物品。');
+ if(!Array.isArray(selections)||!selections.length)throw new Error('请先选择物品。');
+ const seen=new Set();
+ // Validate the entire selection before removing anything or crediting stones.
+ const quotes=selections.map(({uid,quantity})=>{
+  const entry=save.inventory.find(e=>e.uid===uid),price=saleUnitPrice(save,entry);
+  if(seen.has(uid))throw new Error('同一物品不能重复选择。');
+  seen.add(uid);
+  if(price===null)throw new Error('所选物品已变化，请重新选择；已装备或耐久未满的物品不能出售。');
+  const available=ITEMS[entry.itemId].kind==='equipment'?1:entry.quantity||1;
+  if(!Number.isSafeInteger(quantity)||quantity<1||quantity>available)throw new Error('所选物品数量已变化，请重新选择。');
+  return {entry,quantity,available,total:Math.round(price*quantity*100)/100};
+ });
+ const total=Math.round(quotes.reduce((sum,q)=>sum+q.total,0)*100)/100;
+ for(const {entry,quantity,available} of quotes){
+  if(quantity===available)save.inventory=save.inventory.filter(e=>e!==entry);
+  else entry.quantity-=quantity;
+ }
+ save.player.spiritStones=Math.round((save.player.spiritStones+total)*100)/100;
+ return `出售 ${quotes.length} 组物品，获得 ${total} 灵石。`;
 }
 export function discardEquipment(save,uid){
  const entry=save.inventory.find(entry=>entry.uid===uid),item=ITEMS[entry?.itemId];

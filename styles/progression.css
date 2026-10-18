@@ -54,3 +54,10 @@
 #xg-panel .xg-temp-loot{border:1px solid #806b44;border-radius:10px;margin:12px 0;padding:10px}
 #xg-panel .xg-temp-loot h3{color:#efd7a5;font-size:14px}
 #xg-panel .xg-temp-loot button{display:block;width:100%;margin:6px 0;border:1px solid #725f43;border-radius:7px;padding:8px;background:#122720;color:#e9dfc9;text-align:left}
+
+/* Sale actions stay aligned when labels wrap on narrow screens. */
+#xg-panel .xg-sell-card{display:grid;grid-template-columns:minmax(0,1fr);gap:8px}
+#xg-panel .xg-sell-card>button,#xg-panel .xg-sell-card>button+button{width:100%;min-width:0;margin:0;white-space:normal;overflow-wrap:anywhere;text-align:center}
+#xg-panel .xg-bag-grid>button[aria-pressed="true"]{border-color:var(--g);background:#284837;box-shadow:inset 0 0 0 1px var(--g)}
+#xg-panel .xg-bag-grid>button[aria-pressed="true"]::after{content:"已选";font-size:10px;color:var(--g)}
+#xg-panel .xg-bag-grid>button:disabled{opacity:.4;cursor:not-allowed}
