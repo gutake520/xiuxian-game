@@ -1,3 +1,4 @@
+import {advanceTreasure} from './treasure.js';
 import {chargedMultiplier,rootCount} from '../data/technique-slots.js';
 import {QI_MONSTERS,FOUNDATION_MONSTERS} from '../data/locations.js';
 import {ITEMS} from '../data/items.js';
@@ -93,6 +94,7 @@ function resolveVictory(save,now,messages){
   if(maybeMeetDiviner(save,battle.id,result.loot,now))messages.push('归途中遇见卦师，他请你抛一枚铜钱。');
   if(maybeMeetHerbalist(save,battle.id))messages.push(`归途中遇见受伤的${HERBALIST_NAME}，他向你讨一株回血草。`);
  }
+ if(!save.battle&&advanceTreasure(save,battle))messages.push(save.treasure.step===save.treasure.route.length?'图上的最后一处标记亮起。待此间事了，可以摸宝藏了。':`藏宝图上的标记亮起，下一处是${save.treasure.route[save.treasure.step].name}。`);
  if(!save.battle&&save.bossLine?.phase!=='ambush')queueYanAfterVictory(save,battle.id);
  delete save.lastBattle.loot;
  save.lastBattle.log=[...messages];
