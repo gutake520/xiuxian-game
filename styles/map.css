@@ -19,6 +19,10 @@
 #xg-panel .xg-map-scene .xg-map-peak{position:absolute;width:65%;height:90%;right:-4%;bottom:0;background:#29453e;clip-path:polygon(0 100%,26% 42%,42% 70%,62% 10%,100% 100%);opacity:.64}
 #xg-panel .xg-map-sheet .xg-card p{color:#e0e1d5!important;line-height:1.65}
 #xg-panel .xg-map-sheet .xg-black-market-hint{display:block;margin-top:12px;color:#d9c9a5;font-size:13px;line-height:1.5}
+#xg-panel .xg-map-sheet [data-draw]{appearance:none;-webkit-appearance:none;flex:1;min-width:0;min-height:46px;margin:0;padding:10px 8px;border:1px solid #866f47;border-radius:8px;background:#193129;color:#eddbb5!important;-webkit-text-fill-color:#eddbb5;font:inherit;font-size:13px;line-height:1.5;text-align:center;text-shadow:none;box-shadow:none;cursor:pointer;touch-action:manipulation}
+#xg-panel .xg-map-sheet [data-draw]:disabled{background:#10231d;border-color:#554c3a;color:#a29c88!important;-webkit-text-fill-color:#a29c88;cursor:default;opacity:.65}
+#xg-panel .xg-map-sheet [data-draw]:not(:disabled):active{background:#294537;border-color:#c1a36b}
+#xg-panel .xg-map-sheet [data-draw]:focus-visible{outline:2px solid #d9c08a;outline-offset:2px}
 #xg-panel .xg-map-pending,#xg-panel .xg-map-monster small{display:block;color:#b6c4b7!important;font-size:11px;margin:10px 0 2px}
 #xg-panel .xg-map-monster button,#xg-panel .xg-battle-sheet button{border:1px solid #866f47;border-radius:7px;background:#1a3028;color:#eddbb5;padding:8px 12px;font:inherit}
 #xg-panel .xg-map-monster button{margin-top:10px}
