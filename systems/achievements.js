@@ -1,4 +1,6 @@
+import {spiritPeakCompleted,SPIRIT_PEAK_ACHIEVEMENT} from '../data/spirit-peak.js';
 export const ACHIEVEMENTS=[
+ {id:SPIRIT_PEAK_ACHIEVEMENT,name:'万物有灵',description:'将灵兽峰的五只异兽喂养圆满，获得万灵山入宗资格。',reward:5},
  {id:'immortal-path',name:'踏上仙途',description:'达到筑基境界。',reward:5},
  {id:'first-sect',name:'拜师学艺',description:'第一次加入宗门。',reward:5}
 ];
@@ -6,6 +8,7 @@ export function syncAchievements(save){
  save.achievements??={unlocked:[],claimed:[]};
  save.achievements.unlocked??=[];save.achievements.claimed??=[];
  const unlock=id=>{if(!save.achievements.unlocked.includes(id))save.achievements.unlocked.push(id)};
+ if(spiritPeakCompleted(save)>=5)unlock(SPIRIT_PEAK_ACHIEVEMENT);
  if(save.player.sect&&save.player.sect!=='无门无派')unlock('first-sect');
  if(/筑基|金丹|元婴|化神|炼虚|合体|大乘|渡劫|人仙|地仙|天仙|真仙|金仙/.test(String(save.player.realm||'')))unlock('immortal-path');
  return save.achievements;

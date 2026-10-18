@@ -1,3 +1,4 @@
+import {showSpiritPeak} from './spirit-peak.js';
 import {showBlackMarket} from './black-market.js';
 import {beastCanFight,beastName} from '../systems/pets.js';
 import {VISITING_SECTS,QI_MONSTERS,QI_PEAKS,FOUNDATION_MONSTERS,FOUNDATION_PEAKS} from '../data/locations.js';
@@ -35,9 +36,11 @@ export function createMapUI({getSave,activate,actions,onSectBattleExit}){
   content().innerHTML=`<section class="xg-map-sheet">${heading('山河图','点一座山，走一段路。')}${peaks([
    {name:'坊市',id:'market',x:12,y:6,size:.8},{name:'黑市',id:'blackmarket',x:68,y:17,size:.76},
    foundationPlayer()?{name:'望川岭',id:'foundation',x:36,y:37,size:.85}:{name:'远山 · 待定',x:36,y:37,locked:true,size:.85},{name:'九宗山门',id:'sects',x:8,y:69,size:1.08},
+   {name:'灵兽峰',id:'spirit-peak',x:10,y:34,size:.7},
    {name:'丰原镇',id:'monsters',x:64,y:62,size:1.04},
    ...(yanState(getSave()).unlocked?[{name:YAN_HILL,id:'yan-hill',x:74,y:39,size:.72}]:[])
   ],'map')}</section>`;
+  content().querySelector('[data-map="spirit-peak"]').onclick=()=>showSpiritPeak({getSave,actions},render);
   content().querySelector('[data-map="sects"]').onclick=renderSects;
   content().querySelector('[data-map="monsters"]').onclick=renderMonsters;
   content().querySelector('[data-map="market"]').onclick=renderMarket;

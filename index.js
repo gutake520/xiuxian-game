@@ -1,3 +1,4 @@
+import {sectEligibility} from './systems/sect-eligibility.js';
 import {attachViewportPanel} from './ui/viewport.js';
 import {showAchievements} from './ui/achievements.js';
 import {sectExitPrice,leaveSect,assertCanJoinSect} from './systems/sect-membership.js';
@@ -149,19 +150,13 @@ const SECTS=[
  {id:'danxia',name:'丹霞谷',roots:['火','木'],condition:'火或木灵根',feature:'炼丹制药，辅助修行。'},
  {id:'qinglan',name:'青岚谷',roots:['木','水'],condition:'木或水灵根',feature:'医修传承，擅长治疗与恢复。'},
  {id:'hehuan',name:'合欢宗',stat:['魅力',8],condition:'魅力 ≥ 8',feature:'人际与情缘，可结三位正式道侣。'},
- {id:'wanling',name:'万灵山',roots:['木','土','风'],condition:'木、土或风灵根',feature:'御兽之道，培养灵兽并肩作战。'},
+ {id:'wanling',name:'万灵山',roots:['木','土','风'],condition:'成就「万物有灵」',feature:'御兽之道，培养灵兽并肩作战。'},
  {id:'lingxiao',name:'凌霄剑宗',roots:['金','雷','冰'],condition:'金、雷或冰灵根',feature:'以剑求道，专精攻击与高伤害。'},
  {id:'xuanji',name:'玄机门',roots:['冰'],stat:['神识',8],condition:'冰灵根或神识 ≥ 8',feature:'阵法与控制，限制敌人行动。'},
  {id:'taixu',name:'太虚符宗',allStats:[['神识',6],['悟性',7]],condition:'神识 ≥ 6，且悟性 ≥ 7',feature:'符箓传承与功能型术法。'},
  {id:'zhenyue',name:'镇岳宗',roots:['雷','土'],stat:['根骨',8],condition:'雷、土灵根或根骨 ≥ 8',feature:'锤炼肉身，擅长近战与生存。'}
 ];
-function sectEligibility(player,sect){
- const name=player.spiritRoot||'';
- const variant=['雷','冰','风'].some(element=>name.includes(element));
- const enough=([key,min])=>Number.isFinite(player.stats?.[key])&&player.stats[key]>=min;
- const specialty=sect.allStats?sect.allStats.every(enough):Boolean(sect.roots?.some(element=>name.includes(element))||(sect.stat&&enough(sect.stat)));
- return{join:variant||specialty,specialty};
-}
+
 function playerSect(player){return SECTS.find(sect=>sect.name===player.sect)||null}
 function companionLimit(player){return player.sect==='合欢宗'?3:1}
 function companionMarkup(player){
@@ -181,15 +176,15 @@ function showSect(){
  if(['sect-tournament','sect-senior'].includes(currentSave.battle?.kind))return showSectTournamentBattle(sect);
  if(sect){if(currentSave.sectProgress?.introPending)renderSectIntro(sect);else renderSectHall(sect);return}
  const sheet=sectOverlay();
- sheet.innerHTML=`<div class="xg-sect-heading"><h2>择宗入道</h2><button type="button" id="xg-sect-back">返回人物</button></div><p class="xg-sect-hint">择一山门，寻一条修行路。变异灵根可入各宗，特色传承仍需满足专精条件。</p>${(currentSave.sectRejoinAt||0)>Date.now()?`<p>离宗冷静期：还需 ${Math.ceil((currentSave.sectRejoinAt-Date.now())/3600000)} 小时。</p>`:''}<div class="xg-sect-list">${SECTS.map(sect=>{const eligible=sectEligibility(currentSave.player,sect);return `<button type="button" data-sect="${sect.id}" ${eligible.join&&(currentSave.sectRejoinAt||0)<=Date.now()?'':'disabled'}><strong>${sect.name}</strong><small>${sect.condition}</small><span>${sect.feature}</span><em>${eligible.join?(eligible.specialty?'可入宗 · 可学特色传承':'可入宗 · 仅通用功法'):'暂不符合条件'}</em></button>`}).join('')}</div>`;
+ sheet.innerHTML=`<div class="xg-sect-heading"><h2>择宗入道</h2><button type="button" id="xg-sect-back">返回人物</button></div><p class="xg-sect-hint">择一山门，寻一条修行路。万灵山须获「万物有灵」；其余宗门对变异灵根开放。特色传承仍需满足专精条件。</p>${(currentSave.sectRejoinAt||0)>Date.now()?`<p>离宗冷静期：还需 ${Math.ceil((currentSave.sectRejoinAt-Date.now())/3600000)} 小时。</p>`:''}<div class="xg-sect-list">${SECTS.map(sect=>{const eligible=sectEligibility(currentSave,sect);return `<button type="button" data-sect="${sect.id}" ${eligible.join&&(currentSave.sectRejoinAt||0)<=Date.now()?'':'disabled'}><strong>${sect.name}</strong><small>${sect.condition}</small><span>${sect.feature}</span><em>${eligible.join?(eligible.specialty?'可入宗 · 可学特色传承':'可入宗 · 仅通用功法'):'暂不符合条件'}</em></button>`}).join('')}</div>`;
  document.getElementById('xg-sect-back').onclick=closeSect;
  sheet.querySelectorAll('[data-sect]').forEach(button=>button.onclick=()=>previewSect(SECTS.find(sect=>sect.id===button.dataset.sect)));
  sheet.scrollTop=0;
 }
 function previewSect(sect){
- if(!sect||!currentSave||!sectEligibility(currentSave.player,sect).join)return;
- const sheet=sectOverlay(),eligible=sectEligibility(currentSave.player,sect);
- sheet.innerHTML=`<div class="xg-sect-heading"><h2>${sect.name}</h2><button type="button" id="xg-sect-back">返回选择</button></div><div class="xg-card"><p>${sect.feature}</p><p class="xg-sect-hint">${eligible.specialty?'你已满足本宗专精条件。':'你可凭变异灵根入宗，但暂不能学习本宗特色传承。'}</p></div><p class="xg-sect-hint">拜师后获赠通用功法《引气诀》。解开数阵学会后，设为主修即可挂机积累修为。</p><button type="button" id="xg-sect-join">拜入山门</button><p id="xg-sect-error" role="status"></p>`;
+ if(!sect||!currentSave||!sectEligibility(currentSave,sect).join)return;
+ const sheet=sectOverlay(),eligible=sectEligibility(currentSave,sect);
+ sheet.innerHTML=`<div class="xg-sect-heading"><h2>${sect.name}</h2><button type="button" id="xg-sect-back">返回选择</button></div><div class="xg-card"><p>${sect.feature}</p><p class="xg-sect-hint">${eligible.specialty?'你已满足本宗专精条件。':'你已获入宗资格，但暂不能学习本宗特色传承。'}</p></div><p class="xg-sect-hint">拜师后获赠通用功法《引气诀》。解开数阵学会后，设为主修即可挂机积累修为。</p><button type="button" id="xg-sect-join">拜入山门</button><p id="xg-sect-error" role="status"></p>`;
  document.getElementById('xg-sect-back').onclick=showSect;
  document.getElementById('xg-sect-join').onclick=async()=>{
   const button=document.getElementById('xg-sect-join'),back=document.getElementById('xg-sect-back');button.disabled=back.disabled=true;
@@ -201,13 +196,13 @@ let sectBusy=false;
 async function joinSect(id){
  if(sectBusy||actionPending)throw new Error('操作进行中');
  const sect=SECTS.find(sect=>sect.id===id);
- if(!currentSave||!sect||!sectEligibility(currentSave.player,sect).join)throw new Error('入宗资格不足');
+ if(!currentSave||!sect||!sectEligibility(currentSave,sect).join)throw new Error('入宗资格不足');
  if(currentSave.player.sect&&currentSave.player.sect!=='无门无派')throw new Error('已归属宗门');
  sectBusy=true;
  try{
   await game.mutate(next=>{
    assertCanJoinSect(next);
-   if(!sectEligibility(next.player,sect).join)throw new Error('入宗资格不足');
+   if(!sectEligibility(next,sect).join)throw new Error('入宗资格不足');
    if(!ownsTechnique(next,'basic-qi-guide'))addItem(next,'qi-manual');
    next.player.sect=sect.name;next.world={...(next.world||{}),location:sect.name,day:next.world?.day||1};
    if(id==='wanling')ensureSpiritBeasts(next);
@@ -233,7 +228,7 @@ function showSectTournamentBattle(sect){
 }
 function sectHeader(sect,back){return `<div class="xg-sect-heading"><h2>${sect.name}</h2><button type="button" id="xg-sect-back">${back}</button></div>`}
 function renderSectHall(sect){
- const sheet=sectOverlay(),eligible=sectEligibility(currentSave.player,sect);
+ const sheet=sectOverlay(),eligible=sectEligibility(currentSave,sect);
  sheet.innerHTML=`${sectHeader(sect,'返回人物')}<p class="xg-sect-hint">${sect.feature}</p><div class="xg-card"><strong>${eligible.specialty?'特色传承资格已满足':'当前仅可学习通用功法'}</strong><p class="xg-sect-hint">宗门积分 ${currentSave.sectPoints||0} · 《引气诀》可在人物页参悟</p></div><div class="xg-sect-facilities"><button type="button" data-sect-shop>门派商店<small>通用战斗功法</small></button>${SECT_ROOMS[sect.id]?`<button type="button" data-sect-room>${SECT_ROOMS[sect.id]}<small>${eligible.specialty?'进入':'专精条件未满足'}</small></button>`:''}<button type="button" data-sect-tasks>宗门日课<small>每日随机三项 · 共 3 积分</small></button><button type="button" data-sect-inheritance>宗门传承<small>核心功法 · 9 积分</small></button><button type="button" data-sect-tournament ${currentSave.battle||Date.now()<(currentSave.sectTournamentNextAt||0)?'disabled':''}>宗门大比<small>${currentSave.battle?'战斗进行中':Date.now()<(currentSave.sectTournamentNextAt||0)?'三日之期未到':'获胜可得 10 灵石'}</small></button><button type="button" data-sect-library>藏书阁<small>今日 ${libraryVisits(currentSave)} / 3 次</small></button><button type="button" disabled>师尊授业<small>尚未开放</small></button></div><details class="xg-sect-rules"><summary>离宗与情缘须知</summary><p>离宗后，本宗专属功法与物品停止生效，专属功法自动卸下；已学记录保留，通用物品不受影响。</p><p>主动解除道侣关系须支付灵石。离开合欢宗时，至多保留一位道侣，其余关系须先结清费用。灵石不足时不能办理。</p><p>离宗后须等待现实时间三天，才能再次加入任何宗门；具体费用将在确认时显示。</p></details><button type="button" data-leave-sect ${sectExitPrice(currentSave.player)===null?'disabled':''}>退出宗门</button><p data-leave-status role="status"></p>`;
  sheet.querySelector('#xg-sect-back').onclick=closeSect;
  if((currentSave.petRentals||0)>0||beastCanFight(currentSave,'attack')||beastCanFight(currentSave,'guard'))sheet.querySelector('.xg-sect-facilities').insertAdjacentHTML('afterend',`<fieldset class="xg-card"><legend>大比灵兽出战</legend><label><input type="radio" name="xg-sect-pet" value="" checked> 不出战</label>${['attack','guard'].filter(type=>beastCanFight(currentSave,type)||currentSave.petRentals>0).map(type=>`<label><input type="radio" name="xg-sect-pet" value="${type}"> ${escapeHTML(beastCanFight(currentSave,type)?beastName(currentSave,type):'租借灵兽')} · ${type==='attack'?'追击':'守护'}</label>`).join('')}</fieldset>`);

@@ -59,3 +59,10 @@
 #xg-panel .xg-battle-flee{display:block;width:100%;margin-top:14px;background:transparent!important;border-color:#514a39!important;color:#adb6aa!important}
 #xg-panel .xg-battle-action-panel button:disabled{opacity:.45}
 #xg-panel .xg-battle-sheet [role=status]{color:#ffca91}
+
+#xg-panel .xg-peak-cg{padding:28px 18px;text-align:center;border:1px solid #866f47;border-radius:14px;background:radial-gradient(ellipse at top,#294b3c,#0c201b 75%);color:#dedfce}
+#xg-panel .xg-peak-cg h2{color:#eddbb5;margin:12px 0 24px}
+#xg-panel .xg-peak-cg p{line-height:2;text-align:left;margin:18px 0}
+#xg-panel .xg-peak-moon{font-size:64px;color:#e5cb88;line-height:1.3}
+#xg-panel .xg-peak-cg .xg-peak-achievement{text-align:center;color:#eddbb5;border-top:1px solid #866f47;padding-top:16px}
+#xg-feature-sheet [data-feed]{display:block;width:100%;margin:8px 0}
