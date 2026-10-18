@@ -66,3 +66,6 @@
 #xg-panel .xg-peak-moon{font-size:64px;color:#e5cb88;line-height:1.3}
 #xg-panel .xg-peak-cg .xg-peak-achievement{text-align:center;color:#eddbb5;border-top:1px solid #866f47;padding-top:16px}
 #xg-feature-sheet [data-feed]{display:block;width:100%;margin:8px 0}
+#xg-feature-sheet .xg-peak-actions{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0}
+#xg-feature-sheet .xg-peak-actions button{margin:0;max-width:100%;white-space:normal}
+#xg-feature-sheet [data-name]{display:block;box-sizing:border-box;width:100%;margin:8px 0;padding:10px;border:1px solid #866f47;border-radius:8px;background:#10231d;color:#eddbb5;font:inherit}
