@@ -63,3 +63,12 @@
 #xg-panel .xg-bag-grid>button:disabled{opacity:.4;cursor:not-allowed}
 
 #xg-panel .xg-temper-card>button,#xg-panel .xg-temper-card>button+button{display:block;width:100%;margin:10px 0 0;white-space:normal;overflow-wrap:anywhere}
+#xg-panel .xg-flight-sky{height:300px;max-height:48vh;position:relative;overflow:hidden;border:1px solid #8c8254;border-radius:16px;background:linear-gradient(150deg,transparent 65%,#2d5145 65%,#16392d 85%),linear-gradient(25deg,transparent 65%,#284c3e 65%),linear-gradient(#122d27,#305849)}
+#xg-panel .xg-flight-track{position:absolute;inset:0;background:linear-gradient(90deg,transparent 33%,#b1b87833 33%,#b1b87833 33.4%,transparent 33.4%,transparent 66.6%,#b1b87833 66.6%,#b1b87833 67%,transparent 67%)}
+#xg-panel .xg-flight-ring,#xg-panel .xg-flight-rock{position:absolute;transform:translate(-50%,-50%);font-size:40px;line-height:1;font-weight:bold;color:#edce7b;text-shadow:0 0 9px #efc64a66}
+#xg-panel .xg-flight-rock{font-size:34px;color:#9aaea2;text-shadow:2px 3px #142e25}
+#xg-panel .xg-flight-sword{position:absolute;top:82%;transform:translate(-50%,-50%);transition:left .1s;width:26px;height:40px;border-radius:50% 50% 20% 20%;background:#dfd6aa;color:#173529;text-align:center;line-height:40px;box-shadow:0 10px 15px #d9f7cb66}
+#xg-panel .xg-flight-controls{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:12px 0}
+#xg-panel .xg-flight-controls>button,#xg-panel .xg-flight-menu>button{margin:0;min-height:48px;touch-action:manipulation}
+#xg-panel .xg-flight-controls>button[aria-pressed=true]{background:#345943;border-color:#dfca80}
+#xg-panel .xg-flight-menu{display:grid;gap:10px;margin:15px 0}
