@@ -112,3 +112,10 @@
 - `tests/progression.test.js`：核心规则及 IndexedDB 事务测试；运行 `npm install` 后执行 `npm test`。
 
 人物、宗门、创建与旧界面仍部分保留在根入口；其它注释占位文件暂未启用。新增战斗等玩法时再逐步迁移。
+
+## 灵兽峰闲逛小游戏
+
+- `data/peak-puzzles.js`：互斥的推箱子（5%）与迷宫（20%）概率、十个推箱子关卡。
+- `systems/peak-puzzles.js`：迷宫生成、移动／撤销／重来、通关奖励。`save.peakPuzzle` 保存未完成进度和预定奖励；未完成时不重复生成，通关原子清除后才可再次遇见。
+- `ui/peak-puzzles.js`：手机方向键、棋盘、固定返回栏；从四处走走进入或续玩，不额外消耗闲逛次数。
+- `tests/peak-puzzles.test.js`：关卡可解性、随机迷宫、概率边界、存档续玩、满袋奖励与并发结算。
