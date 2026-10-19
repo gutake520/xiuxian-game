@@ -26,7 +26,7 @@ export function showSectFlight(api,onClose){
   body.querySelector('[data-flight-hud]').textContent=`穿环 ${run.score}/20 · 碰撞 ${run.hits}/3`;
   body.querySelector('[data-sword]').style.left=`${(run.lane+.5)/3*100}%`;
   body.querySelectorAll('[data-lane]').forEach(b=>b.setAttribute('aria-pressed',String(Number(b.dataset.lane)===run.lane)));
-  body.querySelectorAll('[data-gate]').forEach(node=>{const i=Number(node.dataset.gate),remaining=run.gates[i].at-elapsed;node.hidden=i<run.next||remaining>2200;node.style.top=`${82-remaining/2200*90}%`});
+  body.querySelectorAll('[data-gate]').forEach(node=>{const i=Number(node.dataset.gate),gate=run.gates[i],remaining=gate.at-elapsed,travel=gate.travel??FLIGHT_RULES.lead;node.hidden=i<run.next||remaining>travel;node.style.top=`${82-remaining/travel*90}%`});
   if(typeof requestAnimationFrame==='function')frame=requestAnimationFrame(paint);
  };
  const step=async()=>{

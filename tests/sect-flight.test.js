@@ -78,3 +78,15 @@ test('changing sect cannot claim another high-grade reward in the same week',()=
  s.player.sect='无门无派';settleFlightWeek(s,monday+day);
  s.player.sect='青岚谷';fly(s,20,monday+4*day);assert.equal(s.sectPoints,1);
 });
+
+test('flight accelerates continuously with shorter travel and gaps; saved courses retain their timing',()=>{
+ const s=make();startFlight(s,monday);const gates=s.sectFlight.run.gates;
+ assert.equal(gates[0].travel,3200);assert.equal(gates.at(-1).travel,900);
+ assert.equal(gates.at(-1).at-gates.at(-2).at,600);
+ for(let i=1;i<gates.length;i++){
+  assert.ok(gates[i].travel<gates[i-1].travel);assert.ok(gates[i].at>gates[i-1].at);
+  assert.ok(gates[i].at-gates[i].travel>gates[i-1].at-gates[i-1].travel);
+  if(i>1)assert.ok(gates[i].at-gates[i-1].at<gates[i-1].at-gates[i-2].at);
+ }
+ const loaded=migrateSave(JSON.parse(JSON.stringify(s)),monday);assert.deepEqual(loaded.sectFlight.run.gates,gates);
+});

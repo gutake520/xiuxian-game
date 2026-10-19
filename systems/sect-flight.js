@@ -1,5 +1,5 @@
 import {appendEvent} from './events.js';
-export const FLIGHT_RULES={gates:20,interval:1400,lead:2200,medium:10,high:16,maxHits:3,fine:10,xpPerStone:5};
+export const FLIGHT_RULES={gates:20,interval:1400,lead:2200,startInterval:1800,endInterval:600,startTravel:3200,endTravel:900,medium:10,high:16,maxHits:3,fine:10,xpPerStone:5};
 export function flightWeek(now=Date.now()){
  const d=new Date(now);d.setHours(0,0,0,0);d.setDate(d.getDate()-(d.getDay()+6)%7);return d.getTime();
 }
@@ -26,7 +26,13 @@ function stateFor(save,now){
 }
 export function startFlight(save,now=Date.now(),random=Math.random){
  const state=stateFor(save,now);if(state.run)throw new Error('请先完成当前考核。');
- const gates=Array.from({length:FLIGHT_RULES.gates},(_,i)=>{const ring=Math.min(2,Math.floor(random()*3));return {at:FLIGHT_RULES.lead+i*FLIGHT_RULES.interval,ring,rock:(ring+1+(random()<.5?0:1))%3}});
+ let at=FLIGHT_RULES.startTravel;
+ const gates=Array.from({length:FLIGHT_RULES.gates},(_,i)=>{
+  const progress=i/(FLIGHT_RULES.gates-1),ring=Math.min(2,Math.floor(random()*3));
+  const travel=Math.round(FLIGHT_RULES.startTravel+(FLIGHT_RULES.endTravel-FLIGHT_RULES.startTravel)*progress);
+  if(i)at+=Math.round(FLIGHT_RULES.startInterval+(FLIGHT_RULES.endInterval-FLIGHT_RULES.startInterval)*progress);
+  return {at,travel,ring,rock:(ring+1+(random()<.5?0:1))%3};
+ });
  state.run={id:crypto.randomUUID(),token:null,paused:true,elapsed:0,lastAt:now,lane:1,next:0,score:0,hits:0,gates};
  return state.run.id;
 }
