@@ -72,3 +72,11 @@
 #xg-panel .xg-flight-controls>button,#xg-panel .xg-flight-menu>button{margin:0;min-height:48px;touch-action:manipulation}
 #xg-panel .xg-flight-controls>button[aria-pressed=true]{background:#345943;border-color:#dfca80}
 #xg-panel .xg-flight-menu{display:grid;gap:10px;margin:15px 0}
+
+/* Keep feature forms independent of the host app's input theme. */
+#xg-panel .xg-feature select,#xg-panel .xg-feature input:not([type=radio]):not([type=checkbox]){box-sizing:border-box;max-width:100%;min-width:0;min-height:44px;background:#102b22!important;color:#ebd8af!important;-webkit-text-fill-color:#ebd8af;border:1px solid #8d7c50!important;border-radius:8px;padding:10px 12px;font:inherit;line-height:1.5;text-shadow:none!important;box-shadow:none!important;color-scheme:dark;appearance:none;-webkit-appearance:none}
+#xg-panel .xg-feature select{padding-right:36px;background-image:linear-gradient(45deg,transparent 50%,#d8c08c 50%),linear-gradient(135deg,#d8c08c 50%,transparent 50%)!important;background-position:calc(100% - 18px) 50%,calc(100% - 12px) 50%!important;background-size:6px 6px,6px 6px!important;background-repeat:no-repeat!important}
+#xg-panel .xg-feature select option{background:#102b22;color:#ebd8af;text-shadow:none}
+#xg-panel .xg-feature select:disabled{opacity:.5;cursor:default}
+#xg-panel .xg-feature select:focus-visible,#xg-panel .xg-feature input:focus-visible{outline:2px solid #d9c08a;outline-offset:2px}
+#xg-panel .xg-feature-row>button,#xg-panel .xg-feature-card .xg-feature-row>button,#xg-panel .xg-feature-card .xg-peak-actions>button{margin:0;min-width:0;min-height:44px;white-space:normal;overflow-wrap:anywhere}

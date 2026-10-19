@@ -110,6 +110,10 @@
 #xg-panel .xg-gomoku-board>button.is-last:before{content:'';position:absolute;inset:40%;border-radius:50%;background:#ba6145;z-index:1}
 #xg-panel .xg-stall-form{display:grid;gap:10px;margin:12px 0}
 #xg-panel .xg-stall-form>button,#xg-panel .xg-stall-form>button+button{margin:0;min-height:44px;white-space:normal}
-#xg-panel .xg-stall-form label{display:flex;align-items:center;gap:12px}
+#xg-panel .xg-stall-form label{display:grid;grid-template-columns:4em minmax(0,1fr);align-items:center;gap:12px;margin:0}
 #xg-panel .xg-stall-form select{flex:1;min-width:0;background:#153428;color:#e4d5aa;border:1px solid #8d7c50;border-radius:8px;padding:10px}
 #xg-panel .xg-dice-cup{width:90px;height:90px;display:grid;place-items:center;border:2px solid #b49b63;border-radius:45% 45% 12% 12%;margin:20px auto;font-size:32px;color:#e4d5aa;background:#234b38}
+
+/* Equal, separated touch targets after combat, including treasure discovery. */
+#xg-panel .xg-battle-sheet>[data-return],#xg-panel .xg-battle-sheet>[data-treasure-dig]{display:flex;align-items:center;justify-content:center;box-sizing:border-box;width:100%;min-width:0;min-height:48px;margin:12px 0 0;padding:12px 14px;font:inherit;line-height:1.5;text-align:center;white-space:normal;text-shadow:none;box-shadow:none;touch-action:manipulation}
+#xg-panel .xg-battle-sheet>[data-treasure-dig]{background:#254334;border-color:#b49b63;color:#f0d9a6}
