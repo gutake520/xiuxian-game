@@ -1,4 +1,4 @@
-export const STROLL_DAILY_LIMIT=10;
+export const STROLL_ENCOUNTER_LIMIT=3;
 export const STROLL_PLACES=[
  {id:'market',name:'坊市',stories:[
  '两个摊主隔街吵了半日，争论谁家的回灵草更新鲜。你凑近看了看，两家的草似乎装在同样的竹筐里。',
