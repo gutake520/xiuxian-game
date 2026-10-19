@@ -7,8 +7,7 @@ import {localDay} from '../systems/cultivation.js';
 import {initialCombat} from '../data/initial-combat.js';
 import {ITEMS} from '../data/items.js';
 import {QI_MONSTERS} from '../data/locations.js';
-import {DURABILITY_MAX} from '../data/balance.js';
-import {expireLoot} from '../systems/inventory.js';
+import {expireLoot,maxDurability} from '../systems/inventory.js';
 import {ensureBossLine} from '../systems/boss-line.js';
 import {ensureSpiritBeasts} from '../systems/pets.js';
 export function migrateSave(save,now=Date.now()){
@@ -44,7 +43,7 @@ export function migrateSave(save,now=Date.now()){
  save.bagCapacity=Number.isSafeInteger(save.bagCapacity)?Math.max(INITIAL_BAG_SIZE,save.bagCapacity):INITIAL_BAG_SIZE;
  save.equipment??={weapon:null,armor:null};
  for(const slot of ['weapon','armor','shoes','accessoryVital','accessoryFate'])save.equipment[slot]??=null;
- for(const entry of save.inventory)if(ITEMS[entry.itemId]?.kind==='equipment'&&!Number.isFinite(entry.durability))entry.durability=ITEMS[entry.itemId].maxDurability??DURABILITY_MAX;
+ for(const entry of save.inventory)if(ITEMS[entry.itemId]?.kind==='equipment'&&!Number.isFinite(entry.durability))entry.durability=maxDurability(entry);
  expireLoot(save,now);
  save.petRentals=Number.isSafeInteger(save.petRentals)?Math.max(0,save.petRentals):0;
  save.foundationPetRentals=Number.isSafeInteger(save.foundationPetRentals)?Math.max(0,save.foundationPetRentals):0;

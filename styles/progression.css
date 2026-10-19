@@ -61,3 +61,5 @@
 #xg-panel .xg-bag-grid>button[aria-pressed="true"]{border-color:var(--g);background:#284837;box-shadow:inset 0 0 0 1px var(--g)}
 #xg-panel .xg-bag-grid>button[aria-pressed="true"]::after{content:"已选";font-size:10px;color:var(--g)}
 #xg-panel .xg-bag-grid>button:disabled{opacity:.4;cursor:not-allowed}
+
+#xg-panel .xg-temper-card>button,#xg-panel .xg-temper-card>button+button{display:block;width:100%;margin:10px 0 0;white-space:normal;overflow-wrap:anywhere}

@@ -146,10 +146,10 @@ function renderCharacter(){
  document.getElementById('xg-breakthrough').onclick=()=>runAction(async()=>{if(!currentSave.foundationAptitudePending)await game.startBreakthrough();showBreakthrough({getSave:()=>currentSave,actions:game},()=>{document.getElementById('xg-feature-sheet')?.remove();renderCharacter()})});
 }
 const SECTS=[
- {id:'tiangong',name:'天工阁',roots:['金','火'],condition:'金或火灵根',feature:'炼器与装备打造，提升装备耐久。'},
+ {id:'tiangong',name:'天工阁',roots:['金','火'],condition:'金或火灵根',feature:'修补与淬炼装备，提升耐久上限。'},
  {id:'danxia',name:'丹霞谷',roots:['火','木'],condition:'火或木灵根',feature:'炼丹制药，辅助修行。'},
  {id:'qinglan',name:'青岚谷',roots:['木','水'],condition:'木或水灵根',feature:'医修传承，擅长治疗与恢复。'},
- {id:'hehuan',name:'合欢宗',stat:['魅力',8],condition:'魅力 ≥ 8',feature:'人际与情缘，可结三位正式道侣。'},
+ {id:'hehuan',name:'合欢宗',stat:['魅力',8],condition:'魅力 ≥ 8',feature:'可结三位正式道侣，每位使每日挂机上限增加半小时。'},
  {id:'wanling',name:'万灵山',roots:['木','土','风'],condition:'成就「万物有灵」',feature:'御兽之道，培养灵兽并肩作战。'},
  {id:'lingxiao',name:'凌霄剑宗',roots:['金','雷','冰'],condition:'金、雷或冰灵根',feature:'以剑求道，专精攻击与高伤害。'},
  {id:'xuanji',name:'玄机门',roots:['冰'],stat:['神识',8],condition:'冰灵根或神识 ≥ 8',feature:'阵法与控制，限制敌人行动。'},

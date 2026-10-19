@@ -1,8 +1,8 @@
 import {TECHNIQUES,techniqueEligible,hasActiveTechnique} from '../data/techniques.js';
 import {ITEMS} from '../data/items.js';
-import {DAILY_TASKS,dailyTasks,claimDailyTask,redeemInheritance,craftSectItem,repairOwnEquipment} from '../systems/sect-progression.js';
+import {DAILY_TASKS,dailyTasks,claimDailyTask,redeemInheritance,craftSectItem,repairOwnEquipment,temperEquipment} from '../systems/sect-progression.js';
 import {startLearning} from '../systems/techniques.js';
-import {PILL_RECIPES,brewPill,maxDurability} from '../systems/inventory.js';
+import {PILL_RECIPES,brewPill,maxDurability,durabilityUpgrades,DURABILITY_UPGRADE_COST,DURABILITY_UPGRADE_LIMIT} from '../systems/inventory.js';
 import {learningPuzzle} from './techniques.js';
 import {createSheet,escapeHTML,buttonTask} from './shared.js';
 import {BEAST_TYPES,ensureSpiritBeasts,beastCanFight,renameBeast,feedBeast} from '../systems/pets.js';
@@ -35,14 +35,14 @@ export function showSectWorkshop(api,sectId,onClose){
  }
  if(sectId==='tiangong'){
   const gear=save.inventory.filter(entry=>ITEMS[entry.itemId]?.kind==='equipment');
-  body.innerHTML=`${gear.length?gear.map(entry=>{const limit=maxDurability(entry),cost=Math.ceil(limit/5);return `<article class="xg-feature-card"><h3>${escapeHTML(ITEMS[entry.itemId].name)}</h3><p>耐久 ${entry.durability??limit}/${limit} · 消耗${ITEMS[ITEMS[entry.itemId].stage==='筑基'?'foundation-ore':'ore'].name} ${cost}</p><button type="button" data-repair="${escapeHTML(entry.uid)}" ${entry.durability>=limit?'disabled':''}>${entry.durability>=limit?'已修满':'修补至满耐久'}</button></article>`}).join(''):'<p>储物中没有装备。</p>'}`;
+  body.innerHTML=`${gear.length?gear.map(entry=>{const limit=maxDurability(entry),cost=Math.ceil(limit/5);return `<article class="xg-feature-card xg-temper-card"><h3>${escapeHTML(ITEMS[entry.itemId].name)}</h3><p>耐久 ${entry.durability??limit}/${limit}</p><button type="button" data-repair="${escapeHTML(entry.uid)}" ${entry.durability>=limit?'disabled':''}>${entry.durability>=limit?'已修满':'修补至满耐久 · '+ITEMS[ITEMS[entry.itemId].stage==='筑基'?'foundation-ore':'ore'].name+'×'+cost}</button><button type="button" data-temper="${escapeHTML(entry.uid)}" ${durabilityUpgrades(entry)>=DURABILITY_UPGRADE_LIMIT?'disabled':''}>${durabilityUpgrades(entry)>=DURABILITY_UPGRADE_LIMIT?'淬炼已满':'淬炼 · 耐久上限＋5 · '+ITEMS[ITEMS[entry.itemId].stage==='筑基'?'foundation-ore':'ore'].name+'×'+DURABILITY_UPGRADE_COST+' · '+durabilityUpgrades(entry)+'/'+DURABILITY_UPGRADE_LIMIT}</button></article>`}).join(''):'<p>储物中没有装备。</p>'}`;
  }
  body.querySelectorAll('[data-brew],[data-craft]').forEach(button=>button.onclick=()=>buttonTask(button,async()=>{const herb=body.querySelector('[data-herb]')?.value;const {result}=await api.actions.mutate(s=>button.dataset.brew?brewPill(s,button.dataset.brew):craftSectItem(s,button.dataset.craft,herb),{message:r=>r});showSectWorkshop(api,sectId,onClose);document.querySelector('#xg-feature-sheet [role=status]').textContent=result},status));
- body.querySelectorAll('[data-repair],[data-feed],[data-rename]').forEach(button=>button.onclick=()=>buttonTask(button,async()=>{
+ body.querySelectorAll('[data-repair],[data-temper],[data-feed],[data-rename]').forEach(button=>button.onclick=()=>buttonTask(button,async()=>{
   const type=button.dataset.feed||button.dataset.rename;
   const name=body.querySelector(`[data-beast-name="${type}"]`)?.value;
   const herb=body.querySelector(`[data-feed-herb="${type}"]`)?.value;
-  const {result}=await api.actions.mutate(s=>button.dataset.repair?repairOwnEquipment(s,button.dataset.repair):button.dataset.feed?feedBeast(s,type,herb):renameBeast(s,type,name),{message:r=>r});
+  const {result}=await api.actions.mutate(s=>button.dataset.temper?temperEquipment(s,button.dataset.temper):button.dataset.repair?repairOwnEquipment(s,button.dataset.repair):button.dataset.feed?feedBeast(s,type,herb):renameBeast(s,type,name),{message:r=>r});
   showSectWorkshop(api,sectId,onClose);document.querySelector('#xg-feature-sheet [role=status]').textContent=result;
  },status));
 }

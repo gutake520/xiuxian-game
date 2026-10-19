@@ -3,7 +3,10 @@ import {DURABILITY_MAX,TEMP_LOOT_MS} from '../data/balance.js';
 import {localDay} from './cultivation.js';
 import {realmHpBonus,realmBattleBonus} from '../data/realms.js';
 export function hasManual(save,id='basic-qi-guide'){return save.inventory.some(entry=>ITEMS[entry.itemId]?.methodId===id)}
-export const maxDurability=entry=>ITEMS[entry?.itemId]?.maxDurability??DURABILITY_MAX;
+export const DURABILITY_UPGRADE_COST=10;
+export const DURABILITY_UPGRADE_LIMIT=2;
+export const durabilityUpgrades=entry=>Number.isInteger(entry?.durabilityUpgrades)?Math.max(0,Math.min(DURABILITY_UPGRADE_LIMIT,entry.durabilityUpgrades)):0;
+export const maxDurability=entry=>(ITEMS[entry?.itemId]?.maxDurability??DURABILITY_MAX)+durabilityUpgrades(entry)*5;
 export function ownsTechnique(save,id){return save.techniques.mastered.includes(id)||hasManual(save,id)}
 export function addItem(save,id,quantity=1){
  const item=ITEMS[id];if(!item)throw new Error('物品不存在。');

@@ -1,7 +1,7 @@
 import {localDay} from './cultivation.js';
 import {TECHNIQUES,techniqueEligible,hasActiveTechnique} from '../data/techniques.js';
 import {ITEMS} from '../data/items.js';
-import {addItem,maxDurability,equipmentStats} from './inventory.js';
+import {addItem,maxDurability,equipmentStats,durabilityUpgrades,DURABILITY_UPGRADE_COST,DURABILITY_UPGRADE_LIMIT} from './inventory.js';
 export const DAILY_TASKS=[
  {id:'kills',name:'击败小怪',target:3},
  {id:'spent',name:'消费灵石',target:3},
@@ -91,4 +91,23 @@ export function repairOwnEquipment(save,uid){
  save.player.hp=Math.round(Math.min(after.maxHp,save.player.hp+after.maxHp-before.maxHp)*100)/100;
  save.player.mp=Math.round(Math.min(after.maxMp,save.player.mp+after.maxMp-before.maxMp)*100)/100;
  return `修好${item.name}，消耗 ${cost} 个${ITEMS[oreId].name}。`;
+}
+
+export function temperEquipment(save,uid){
+ if(!hasActiveTechnique(save,'mending'))throw new Error('请先学会天工阁修补传承。');
+ if(save.battle)throw new Error('战斗中不能淬炼装备。');
+ const entry=save.inventory.find(e=>e.uid===uid),item=ITEMS[entry?.itemId];
+ if(item?.kind!=='equipment')throw new Error('找不到这件装备。');
+ const upgrades=durabilityUpgrades(entry);
+ if(upgrades>=DURABILITY_UPGRADE_LIMIT)throw new Error('这件装备已淬炼两次。');
+ const oreId=item.stage==='筑基'?'foundation-ore':'ore',ore=save.inventory.find(e=>e.itemId===oreId);
+ if((ore?.quantity||0)<DURABILITY_UPGRADE_COST)throw new Error(`需要 ${DURABILITY_UPGRADE_COST} 个${ITEMS[oreId].name}。`);
+ const before=equipmentStats(save),current=entry.durability??maxDurability(entry);
+ ore.quantity-=DURABILITY_UPGRADE_COST;if(!ore.quantity)save.inventory=save.inventory.filter(e=>e!==ore);
+ entry.durabilityUpgrades=upgrades+1;
+ entry.durability=Math.min(maxDurability(entry),current+5);
+ const after=equipmentStats(save);
+ save.player.hp=Math.round(Math.min(after.maxHp,save.player.hp+after.maxHp-before.maxHp)*100)/100;
+ save.player.mp=Math.round(Math.min(after.maxMp,save.player.mp+after.maxMp-before.maxMp)*100)/100;
+ return `${item.name}淬炼完成，耐久 ${entry.durability}/${maxDurability(entry)}。`;
 }

@@ -18,7 +18,7 @@ export const TECHNIQUES={
  'spirit-burn':{id:'spirit-burn',name:'灵息尽燃',rank:'中级',type:'combat',description:'耗尽当前全部法力，造成消耗量的 0.9／0.8／0.7 倍固定伤害，依次对应单灵根、双／三灵根、四／五灵根；无法暴击，无冷却。'},
  'only-once':{id:'only-once',name:'只此一次！',rank:'普通',type:'combat',mpCost:2,description:'每场战斗限用一次，占一次行动；本场战斗暴击率增加 15 个百分点。'},
  'divine-pharmacopoeia':{id:'divine-pharmacopoeia',name:'神药谱',rank:'特殊',type:'craft',sect:'丹霞谷',roots:['火','木'],description:'丹霞谷炼丹传承。参悟五阶数阵后，便可用药草炼制丹药。'},
- 'mending':{id:'mending',name:'缝缝补补又三年',rank:'特殊',type:'craft',sect:'天工阁',roots:['金','火'],description:'学会后在锻兵室自行修补装备。按耐久上限每 5 点消耗一份矿石，直接修满。'},
+ 'mending':{id:'mending',name:'缝缝补补又三年',rank:'特殊',type:'craft',sect:'天工阁',roots:['金','火'],description:'学会后在锻兵室自行修补装备。按耐久上限每 5 点消耗一份矿石，直接修满；每 10 份对应矿石可淬炼一次，当前与上限耐久各加 5，每件最多两次。'},
  'beast-keeper':{id:'beast-keeper',name:'铲屎官手册',rank:'特殊',type:'craft',sect:'万灵山',roots:['木','土','风'],description:'学会后照料入门时获赠的追击与守护灵兽。每只每天喂三株对应境界的药草，喂过才可出战。'},
  'fairy-painting':{id:'fairy-painting',name:'画中仙',rank:'特殊',type:'craft',sect:'太虚符宗',allStats:[['神识',6],['悟性',7]],description:'解锁制符：一份药草、一份矿石制成一张攻击符或护身符。'},
  'planting-flags':{id:'planting-flags',name:'我在插旗，勿扰',rank:'特殊',type:'craft',sect:'玄机门',roots:['冰'],stat:['神识',8],description:'解锁阵盘制作：20 份矿石制成可使用六次的定身阵盘；用尽后阵盘损坏。'},
