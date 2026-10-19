@@ -16,14 +16,15 @@ export function maybeFindPeakPuzzle(save,random=Math.random){
  if(save.peakPuzzle)return null;
  const roll=random(),kind=roll<PEAK_PUZZLE_CHANCES.sokoban?'sokoban':roll<PEAK_PUZZLE_CHANCES.sokoban+PEAK_PUZZLE_CHANCES.maze?'maze':null;
  if(!kind)return null;
- let rows,player,boxes=[],goals=[],reward;
+ let rows,player,boxes=[],goals=[],reward,levelIndex;
  if(kind==='sokoban'){
-  rows=pick(SOKOBAN_LEVELS,random).rows;
+  levelIndex=Number.isInteger(save.nextSokobanLevel)&&save.nextSokobanLevel>=0?save.nextSokobanLevel%SOKOBAN_LEVELS.length:0;
+  rows=SOKOBAN_LEVELS[levelIndex].rows;
   rows.forEach((row,y)=>[...row].forEach((c,x)=>{const pos=y*row.length+x;if(c==='@')player=pos;if(c==='$')boxes.push(pos);if(c==='.')goals.push(pos)}));
   reward={itemId:pick(Object.values(ITEMS).filter(i=>i.kind==='gift'),random).id};
   rows=rows.map(r=>r.replace(/[@$.]/g,' '));
  }else{rows=makeMaze(random);player=12;goals=[108];reward={stones:random()<.5?1:2}}
- save.peakPuzzle={id:crypto.randomUUID(),kind,rows,player,boxes,goals,reward,initial:{player,boxes:[...boxes]},history:[],moves:0};
+ save.peakPuzzle={id:crypto.randomUUID(),kind,rows,player,boxes,goals,reward,...(kind==='sokoban'?{levelIndex}:{}),initial:{player,boxes:[...boxes]},history:[],moves:0};
  return kind;
 }
 export function playPeakPuzzle(save,id,action,now=Date.now()){
@@ -46,7 +47,13 @@ export function playPeakPuzzle(save,id,action,now=Date.now()){
  if(!won)return {};
  let text;
  if(p.kind==='sokoban'){
+  // Older active puzzles have no level index; identify their original board without resetting play.
+  const levelIndex=Number.isInteger(p.levelIndex)?p.levelIndex:SOKOBAN_LEVELS.findIndex(level=>level.rows.every((row,y)=>[...row].every((c,x)=>{
+   const pos=y*row.length+x;
+   return (c==='#')===(p.rows[y]?.[x]==='#')&&(c==='@')===(p.initial.player===pos)&&(c==='$')===p.initial.boxes.includes(pos)&&(c==='.')===p.goals.includes(pos);
+  })));
   const where=awardItem(save,p.reward.itemId,1,now);
+  save.nextSokobanLevel=(levelIndex+1)%SOKOBAN_LEVELS.length;
   text=`石阵归位，小兽衔来一份谢礼：${ITEMS[p.reward.itemId].name} ×1。${where==='temporary'?'储物袋已满，已放入临时储物。':''}`;
  }else{save.player.spiritStones+=p.reward.stones;text=`你循着兽爪印走出迷林，在树根旁拾得${p.reward.stones}灵石。`}
  save.lastPeakPuzzle={kind:p.kind,text,moves:p.moves};save.peakPuzzle=null;

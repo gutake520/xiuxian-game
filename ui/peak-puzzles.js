@@ -1,9 +1,10 @@
+import {SOKOBAN_LEVELS} from '../data/peak-puzzles.js';
 import {createSheet,escapeHTML} from './shared.js';
 import {playPeakPuzzle} from '../systems/peak-puzzles.js';
 export function showPeakPuzzle(api,onClose){
  const slot=api.getSave().slot,puzzle=api.getSave().peakPuzzle;
  if(!puzzle){onClose();return}
- const sheet=createSheet(puzzle.kind==='sokoban'?'搬石归阵':'林间迷踪',()=>{sheet.remove();onClose()});sheet.classList.add('xg-stroll-sheet');
+ const sheet=createSheet(puzzle.kind==='sokoban'?`搬石归阵${Number.isInteger(puzzle.levelIndex)?` · ${puzzle.levelIndex+1}/${SOKOBAN_LEVELS.length}`:''}`:'林间迷踪',()=>{sheet.remove();onClose()});sheet.classList.add('xg-stroll-sheet');
  const body=sheet.querySelector('[data-body]'),status=sheet.querySelector('[role=status]');let busy=false;
  const current=()=>sheet.isConnected&&api.getSave()?.slot===slot;
  const draw=()=>{

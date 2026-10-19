@@ -30,12 +30,12 @@ test('encounter boundaries are 5% sokoban, 20% maze, 75% none; unfinished encoun
  const s=make();takeStroll(s,'market',Date.now(),()=>0);assert.equal(s.peakPuzzle,undefined);
  takeStroll(s,'spirit-peak',Date.now(),()=>0);assert.equal(s.peakPuzzle.kind,'sokoban');assert.equal(s.stroll.count,2);
 });
-test('all ten sokoban levels solve through game rules and award exactly one gift, even after reload',()=>{
+test('all twenty sokoban levels solve through game rules and award exactly one gift, even after reload',()=>{
  for(let i=0;i<SOKOBAN_LEVELS.length;i++){
-  let s=make(),rolls=[0,(i+.1)/SOKOBAN_LEVELS.length,.9];maybeFindPeakPuzzle(s,()=>rolls.shift());
+  let s=make();s.nextSokobanLevel=i;maybeFindPeakPuzzle(s,()=>0);assert.equal(s.peakPuzzle.levelIndex,i);
   const p=s.peakPuzzle,path=solution(p);assert.ok(path.length>0);
   for(const direction of path){s=migrateSave(JSON.parse(JSON.stringify(s)));playPeakPuzzle(s,p.id,direction)}
-  assert.equal(s.peakPuzzle,null);assert.equal(s.inventory.length,1);assert.equal(s.inventory[0].quantity,1);
+  assert.equal(s.peakPuzzle,null);assert.equal(s.nextSokobanLevel,(i+1)%20);assert.equal(s.inventory.length,1);assert.equal(s.inventory[0].quantity,1);
   const before=structuredClone(s);assert.throws(()=>playPeakPuzzle(s,p.id,'up'));assert.deepEqual(s,before);
  }
 });
@@ -72,4 +72,30 @@ test('concurrent completion cannot award a second reward',async()=>{
  const results=await Promise.allSettled([complete(),complete()]);
  assert.equal(results.filter(r=>r.status==='fulfilled').length,1);
  const stored=await readSave(s.slot);assert.equal(stored.inventory[0].quantity,1);assert.equal(stored.peakPuzzle,null);
+});
+
+test('twenty levels appear in order, wrap, and survive reload/reset and intervening mazes',()=>{
+ assert.equal(SOKOBAN_LEVELS.length,20);let s=make();
+ for(let i=0;i<21;i++){
+  maybeFindPeakPuzzle(s,()=>0);const p=s.peakPuzzle;assert.equal(p.levelIndex,i%20);
+  playPeakPuzzle(s,p.id,'reset');assert.equal(p.levelIndex,i%20);
+  s=migrateSave(JSON.parse(JSON.stringify(s)));
+  assert.equal(maybeFindPeakPuzzle(s,()=>0),null);
+  for(const d of solution(s.peakPuzzle))playPeakPuzzle(s,p.id,d);
+  const next=s.nextSokobanLevel;
+  maybeFindPeakPuzzle(s,()=>.1);const maze=s.peakPuzzle;
+  for(const d of solution(maze))playPeakPuzzle(s,maze.id,d);
+  assert.equal(s.nextSokobanLevel,next);
+ }
+});
+test('legacy active boards finish unchanged and continue with their following level',()=>{
+ for(const index of [0,4,9]){
+  const s=make();s.nextSokobanLevel=index;maybeFindPeakPuzzle(s,()=>0);
+  delete s.nextSokobanLevel;delete s.peakPuzzle.levelIndex;
+  const p=s.peakPuzzle,path=solution(p);playPeakPuzzle(s,p.id,path.shift());
+  const restored=migrateSave(JSON.parse(JSON.stringify(s)));
+  assert.deepEqual(restored.peakPuzzle,s.peakPuzzle);
+  for(const d of path)playPeakPuzzle(restored,p.id,d);
+  maybeFindPeakPuzzle(restored,()=>0);assert.equal(restored.peakPuzzle.levelIndex,index+1);
+ }
 });
