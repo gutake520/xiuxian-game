@@ -71,11 +71,11 @@ export function answerYan(save,answer,now=Date.now()){
  if(answer==='later')return YAN_SCENES.later;
  if(answer==='reject'){state.rejected=true;return YAN_SCENES.reject}
  if(answer!=='accept')throw new Error('请选择回应。');
- addCompanion(save,YAN_NAME,now);state.bonded=true;return YAN_SCENES.accept;
+ addCompanion(save,YAN_NAME,now);state.bonded=true;state.romanceEnded=false;return YAN_SCENES.accept;
 }
 export function leaveYan(save,now=Date.now()){
  const state=save.yanTingyun;if(!state?.bonded)throw new Error('当前并无道侣关系。');
  const fee=companionBreakupFee(save.player);
- removeCompanion(save,YAN_NAME,fee,now);state.bonded=false;
+ removeCompanion(save,YAN_NAME,fee,now);state.bonded=false;state.romanceEnded=true;
  return `与${YAN_NAME}解除道侣关系，支付 ${fee} 灵石；三天内不能再结缘。`;
 }

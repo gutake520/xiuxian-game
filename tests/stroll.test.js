@@ -24,7 +24,7 @@ test('ten visits shared across locations persist on reload and reset the followi
  takeStroll(loaded,'market',now+86400000);assert.equal(strollCount(loaded,now+86400000),1);assert.ok(loaded.stroll.last.text);
 });
 test('all thirty approved stories can be drawn, battle visits do not consume quota',()=>{
- for(const p of STROLL_PLACES){assert.equal(p.stories.length,5);const s=make();s.player.realm='筑基一层';for(let i=0;i<5;i++)assert.equal(takeStroll(s,p.id,now,()=>i/5+.1).text,p.stories[i])}
+ for(const p of STROLL_PLACES){assert.equal(p.stories.length,5);const s=make();s.player.realm='筑基一层';for(let i=0;i<5;i++){let roll=0;assert.equal(takeStroll(s,p.id,now,()=>roll++===0?i/5+.1:.99).text,p.stories[i])}}
  const s=make();s.battle={};const before=structuredClone(s);assert.throws(()=>takeStroll(s,'market',now));assert.deepEqual(s,before);
 });
 test('concurrent last visits cannot exceed the daily allowance',async()=>{

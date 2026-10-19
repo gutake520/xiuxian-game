@@ -1,5 +1,5 @@
 import {QI_PEAKS,FOUNDATION_PEAKS} from './locations.js';
-export const TREASURE_FIND_CHANCE=.05;
+export const TREASURE_FIND_CHANCE=.1;
 export const TREASURE_REAL_CHANCE=.3;
 // Add a new realm here only when its monster locations and reward are available.
 export const TREASURE_TIERS=[

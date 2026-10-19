@@ -14,8 +14,8 @@ const make=(realm='炼气七层')=>migrateSave({slot:'treasure-test',player:{rea
 function found(s,real=true){const rolls=[0,.9,.9,real?.299:.3];assert.equal(maybeFindTreasure(s,()=>rolls.shift()),true);return s.treasure}
 function ready(s,real=true){const map=found(s,real);map.step=3;return map}
 function fixed(value,fn){const prev=Math.random;try{Math.random=()=>value;return fn()}finally{Math.random=prev}}
-test('black market finds a map at five percent, fixes truth and route, and prevents duplicates',()=>{
- const s=make();assert.equal(maybeFindTreasure(s,()=>.05),false);const map=found(s);assert.equal(map.real,true);assert.equal(new Set(map.route.map(p=>p.id)).size,3);const before=structuredClone(map);
+test('black market finds a map at ten percent, fixes truth and route, and prevents duplicates',()=>{
+ const s=make();assert.equal(maybeFindTreasure(s,()=>.1),false);const map=found(s);assert.equal(map.real,true);assert.equal(new Set(map.route.map(p=>p.id)).size,3);const before=structuredClone(map);
  assert.equal(maybeFindTreasure(s,()=>0),false);assert.deepEqual(s.treasure,before);
  const copy=migrateSave(JSON.parse(JSON.stringify(s)),now);assert.deepEqual(copy.treasure,before);
  const other=make();takeStroll(other,'market',now,()=>0);assert.equal(other.treasure,undefined);takeStroll(other,'blackmarket',now,()=>0);assert.ok(other.treasure);assert.equal(other.stroll.count,2);

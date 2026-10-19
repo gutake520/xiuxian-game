@@ -34,11 +34,11 @@ export function answerFox(save,id,answer,now=Date.now()){
  if(answer==='later')return '你决定再考虑一阵。';
  if(answer==='reject'){state.rejected=true;return fox.reject}
  if(answer!=='accept')throw new Error('请选择回应。');
- addCompanion(save,fox.name,now);state.bonded=true;return fox.accept;
+ addCompanion(save,fox.name,now);state.bonded=true;state.romanceEnded=false;return fox.accept;
 }
 export function leaveFox(save,id,now=Date.now()){
  const fox=FOXES[id],state=ensureFox(save,id);if(!fox||!state.bonded)throw new Error('当前并无道侣关系。');
  const fee=companionBreakupFee(save.player);
- removeCompanion(save,fox.name,fee,now);state.bonded=false;
+ removeCompanion(save,fox.name,fee,now);state.bonded=false;state.romanceEnded=true;
  return `与${fox.name}解除道侣关系，支付 ${fee} 灵石；三天内不能再结缘。`;
 }
