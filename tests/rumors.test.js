@@ -38,7 +38,7 @@ test('romance rumors disappear after real breakup and return only on reunion, in
 test('every destination can draw shared romance gossip; treasure keeps priority',()=>{
  const s=make();s.player.realm='筑基一层';s.foxes={'pine-summit':{met:true,affinity:90}};
  for(const place of strollPlaces(s)){
-  const rolls=place.id==='blackmarket'?[0,.99,0,.99]:place.id==='spirit-peak'?[0,.99,0,.99]:[0,0,.99];
+  const rolls=place.id==='blackmarket'?[0,.99,.99,0,.99]:['spirit-peak','market'].includes(place.id)?[0,.99,0,.99]:[0,0,.99];
   const result=takeStroll(s,place.id,Date.now(),()=>rolls.shift());assert.ok(result.text.includes('言一'));assert.ok(result.text.includes('沈砚'));
  }
  const result=takeStroll(s,'blackmarket',Date.now(),()=>0);assert.ok(s.treasure);assert.match(result.text,/残图/);

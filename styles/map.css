@@ -102,3 +102,14 @@
 #xg-panel .xg-puzzle-controls>button:nth-child(2){grid-column:1}
 #xg-panel .xg-puzzle-tools{display:flex;justify-content:center;gap:12px;margin-bottom:16px}
 #xg-panel .xg-puzzle-tools>button{min-width:80px}
+#xg-panel .xg-gomoku-board{display:grid;grid-template-columns:repeat(13,minmax(0,1fr));width:100%;max-width:440px;margin:12px auto;padding:4px;background:#294c3c;border:1px solid #a6925f;border-radius:6px;gap:0}
+#xg-panel .xg-gomoku-board>button{position:relative;display:block;aspect-ratio:1;min-width:0;min-height:0;width:100%;height:auto;padding:0;margin:0;border:0;border-radius:0;background:linear-gradient(transparent 48%,#a6925f 48%,#a6925f 52%,transparent 52%),linear-gradient(90deg,transparent 48%,#a6925f 48%,#a6925f 52%,transparent 52%);box-shadow:none;opacity:1;touch-action:manipulation}
+#xg-panel .xg-gomoku-board>button.is-black:after,#xg-panel .xg-gomoku-board>button.is-white:after,#xg-panel .xg-gomoku-board>button.is-selected:after{content:'';position:absolute;inset:10%;border-radius:50%;background:#101915;box-shadow:0 1px 2px #0008;border:1px solid #8a957b}
+#xg-panel .xg-gomoku-board>button.is-white:after{background:#f0e7c7;border-color:#fff5d8}
+#xg-panel .xg-gomoku-board>button.is-selected:after{background:#10191599;border:2px dashed #f0ce70}
+#xg-panel .xg-gomoku-board>button.is-last:before{content:'';position:absolute;inset:40%;border-radius:50%;background:#ba6145;z-index:1}
+#xg-panel .xg-stall-form{display:grid;gap:10px;margin:12px 0}
+#xg-panel .xg-stall-form>button,#xg-panel .xg-stall-form>button+button{margin:0;min-height:44px;white-space:normal}
+#xg-panel .xg-stall-form label{display:flex;align-items:center;gap:12px}
+#xg-panel .xg-stall-form select{flex:1;min-width:0;background:#153428;color:#e4d5aa;border:1px solid #8d7c50;border-radius:8px;padding:10px}
+#xg-panel .xg-dice-cup{width:90px;height:90px;display:grid;place-items:center;border:2px solid #b49b63;border-radius:45% 45% 12% 12%;margin:20px auto;font-size:32px;color:#e4d5aa;background:#234b38}
