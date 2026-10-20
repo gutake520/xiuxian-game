@@ -44,6 +44,8 @@ export function showBattle({getSave,actions,activate,onExit,onYanEncounter},endR
   ${arrays.length?`<div class="xg-battle-talisman"><div class="xg-battle-subheading"><strong>阵盘</strong><small>使用后仍可行动</small></div>${arrays.map(entry=>`<button type="button" data-array="${escapeHTML(entry.uid)}" ${battle.arrayRound===battle.round+1?'disabled':''}>${entry.itemId.includes('crafted')?ITEMS[entry.itemId].name+' · 剩余 '+entry.usesLeft+' 次':ITEMS[entry.itemId].name+' · '+entry.quantity+' 枚'}</button>`).join('')}</div>`:''}
   ${talismans.length?`<div class="xg-battle-talisman"><div class="xg-battle-subheading"><strong>符箓</strong><small>${battle.talismansUsed||0} / 2 · 不占行动</small></div><div class="xg-battle-talisman-actions">${talismans.map(id=>`<button type="button" data-talisman="${id}" ${battle.talismansUsed>=2||battle.talismanRound===battle.round+1?'disabled':''}>${ITEMS[id].name} · ${ITEMS[id].damage?'+'+ITEMS[id].damage:'免伤'}</button>`).join('')}</div></div>`:''}
   <button class="xg-battle-flee" type="button" data-fight="flee">脱离战斗</button></div><p role="status" aria-live="polite"></p></section>`;
+ const log=content.querySelector('.xg-battle-log');
+ log.scrollTop=log.scrollHeight;
  const status=content.querySelector('[role=status]');
  const controls=[...content.querySelectorAll('[data-fight],[data-talisman],[data-array]')];
  const run=async task=>{const disabled=controls.map(button=>button.disabled);controls.forEach(button=>button.disabled=true);try{await task();showBattle({getSave,actions,activate,onExit,onYanEncounter})}catch(error){status.textContent=error.message;controls.forEach((button,i)=>button.disabled=disabled[i])}};

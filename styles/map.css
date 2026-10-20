@@ -154,18 +154,20 @@
 #xg-panel .xg-map-sheet .xg-card p{font-size:13px;color:#5d6e5d!important;line-height:1.95}
 #xg-panel .xg-map-sheet .xg-card small{color:var(--muted)!important}
 #xg-panel .xg-map-trade-actions{gap:10px}
-#xg-panel .xg-battle-sheet>h2{font-size:26px}
-#xg-panel .xg-battle-sheet>p{font-size:11px;color:var(--muted)}
+#xg-panel .xg-battle-sheet>h2{font-size:22px;margin:0 0 8px}
+#xg-panel .xg-battle-sheet>p{font-size:11px;color:var(--muted);margin:5px 0;line-height:1.5}
 #xg-panel .xg-battle-bars{gap:10px}
-#xg-panel .xg-battle-bars div{background:var(--wash);border:0;border-radius:12px;padding:15px;font-size:11px;color:var(--muted)}
+#xg-panel .xg-battle-bars div{background:var(--wash);border:0;border-radius:12px;padding:10px 12px;font-size:11px;color:var(--muted)}
 #xg-panel .xg-battle-bars div:last-child{background:#f1e9df}
-#xg-panel .xg-battle-bars strong{font-size:17px;color:var(--jade);margin-top:5px;font-variant-numeric:tabular-nums}
+#xg-panel .xg-battle-bars strong{font-size:15px;color:var(--jade);margin-top:3px;font-variant-numeric:tabular-nums}
 #xg-panel .xg-battle-bars div:last-child strong{color:#9b6651}
-#xg-panel .xg-battle-log{background:transparent;border:0;border-left:2px solid #c0d0b8;padding:2px 0 2px 15px;border-radius:0;margin:22px 0}
-#xg-panel .xg-battle-sheet .xg-battle-log p{font-size:12px}
-#xg-panel .xg-battle-action-panel{padding:18px;border:1px solid var(--line);border-radius:16px;background:var(--surface)}
-#xg-panel .xg-battle-action-panel h3{font:600 17px var(--serif);margin-bottom:14px}
-#xg-panel .xg-battle-talisman{border-color:var(--line);padding-top:16px;margin-top:18px}
+#xg-panel .xg-battle-sheet .xg-battle-log{background:var(--surface);border:1px solid var(--line);padding:8px 12px;border-radius:12px;margin:10px 0;min-height:48px;max-height:clamp(72px,16dvh,120px);overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin}
+#xg-panel .xg-battle-sheet .xg-battle-log p{font-size:12px;line-height:1.5;margin:3px 0}
+#xg-panel .xg-battle-action-panel{padding:12px;border:1px solid var(--line);border-radius:16px;background:var(--surface)}
+#xg-panel .xg-battle-action-panel h3{font:600 15px var(--serif);margin:0 0 8px}
+#xg-panel .xg-battle-action-panel button{font-size:12px;padding:8px 10px}
+#xg-panel .xg-battle-action-panel>p{font-size:12px;line-height:1.5;margin:5px 0}
+#xg-panel .xg-battle-talisman{border-color:var(--line);padding-top:10px;margin-top:10px}
 #xg-panel .xg-battle-subheading{font-size:12px;margin-bottom:10px}
 #xg-panel .xg-battle-subheading small{color:var(--muted)}
 #xg-panel .xg-battle-main-actions [data-fight=attack],#xg-panel .xg-map-sheet :is([data-challenge-boss],[data-pursuer-fight],[data-pursuer-search]){background:var(--jade);color:#fffefa!important;border-color:var(--jade);width:100%}
