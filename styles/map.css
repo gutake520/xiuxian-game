@@ -1,3 +1,8 @@
+/* Map actions share a base skin, including buttons outside monster cards. */
+#xg-panel .xg-map-sheet button:where(:not(.xg-map-hill)){appearance:none;-webkit-appearance:none;box-sizing:border-box;max-width:100%;min-height:44px;min-width:0;padding:10px 14px;border:1px solid #866f47;border-radius:8px;background:#193129;color:#eddbb5!important;-webkit-text-fill-color:currentColor;font:inherit;line-height:1.5;text-shadow:none!important;box-shadow:none!important;white-space:normal;overflow-wrap:anywhere;cursor:pointer;touch-action:manipulation}
+#xg-panel .xg-map-sheet button:where(:not(.xg-map-hill)):disabled{opacity:.45;cursor:default}
+#xg-panel .xg-map-sheet button:where(:not(.xg-map-hill)):focus-visible{outline:2px solid #d9c08a;outline-offset:2px}
+#xg-panel .xg-map-sheet button[hidden]{display:none!important}
 #xg-panel .xg-map-sheet{padding:8px 2px 18px;color:#e9e1cf;font-size:13px}
 #xg-panel .xg-map-heading h2{color:#e9cc92;font-size:23px;margin:10px 4px 4px}
 #xg-panel .xg-map-heading p{color:#bbc7ba!important;margin:0 4px 12px;font-size:12px}
@@ -117,3 +122,8 @@
 /* Equal, separated touch targets after combat, including treasure discovery. */
 #xg-panel .xg-battle-sheet>[data-return],#xg-panel .xg-battle-sheet>[data-treasure-dig]{display:flex;align-items:center;justify-content:center;box-sizing:border-box;width:100%;min-width:0;min-height:48px;margin:12px 0 0;padding:12px 14px;font:inherit;line-height:1.5;text-align:center;white-space:normal;text-shadow:none;box-shadow:none;touch-action:manipulation}
 #xg-panel .xg-battle-sheet>[data-treasure-dig]{background:#254334;border-color:#b49b63;color:#f0d9a6}
+
+/* Standalone encounters and confirmation actions need full mobile touch targets. */
+#xg-panel .xg-map-sheet>[data-challenge-boss],#xg-panel .xg-map-sheet>[data-fox-fight],#xg-panel .xg-map-monster>[data-foe],#xg-panel .xg-map-monster>[data-foundation-foe]{display:block;width:100%;min-height:48px;margin:14px 0 0;text-align:center}
+#xg-panel .xg-map-sheet .xg-feature-row>button{margin:0;min-height:44px;flex:1 1 90px;text-align:center}
+#xg-panel .xg-map-sheet .xg-card>[data-leave-confirm],#xg-panel .xg-map-sheet .xg-card>[data-leave-cancel],#xg-panel .xg-map-sheet .xg-card>[data-yan-leave-confirm],#xg-panel .xg-map-sheet .xg-card>[data-yan-leave-cancel]{display:block;width:100%;margin:12px 0 0;text-align:center}
