@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500" fill="none">
+<defs><linearGradient id="sky" x2="0" y2="1"><stop stop-color="#e4eeea"/><stop offset="1" stop-color="#f6f5ed"/></linearGradient><linearGradient id="hill" x2="0" y2="1"><stop stop-color="#75998b"/><stop offset="1" stop-color="#b5c9bd"/></linearGradient></defs>
+<path fill="url(#sky)" d="M0 0h800v500H0z"/><circle cx="605" cy="116" r="42" fill="#f9f5e7"/>
+<path d="M200 320 300 214 335 239 394 146 427 188 477 127 520 206 562 181 660 298 729 211 800 258v242H200Z" fill="#cddbd2"/>
+<path d="m320 349 108-115 38 39 68-104 42 42 36-16 79 108 56-41 53 81v157H320Z" fill="#a9c2b5"/>
+<path d="m441 403 62-88 42 27 47-67 48 19 49-101 34 49 23-9 54 66v201H441Z" fill="url(#hill)"/>
+<path d="m0 402 49-33 42 15 41-57 42 20 23-40 86 77 46-10 68 39 64-25 44 40 66-21 51 32 74-20 104 55v26H0Z" fill="#456f61" opacity=".22"/>
+<path d="M0 438c148-49 207 53 358 8s291-36 442 24v30H0Z" fill="#f3f4ec" opacity=".8"/>
+<g stroke="#4f7567" stroke-width="1.2" opacity=".5"><path d="m519 122 8 3 7-4m-40 20 6 2 5-3m39-48 5 2 5-2"/></g>
+<path d="M660 500c-14-46-18-68-16-100m0 43-16-16m17-6 14-21" stroke="#537464" stroke-width="3"/><g fill="#537464"><path d="m619 418 29-21 21 20-21-5ZM625 402l21-17 17 15-16-4Z"/></g>
+</svg>

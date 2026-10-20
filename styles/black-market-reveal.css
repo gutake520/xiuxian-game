@@ -25,3 +25,12 @@
 @keyframes gm-text{0%,58%{opacity:0;transform:translateY(10px)}76%,100%{opacity:1;transform:translateY(0)}}
 @keyframes gm-particle{0%{opacity:0;transform:translate(0,0) scale(.2)}20%{opacity:1}100%{opacity:0;transform:translate(var(--x),var(--y)) scale(.4)}}
 @media(prefers-reduced-motion:reduce){#xg-panel .xg-manual-reveal .gm-stage.play .gm-box{opacity:0;animation:none}#xg-panel .xg-manual-reveal .gm-stage.play .gm-card{opacity:1;transform:translate(-50%,-54%) scale(1);animation:none}#xg-panel .xg-manual-reveal .gm-stage.play .gm-reveal{opacity:1;transform:none;animation:none}#xg-panel .xg-manual-reveal .gm-stage.play .gm-halo{opacity:.65;transform:translate(-50%,-50%);animation:none}#xg-panel .xg-manual-reveal .gm-stage.play .gm-rays{opacity:.5;animation:none}#xg-panel .xg-manual-reveal .gm-stage.play .gm-sparks{display:none}}
+
+/* The keepsake retains its ink-and-gold cover, framed by the new paper theme. */
+#xg-panel .xg-manual-reveal{background:#e9eee4f5;padding:20px}
+#xg-panel .xg-manual-reveal .gm-stage{--ink:#284c3b;--gold:#a68546;border:1px solid #d1dac4;border-radius:20px;background:radial-gradient(circle at 50% 42%,#f6efd7,#e6ecdc 66%,#d8e3d0)}
+#xg-panel .xg-manual-reveal .gm-halo{filter:blur(5px);background:radial-gradient(circle,#fffbed,#e0d3a477 45%,transparent 72%)}
+#xg-panel .xg-manual-reveal .gm-rays{background:repeating-conic-gradient(from 0deg,transparent 0deg 18deg,#bdad7044 21deg 24deg,transparent 28deg 43deg)}
+#xg-panel .xg-manual-reveal .gm-reveal,#xg-panel .xg-manual-reveal .gm-reveal strong{color:var(--jade)!important;text-shadow:none}
+#xg-panel .xg-manual-reveal .gm-card{filter:drop-shadow(0 9px 14px #65754d44)}
+#xg-panel .xg-manual-reveal [data-close-reveal]{background:var(--jade);border-color:var(--jade);color:#fffefa;border-radius:12px;padding:12px 28px}

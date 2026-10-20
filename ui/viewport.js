@@ -6,8 +6,8 @@ export function attachViewportPanel(panel,win=window,doc=document){
   const width=viewport?.width||win.innerWidth,height=viewport?.height||win.innerHeight;
   const left=viewport?.offsetLeft||0,top=viewport?.offsetTop||0;
   const styles={position:'fixed',left:`${left+width/2}px`,top:`${top+height/2}px`,
-   width:`${Math.max(1,Math.min(width-24,Math.max(280,width*.86),580))}px`,
-   height:`${Math.max(1,Math.min(height-20,height*.88,820))}px`,
+   width:`${Math.max(1,Math.min(width-16,600))}px`,
+   height:`${Math.max(1,Math.min(height-16,height*.96,880))}px`,
    transform:'translate(-50%, -50%)',margin:'0',bottom:'auto',right:'auto'};
   for(const [key,value] of Object.entries(styles))panel.style.setProperty(key,value,'important');
  };

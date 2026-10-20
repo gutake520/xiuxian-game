@@ -25,7 +25,7 @@ function practiceCanvas(api,id,onClose){
  sheet.classList.add('xg-practice-sheet');sheet.querySelector('[data-close]').textContent='结束并结算';
  body.innerHTML=`<div class="xg-game-hud"><span data-count>灵气 0 / 30</span><span data-lives>灵珠 ♥♥♥</span></div><canvas width="640" height="800" tabindex="0" aria-label="修炼打砖块，拖动接灵台或用左右方向键移动"></canvas><div class="xg-feature-row"><button type="button" data-launch>发射灵珠</button><button type="button" data-pause>暂停</button></div><small>左右拖动接灵台；也可使用键盘方向键和空格。切到后台自动暂停。</small>`;
  const canvas=body.querySelector('canvas'),ctx=canvas.getContext('2d');ctx.scale(2,2);
- const palette=['#f7b454','#ef769b','#b88cff','#76b9ff','#5cdbbe','#d9e877'];
+ const palette=['#bd9c62','#b98277','#9d9e7a','#78998d','#639879','#b1b877'];
  const cleanup=()=>{if(cleaned)return;cleaned=true;cancelAnimationFrame(raf);abort.abort();api.setCleanup(null)};api.setCleanup(cleanup);
  const launch=()=>{if(!paused&&!finished)launchBall(game)};
  body.querySelector('[data-launch]').onclick=launch;
@@ -46,14 +46,14 @@ function practiceCanvas(api,id,onClose){
   finally{saving=false}
  }
  function draw(){
-  ctx.clearRect(0,0,game.w,game.h);const bg=ctx.createLinearGradient(0,0,game.w,game.h);bg.addColorStop(0,'#182145');bg.addColorStop(.55,'#13243c');bg.addColorStop(1,'#102f2b');ctx.fillStyle=bg;ctx.fillRect(0,0,game.w,game.h);
-  ctx.fillStyle='#ffffff38';for(let i=0;i<30;i++){ctx.beginPath();ctx.arc((i*73+13)%320,(i*47+7)%400,1,0,Math.PI*2);ctx.fill()}
-  for(const brick of game.bricks){if(!brick.alive)continue;ctx.shadowBlur=8;ctx.shadowColor=palette[brick.color];ctx.fillStyle=palette[brick.color];ctx.beginPath();ctx.roundRect(brick.x,brick.y,brick.w,brick.h,5);ctx.fill();ctx.shadowBlur=0;ctx.fillStyle='#ffffff70';ctx.fillRect(brick.x+5,brick.y+3,brick.w-10,2)}
+  ctx.clearRect(0,0,game.w,game.h);const bg=ctx.createLinearGradient(0,0,game.w,game.h);bg.addColorStop(0,'#eef2e6');bg.addColorStop(.55,'#e5eddf');bg.addColorStop(1,'#d5e3ce');ctx.fillStyle=bg;ctx.fillRect(0,0,game.w,game.h);
+  ctx.fillStyle='#82987825';for(let i=0;i<30;i++){ctx.beginPath();ctx.arc((i*73+13)%320,(i*47+7)%400,1,0,Math.PI*2);ctx.fill()}
+  for(const brick of game.bricks){if(!brick.alive)continue;ctx.shadowBlur=0;ctx.shadowColor=palette[brick.color];ctx.fillStyle=palette[brick.color];ctx.beginPath();ctx.roundRect(brick.x,brick.y,brick.w,brick.h,5);ctx.fill();ctx.shadowBlur=0;ctx.fillStyle='#ffffff70';ctx.fillRect(brick.x+5,brick.y+3,brick.w-10,2)}
   for(const p of game.particles){ctx.globalAlpha=p.life/.6;ctx.fillStyle=palette[p.color];ctx.fillRect(p.x,p.y,3,3)}ctx.globalAlpha=1;
-  const paddle=game.paddle;ctx.shadowBlur=16;ctx.shadowColor='#71ffee';ctx.fillStyle='#abfff2';ctx.beginPath();ctx.roundRect(paddle.x-paddle.width/2,paddle.y,paddle.width,8,4);ctx.fill();
-  ctx.fillStyle='#fff4c4';ctx.shadowColor='#ffe9a1';ctx.beginPath();ctx.arc(game.ball.x,game.ball.y,game.ball.r,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0;
-  if(game.combo>1){ctx.fillStyle='#ffe5ab';ctx.font='14px sans-serif';ctx.textAlign='center';ctx.fillText('连击 '+game.combo,160,205)}
-  if(paused||!game.launched){ctx.fillStyle='#07111d99';ctx.fillRect(0,220,320,45);ctx.fillStyle='#e5f5ee';ctx.font='13px sans-serif';ctx.textAlign='center';ctx.fillText(paused?'灵境暂停':'点按发射 · 拖动接灵台',160,247)}
+  const paddle=game.paddle;ctx.shadowBlur=3;ctx.shadowColor='#52785f';ctx.fillStyle='#416d53';ctx.beginPath();ctx.roundRect(paddle.x-paddle.width/2,paddle.y,paddle.width,8,4);ctx.fill();
+  ctx.fillStyle='#ad8050';ctx.shadowColor='#c3a46e';ctx.beginPath();ctx.arc(game.ball.x,game.ball.y,game.ball.r,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0;
+  if(game.combo>1){ctx.fillStyle='#567346';ctx.font='14px sans-serif';ctx.textAlign='center';ctx.fillText('连击 '+game.combo,160,205)}
+  if(paused||!game.launched){ctx.fillStyle='#e9efdfdd';ctx.fillRect(0,220,320,45);ctx.fillStyle='#486344';ctx.font='13px sans-serif';ctx.textAlign='center';ctx.fillText(paused?'灵境暂停':'点按发射 · 拖动接灵台',160,247)}
  }
  function frame(time){if(cleaned||finished)return;if(!sheet.isConnected){cleanup();return}const dt=previous?Math.min(.04,(time-previous)/1000):0;previous=time;if(!paused)stepPractice(game,dt);draw();body.querySelector('[data-count]').textContent=`灵气 ${game.cleared} / ${game.bricks.length}`;body.querySelector('[data-lives]').textContent='灵珠 '+'♥'.repeat(game.lives);if(game.done){finish();return}raf=requestAnimationFrame(frame)}
  raf=requestAnimationFrame(frame);
