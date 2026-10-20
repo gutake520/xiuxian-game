@@ -25,11 +25,11 @@ function met(){const s=make();assert.equal(maybeMeetZhang(s,()=>0),true);finishZ
 function complete(s,n,kind=0){const g=startZhangPlay(s,day(n),()=>kind);if(g.kind==='dice'){const id=g.world.stallGames.dice.id;startDice(g.world,id,'big',0,()=>0);revealDice(g.world,id)}else if(g.kind==='gomoku'){const id=g.world.stallGames.gomoku.id;startGomoku(g.world,id,'medium',0);leaveStallGame(g.world,'gomoku',id)}else playPeakPuzzle(g.world,g.world.peakPuzzle.id,'surrender');return finishZhangPlay(s,g.id,'surrender',day(n))}
 function bonded(){const s=met();s.zhangHuaijin.giftsUnlocked=true;s.zhangHuaijin.affinity=100;answerZhang(s,'accept',at);return s}
 
-test('foundation stroll alone triggers once, honors the five-encounter cap and probability boundary',()=>{
+test('foundation stroll alone triggers once, honors the seven-encounter cap and probability boundary',()=>{
  const low=make();low.player.realm='炼气十层';assert.throws(()=>takeStroll(low,'foundation',at,()=>0));assert.equal(maybeMeetZhang(low,()=>0),false);
  const miss=make();assert.equal(maybeMeetZhang(miss,()=>.1),false);
  const s=make();takeStroll(s,'foundation',at,()=>0);assert.equal(s.battle.kind,'zhang-intro');assert.equal(s.battle.dodgeRate,60);assert.equal(s.stroll.encounters,1);finishZhangEncounter(s);takeStroll(s,'foundation',at,()=>0);assert.equal(s.battle,null);assert.equal(s.stroll.encounters,1);
- const cap=make();cap.stroll={day:`2026-10-21`,count:7,encounters:5};takeStroll(cap,'foundation',at,()=>0);assert.equal(cap.zhangHuaijin,undefined);
+ const cap=make();cap.stroll={day:`2026-10-21`,count:7,encounters:7};takeStroll(cap,'foundation',at,()=>0);assert.equal(cap.zhangHuaijin,undefined);
 });
 test('scripted battle defeats without costs, wear or consuming rescue; escape also unlocks cave',t=>{
  t.mock.method(Math,'random',()=>.9);

@@ -1,3 +1,5 @@
+import {foundationStoryPending} from '../systems/foundation-story.js';
+import {showFoundationStory} from './foundation-story.js';
 import {showTreasure} from './treasure.js';
 import {treasureCanDig} from '../systems/treasure.js';
 import {ITEMS} from '../data/items.js';
@@ -14,6 +16,7 @@ export function showBattle({getSave,actions,activate,onExit,onYanEncounter},endR
  const save=getSave(),battle=save?.battle;activate('map');
  const content=document.getElementById('xg-content');
  if(!battle&&save.yanAftermath)return onYanEncounter();
+ if(!battle&&!save.divinationPending&&!save.encounterPending&&foundationStoryPending(save))return showFoundationStory({getSave,actions,activate,onDone:onExit});
  if(!battle&&!save.divinationPending&&!save.encounterPending&&(save.bossLine?.phase==='ambush'||save.bossLine?.rescuePending))return showBossStory({getSave,actions,activate,onDone:onExit});
  if(!battle){
   const result=endResult||save?.lastBattle;

@@ -7,6 +7,6 @@ export const TREASURE_TIERS=[
  {realm:'筑基',reward:15,peaks:FOUNDATION_PEAKS.filter(p=>p.kind==='monster')}
 ];
 export const TREASURE_GAMES={
- real:{durationMs:18000,intervalMs:1200,visibleMs:1050,target:8},
- fake:{durationMs:18000,intervalMs:500,visibleMs:280,target:24}
+ real:{durationMs:12000,intervalMs:1200,visibleMs:1050,target:10},
+ fake:{durationMs:5000,intervalMs:500,visibleMs:280,target:10}
 };

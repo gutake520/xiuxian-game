@@ -1,3 +1,4 @@
+import {foundationStoryPending} from './foundation-story.js';
 import {YAN_NAME,YAN_ENCOUNTERS,YAN_ENDINGS,YAN_GIFTS,YAN_OTHER_GIFTS,YAN_SCENES} from '../data/yan-tingyun.js';
 import {giveCompanionGift,addCompanion,removeCompanion} from './relationships.js';
 import {companionBreakupFee} from './foxes.js';
@@ -12,7 +13,7 @@ export function queueYanAfterVictory(save,battleId){
  if(!yanState(save).closed&&!yanState(save).unlocked)save.yanEncounterBattleId=battleId;
 }
 export function maybeMeetYan(save){
- if(!save.yanEncounterBattleId||save.battle||save.encounterPending||save.divinationPending||save.seniorRewardPending||save.bossLine?.phase==='ambush'||save.bossLine?.rescuePending||save.yanEncounterPending||save.yanAftermath)return false;
+ if(!save.yanEncounterBattleId||save.battle||save.encounterPending||save.divinationPending||save.seniorRewardPending||save.bossLine?.phase==='ambush'||save.bossLine?.rescuePending||foundationStoryPending(save)||save.yanEncounterPending||save.yanAftermath)return false;
  delete save.yanEncounterBattleId;
  const state=yanState(save);
  if(state.closed||state.unlocked||state.rescues>=3||Math.random()>=.05)return false;

@@ -1,3 +1,4 @@
+import {ensureFoundationStory} from './foundation-story.js';
 import {realmProgress} from '../data/realms.js';
 import {equipmentStats} from './inventory.js';
 import {LIBRARY_ELDERS} from './sect-library.js';
@@ -10,6 +11,7 @@ export const bossRescuerName=save=>{
 };
 
 export function ensureBossLine(save){
+ ensureFoundationStory(save);
  if(!save.bossLine&&realmProgress(save.player).index===9)save.bossLine={phase:'ambush'};
  return save.bossLine;
 }

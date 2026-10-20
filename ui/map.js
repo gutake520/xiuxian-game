@@ -1,3 +1,4 @@
+import {foundationStoryPending,searchPursuerBody,canEnterDongxia,enterDongxia} from '../systems/foundation-story.js';
 import {showZhang} from './zhang-huaijin.js';
 import {ZHANG_CAVE} from '../data/zhang-huaijin.js';
 import {showTreasure} from './treasure.js';
@@ -26,7 +27,7 @@ export function createMapUI({getSave,activate,actions,onSectBattleExit}){
  const content=()=>document.getElementById('xg-content');
  const foundationPlayer=()=>String(getSave()?.player?.realm||'').startsWith('筑基');
  const petChoices=(save,name)=>{const foundation=String(save.player.realm).startsWith('筑基'),rented=(foundation?save.foundationPetRentals:save.petRentals)>0,attack=beastCanFight(save,'attack'),guard=beastCanFight(save,'guard');return rented||attack||guard?`<fieldset class="xg-card"><legend>灵兽出战</legend><label><input type="radio" name="${name}" value="" checked> 不出战</label>${['attack','guard'].filter(type=>beastCanFight(save,type)||rented).map(type=>`<label><input type="radio" name="${name}" value="${type}"> ${escapeHTML(beastCanFight(save,type)?beastName(save,type):'租借灵兽')} · ${type==='attack'?`追击 +${foundation?'0.80':'0.50'}`:`守护 −${foundation?'0.50':'0.30'}`}</label>`).join('')}</fieldset>`:''};
- const battle=outcome=>showBattle({getSave,activate,actions,onYanEncounter:renderYanEncounter,onExit:(getSave().battle?.kind||getSave().lastBattle?.kind)==='zhang-intro'?()=>showZhang({getSave,actions},render):getSave().bossLine?.phase==='ambush'||getSave().bossLine?.rescuePending?renderMonsters:['sect-tournament','sect-senior'].includes(getSave().battle?.kind||getSave().lastBattle?.kind)?onSectBattleExit:(getSave().battle?.kind||getSave().lastBattle?.kind)==='fox-npc'?()=>renderNpc(QI_PEAKS.find(p=>p.id===(getSave().battle?.monsterId||getSave().lastBattle?.monsterId))):FOUNDATION_MONSTERS.some(monster=>monster.id===(getSave().battle?.monsterId||getSave().lastBattle?.monsterId))?renderFoundation:renderMonsters},outcome);
+ const battle=outcome=>showBattle({getSave,activate,actions,onYanEncounter:renderYanEncounter,onExit:foundationStoryPending(getSave())||(getSave().battle?.kind||getSave().lastBattle?.kind)==='wounded-pursuer'?render:(getSave().battle?.kind||getSave().lastBattle?.kind)==='zhang-intro'?()=>showZhang({getSave,actions},render):getSave().bossLine?.phase==='ambush'||getSave().bossLine?.rescuePending?renderMonsters:['sect-tournament','sect-senior'].includes(getSave().battle?.kind||getSave().lastBattle?.kind)?onSectBattleExit:(getSave().battle?.kind||getSave().lastBattle?.kind)==='fox-npc'?()=>renderNpc(QI_PEAKS.find(p=>p.id===(getSave().battle?.monsterId||getSave().lastBattle?.monsterId))):FOUNDATION_MONSTERS.some(monster=>monster.id===(getSave().battle?.monsterId||getSave().lastBattle?.monsterId))?renderFoundation:renderMonsters},outcome);
  function heading(title,subtitle){return `<div class="xg-map-heading"><h2>${title}</h2>${subtitle?`<p>${subtitle}</p>`:''}</div>`}
  const peaks=(locations,kind)=>`<div class="xg-map-landscape xg-map-${kind}">${locations.map((place,i)=>`<button type="button" class="xg-map-hill${place.locked?' xg-map-locked':''}" style="--hill-x:${place.x}%;--hill-y:${place.y}%;--hill-size:${place.size||1}" ${place.locked?'disabled':''} ${place.id?`data-${kind}="${place.id}"`:''}><span class="xg-map-label">${place.name}</span><span class="xg-map-summit" aria-hidden="true"></span></button>`).join('')}</div>`;
  function render(){
@@ -35,16 +36,18 @@ export function createMapUI({getSave,activate,actions,onSectBattleExit}){
   if(getSave().yanEncounterPending||getSave().yanAftermath)return renderYanEncounter();
   if(getSave().qiSecret)return renderSecret();
   if(getSave().qiMeditation)return renderMeditation();
-  if(getSave().bossLine?.phase==='ambush'||getSave().bossLine?.rescuePending)return battle();
+  if(getSave().bossLine?.phase==='ambush'||getSave().bossLine?.rescuePending||foundationStoryPending(getSave()))return battle();
   activate('map');
   content().innerHTML=`<section class="xg-map-sheet">${heading('山河图','点一座山，走一段路。')}<div class="xg-feature xg-feature-row"><button type="button" data-stroll>四处走走</button>${getSave().treasure?'<button type="button" data-treasure>藏宝图</button>':''}</div>${peaks([
    {name:'坊市',id:'market',x:12,y:6,size:.8},{name:'黑市',id:'blackmarket',x:68,y:17,size:.76},
    foundationPlayer()?{name:'望川岭',id:'foundation',x:36,y:37,size:.85}:{name:'远山 · 待定',x:36,y:37,locked:true,size:.85},{name:'九宗山门',id:'sects',x:8,y:69,size:1.08},
    {name:'灵兽峰',id:'spirit-peak',x:10,y:34,size:.7},
    {name:'丰原镇',id:'monsters',x:64,y:62,size:1.04},
+   ...(getSave().foundationStory?.dongxiaClue?[{name:'东夏国 · 金丹',id:'dongxia',x:42,y:84,size:.7,locked:!canEnterDongxia(getSave())}]:[]),
    ...(getSave().zhangHuaijin?.unlocked?[{name:ZHANG_CAVE,id:'zhang-cave',x:39,y:5,size:.72}]:[]),
    ...(yanState(getSave()).unlocked?[{name:YAN_HILL,id:'yan-hill',x:74,y:39,size:.72}]:[])
   ],'map')}</section>`;
+  content().querySelector('[data-map="dongxia"]')?.addEventListener('click',async()=>{try{await actions.mutate(enterDongxia,{message:r=>r});renderDongxia()}catch(error){content().querySelector('.xg-map-heading p').textContent=error.message}});
   content().querySelector('[data-treasure]')?.addEventListener('click',()=>showTreasure({getSave,actions},render));
   content().querySelector('[data-stroll]').onclick=()=>showStroll({getSave,actions},render);
   content().querySelector('[data-map="spirit-peak"]').onclick=()=>showSpiritPeak({getSave,actions},render);
@@ -188,25 +191,39 @@ export function createMapUI({getSave,activate,actions,onSectBattleExit}){
  function renderFoundation(){
   if(!foundationPlayer())return render();
   activate('map');
-  content().innerHTML=`<section class="xg-map-sheet"><button class="xg-map-back" type="button">← 返回地图</button>${heading('望川岭','筑基修士出没的山岭。')}${peaks(realmProgress(getSave().player).index>=19?[...FOUNDATION_PEAKS,{id:'foundation-ending',name:'归元渡',kind:'boss',x:65,y:72,size:.8}]:FOUNDATION_PEAKS,'foundation')}</section>`;
+  content().innerHTML=`<section class="xg-map-sheet"><button class="xg-map-back" type="button">← 返回地图</button>${heading('望川岭','筑基修士出没的山岭。')}${peaks(realmProgress(getSave().player).index>=19?[...FOUNDATION_PEAKS,{id:'foundation-ending',name:getSave().foundationStory?.phase==='wounded'||getSave().foundationStory?.phase==='dead'?'栖息崖':'归元渡',kind:'boss',x:65,y:72,size:.8}]:FOUNDATION_PEAKS,'foundation')}</section>`;
   back(render);
   content().querySelectorAll('[data-foundation]').forEach(button=>button.onclick=()=>renderFoundationPeak(button.dataset.foundation));
  }
  function renderFoundationPeak(id){
   if(!foundationPlayer())return render();
-  const peak=id==='foundation-ending'?{name:'归元渡',monsterId:'foundation-warden'}:FOUNDATION_PEAKS.find(place=>place.id===id);
+  if(id==='foundation-ending')return renderPursuer();
+  const peak=FOUNDATION_PEAKS.find(place=>place.id===id);
   if(!peak)return renderFoundation();
   const level=realmProgress(getSave().player).index-9;
   const foes=FOUNDATION_MONSTERS.filter(m=>(m.id===peak.monsterId||m.id.startsWith(peak.monsterId+'-'))&&level>=m.minLevel);
   if(!foes.length)return renderFoundation();
-  if(id==='foundation-ending'&&getSave().foundationEnding?.defeated){
-   activate('map');content().innerHTML=`<section class="xg-map-sheet"><button class="xg-map-back" type="button">← 返回望川岭</button>${heading('归元渡','风过旧渡，剑痕仍在。')}<div class="xg-card"><h3>叩问金丹</h3><p>${realmProgress(getSave().player).complete?'你已筑基圆满。封渡客留下的丹纹，在灵台中渐渐清晰。':'封渡客已与你罢战。待筑基十层修为圆满，再来参悟丹纹。'}</p><button type="button" disabled>金丹篇 · 待开放</button></div></section>`;back(renderFoundation);return;
-  }
+
   activate('map');
-  content().innerHTML=`<section class="xg-map-sheet"><button class="xg-map-back" type="button">← 返回望川岭</button>${heading(peak.name,id==='foundation-ending'?'一名灰衣剑客守着旧渡口，邀你以剑问道。':'山中对手')}${petChoices(getSave(),'xg-foundation-pet')}${foes.map(monster=>`<div class="xg-card xg-map-monster"><h3>${monster.name}</h3><p>生命 ${monster.hp} · 攻击 ${monster.attack} · 速度 ${monster.speed}</p><small>${monster.drop}</small><button type="button" data-foundation-foe="${monster.id}">迎战</button></div>`).join('')}<p role="status" aria-live="polite"></p></section>`;
+  content().innerHTML=`<section class="xg-map-sheet"><button class="xg-map-back" type="button">← 返回望川岭</button>${heading(peak.name,'山中对手')}${petChoices(getSave(),'xg-foundation-pet')}${foes.map(monster=>`<div class="xg-card xg-map-monster"><h3>${monster.name}</h3><p>生命 ${monster.hp} · 攻击 ${monster.attack} · 速度 ${monster.speed}</p><small>${monster.drop}</small><button type="button" data-foundation-foe="${monster.id}">迎战</button></div>`).join('')}<p role="status" aria-live="polite"></p></section>`;
   back(renderFoundation);
   content().querySelectorAll('[data-foundation-foe]').forEach(button=>button.onclick=async()=>{button.disabled=true;try{const pet=content().querySelector('[name="xg-foundation-pet"]:checked')?.value||null;await actions.startBattle(button.dataset.foundationFoe,pet);battle()}catch(error){content().querySelector('[role=status]').textContent=error.message;button.disabled=false}});
 
+ }
+ function renderDongxia(){
+  activate('map');
+  content().innerHTML=`<section class="xg-map-sheet"><button class="xg-map-back" type="button">← 返回山河图</button>${heading('东夏国','金丹地图')}<div class="xg-card"><p>越过界碑，东夏国的关道铺展在眼前。密信中提到的灭门主使仍留在此地。</p><p>东夏国后续地点与战斗尚未开放。</p></div></section>`;back(render);
+ }
+ function renderPursuer(){
+  if(foundationStoryPending(getSave()))return battle();
+  const line=getSave().foundationStory;
+  if(!line)return renderFoundation();
+  const wounded=line.phase==='wounded',dead=line.phase==='dead',name=escapeHTML(line.enemy.name),foe=bossAttributes(getSave(),1.1);
+  activate('map');
+  content().innerHTML=`<section class="xg-map-sheet"><button class="xg-map-back" type="button">← 返回望川岭</button>${heading(wounded||dead?'栖息崖':'归元渡',name)}<div class="xg-card"><p>${wounded?escapeHTML(line.enemy.wounded):dead?`${name}已经死去，尸身仍在石台旁。`:'密信已经收好：灭门主使仍在东夏国。待突破金丹，就循信中的路线前往。'}</p>${wounded?`<p>生命 ${foe.maxHp.toFixed(2)} · 攻击 ${foe.attack.toFixed(2)} · 防御 ${foe.defense.toFixed(2)} · 速度 ${foe.speed.toFixed(2)}</p>`:''}${!wounded&&!dead?`<p>${realmProgress(getSave().player).complete?'你已筑基圆满。':'修为尚未圆满。'}</p><button type="button" disabled>金丹突破 · 待开放</button>`:''}</div>${wounded?`${petChoices(getSave(),'xg-pursuer-pet')}<button type="button" data-pursuer-fight>追杀仇人</button>`:dead?'<button type="button" data-pursuer-search>搜身</button>':''}<p role="status"></p></section>`;
+  back(renderFoundation);
+  content().querySelector('[data-pursuer-fight]')?.addEventListener('click',async event=>{const button=event.currentTarget;button.disabled=true;try{await actions.startBattle('wounded-pursuer',content().querySelector('[name="xg-pursuer-pet"]:checked')?.value||null);battle()}catch(error){content().querySelector('[role=status]').textContent=error.message;button.disabled=false}});
+  content().querySelector('[data-pursuer-search]')?.addEventListener('click',async event=>{const button=event.currentTarget;button.disabled=true;try{const {result}=await actions.mutate(searchPursuerBody,{message:r=>r});renderPursuer();content().querySelector('[role=status]').textContent=result}catch(error){content().querySelector('[role=status]').textContent=error.message;button.disabled=false}});
  }
  function renderEncounter(id){
   if(getSave().battle||getSave().encounterPending||getSave().bossLine?.phase==='ambush'||getSave().bossLine?.rescuePending)return battle();

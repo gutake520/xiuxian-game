@@ -24,7 +24,7 @@ test('unlimited ordinary visits survive reload and daily count resets',()=>{
  assert.deepEqual(s.player,player);
  takeStroll(loaded,'market',now+86400000);assert.equal(strollCount(loaded,now+86400000),1);
 });
-test('treasure, sokoban and maze share five daily encounters; gossip and pending games do not consume them',()=>{
+test('treasure, sokoban and maze share seven daily encounters; gossip and pending games do not consume them',()=>{
  const s=make();
  takeStroll(s,'blackmarket',now,()=>0);assert.equal(strollEncounterCount(s,now),1);
  takeStroll(s,'blackmarket',now,()=>.99);assert.equal(strollEncounterCount(s,now),1);
@@ -33,9 +33,10 @@ test('treasure, sokoban and maze share five daily encounters; gossip and pending
  s.peakPuzzle=null;takeStroll(s,'spirit-peak',now,()=>.1);assert.equal(s.peakPuzzle.kind,'maze');assert.equal(strollEncounterCount(s,now),3);
  takeStroll(s,'market',now,()=>0);assert.equal(strollEncounterCount(s,now),4);
  takeStroll(s,'blackmarket',now,()=>0);assert.equal(strollEncounterCount(s,now),5);
+ s.peakPuzzle=null;takeStroll(s,'spirit-peak',now,()=>0);s.treasure=null;takeStroll(s,'blackmarket',now,()=>0);
  const loaded=migrateSave(JSON.parse(JSON.stringify(s)),now);loaded.peakPuzzle=null;loaded.treasure=null;
  for(let i=0;i<20;i++)takeStroll(loaded,i%2?'blackmarket':'spirit-peak',now,()=>0);
- assert.equal(loaded.peakPuzzle,null);assert.equal(loaded.treasure,null);assert.equal(strollEncounterCount(loaded,now),5);
+ assert.equal(loaded.peakPuzzle,null);assert.equal(loaded.treasure,null);assert.equal(strollEncounterCount(loaded,now),7);
  takeStroll(loaded,'blackmarket',now+86400000,()=>0);assert.ok(loaded.treasure);assert.equal(strollEncounterCount(loaded,now+86400000),1);
  const old=make();old.stroll={day:s.stroll.day,count:10};takeStroll(old,'blackmarket',now,()=>0);assert.equal(strollEncounterCount(old,now),1);
 });
@@ -43,10 +44,10 @@ test('all thirty approved stories can be drawn, battle visits do not consume quo
  for(const p of STROLL_PLACES){assert.equal(p.stories.length,5);const s=make();s.player.realm='筑基一层';for(let i=0;i<5;i++){let roll=0;assert.equal(takeStroll(s,p.id,now,()=>roll++===0?i/5+.1:.99).text,p.stories[i])}}
  const s=make();s.battle={};const before=structuredClone(s);assert.throws(()=>takeStroll(s,'market',now));assert.deepEqual(s,before);
 });
-test('concurrent visits cannot exceed five encounters',async()=>{
- globalThis.indexedDB=indexedDB;const s=make();takeStroll(s,'market',now,()=>.99);s.stroll.encounters=4;await writeSave(s);
+test('concurrent visits cannot exceed seven encounters',async()=>{
+ globalThis.indexedDB=indexedDB;const s=make();takeStroll(s,'market',now,()=>.99);s.stroll.encounters=6;await writeSave(s);
  await Promise.all([ 'blackmarket','spirit-peak' ].map(id=>updateSave(s.slot,next=>{takeStroll(next,id,now,()=>0);return next})));
- const stored=await readSave(s.slot);assert.equal(strollEncounterCount(stored,now),5);assert.equal(Number(!!stored.treasure)+Number(!!stored.peakPuzzle),1);
+ const stored=await readSave(s.slot);assert.equal(strollEncounterCount(stored,now),7);assert.equal(Number(!!stored.treasure)+Number(!!stored.peakPuzzle),1);
 });
 test('map entry opens without consuming, persists result, returns and restores buttons after errors',async t=>{
  const {document}=parseHTML('<html><body><main id="xg-panel"><div id="xg-content"></div></main></body></html>');const previous=globalThis.document;globalThis.document=document;t.after(()=>{globalThis.document=previous});

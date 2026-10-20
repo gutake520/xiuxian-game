@@ -1,3 +1,4 @@
+import {foundationStoryPending} from './foundation-story.js';
 import {finishZhangEncounter,tryZhangRescue} from './zhang-huaijin.js';
 import {advanceTreasure} from './treasure.js';
 import {chargedMultiplier,rootCount} from '../data/technique-slots.js';
@@ -64,6 +65,11 @@ function resolveVictory(save,now,messages){
   save.foxes??={};save.foxes[battle.monsterId]??={affinity:0,seen:[]};save.foxes[battle.monsterId].met=true;
   const result=finish(save,'victory',{rewards:[],xp:0});messages.push(`${battle.name}收起招式，愿与你正式结识。`);result.log=[...messages];return result;
  }
+ if(battle.kind==='wounded-pursuer'){
+  save.foundationStory.phase='dead';
+  messages.push(`${battle.name}倒在石台旁，再没有回应。你可以返回栖息崖搜查尸身。`);
+  return finish(save,'victory',{rewards:[],xp:0,log:[...messages]});
+ }
  if(battle.kind==='wounded-boss'){
   const result=finish(save,'victory',{rewards:[],xp:0,kind:'wounded-boss'});
   save.bossLine.phase='defeated';save.bossLine.insight=true;
@@ -97,7 +103,8 @@ function resolveVictory(save,now,messages){
  ensureBossLine(save);
  finish(save,'victory',result);
  messages.push(`胜利！修为 +${result.xp}，${result.rewards.join('、')}。`);
- if(save.bossLine?.phase==='ambush')messages.push('你刚踏入炼气十层，故人衣纹忽然在山道尽头出现。');
+ if(foundationStoryPending(save))messages.push('你刚踏入筑基十层，灭门仇人的同伙已追至归元渡。');
+ else if(save.bossLine?.phase==='ambush')messages.push('你刚踏入炼气十层，故人衣纹忽然在山道尽头出现。');
  else if(monster.humanoid&&!battle.retaliation&&save.player.hp>0&&Math.random()<.3){
   beginBattle(save,monster.id,null,true);
   save.battle.log=[...messages.slice(-3),'你敢杀我兄弟？对方的同伴冲出，追战开始。'].slice(-10);
@@ -106,7 +113,7 @@ function resolveVictory(save,now,messages){
   if(maybeMeetHerbalist(save,battle.id))messages.push(`归途中遇见受伤的${HERBALIST_NAME}，他向你讨一株回血草。`);
  }
  if(!save.battle&&advanceTreasure(save,battle))messages.push(save.treasure.step===save.treasure.route.length?'图上的最后一处标记亮起。待此间事了，可以摸宝藏了。':`藏宝图上的标记亮起，下一处是${save.treasure.route[save.treasure.step].name}。`);
- if(!save.battle&&save.bossLine?.phase!=='ambush')queueYanAfterVictory(save,battle.id);
+ if(!save.battle&&save.bossLine?.phase!=='ambush'&&!foundationStoryPending(save))queueYanAfterVictory(save,battle.id);
  delete save.lastBattle.loot;
  save.lastBattle.log=[...messages];
  return save.lastBattle;
@@ -117,14 +124,21 @@ export function beginBattle(save,id,pet=null,retaliation=false){
  if(save.encounterPending)throw new Error(`请先回应${HERBALIST_NAME}。`);
  if(save.yanEncounterPending||save.yanAftermath)throw new Error('请先回应燕停云。');
  if(save.seniorRewardPending)throw new Error('请先领取大比奖励。');
- if(save.bossLine?.phase==='ambush'||save.bossLine?.rescuePending)throw new Error('请先走完当前剧情。');
+ if(save.bossLine?.phase==='ambush'||save.bossLine?.rescuePending||foundationStoryPending(save))throw new Error('请先走完当前剧情。');
  if(save.player.cultivation< -100)throw new Error('请先去修炼。');
  const tier=realmProgress(save.player).index;if(tier<0)throw new Error('当前境界暂未开放此处战斗。');
  if(save.player.hp<=0)throw new Error('生命不足，无法迎战。');
+ if(id==='foundation-warden')throw new Error('归元渡旧事已更替，请返回地图查看师父剧情。');
+ if(id==='wounded-pursuer'){
+  if(save.foundationStory?.phase!=='wounded')throw new Error('这里没有可挑战的仇人。');
+  const foe=bossAttributes(save,1.1),chosen=selectBattlePet(save,pet),name=save.foundationStory.enemy.name;
+  save.battle={id:crypto.randomUUID(),kind:'wounded-pursuer',stage:'筑基',monsterId:null,name,...foe,hp:foe.maxHp,mp:foe.maxMp,round:0,pet:chosen,petName:chosen?(beastCanFight(save,chosen)?beastName(save,chosen):'租借灵兽'):null,petStage:'筑基',guard:false,bindRounds:[],arrayRound:0,talismansUsed:0,talismanRound:0,freeArrayUsed:false,criticalFocus:false,skillReady:{},log:[`你循着血迹找到负伤的${name}。他认出你，撑着石台提起兵刃。`]};
+  return save.battle;
+ }
  if(id==='wounded-boss'){
   if(save.bossLine?.phase!=='wounded')throw new Error('这里没有可挑战的仇人。');
   const foe=bossAttributes(save,1.1),chosen=selectBattlePet(save,pet);
-  save.battle={id:crypto.randomUUID(),kind:'wounded-boss',monsterId:null,name:BOSS_NAME,maxHp:foe.maxHp,hp:foe.maxHp,attack:foe.attack,defense:foe.defense,speed:foe.speed,maxMp:foe.maxMp,mp:foe.maxMp,critRate:foe.critRate,dodgeRate:foe.dodgeRate,round:0,pet:chosen,petName:chosen?(beastCanFight(save,chosen)?beastName(save,chosen):'租借灵兽'):null,guard:false,bindRounds:[],arrayRound:0,talismansUsed:0,talismanRound:0,freeArrayUsed:false,criticalFocus:false,skillReady:{},log:[`你在山中找到了负伤的${BOSS_NAME}。旧怨未了，战斗开始。`]};
+  save.battle={id:crypto.randomUUID(),kind:'wounded-boss',stage:'炼气',monsterId:null,name:BOSS_NAME,maxHp:foe.maxHp,hp:foe.maxHp,attack:foe.attack,defense:foe.defense,speed:foe.speed,maxMp:foe.maxMp,mp:foe.maxMp,critRate:foe.critRate,dodgeRate:foe.dodgeRate,round:0,pet:chosen,petName:chosen?(beastCanFight(save,chosen)?beastName(save,chosen):'租借灵兽'):null,guard:false,bindRounds:[],arrayRound:0,talismansUsed:0,talismanRound:0,freeArrayUsed:false,criticalFocus:false,skillReady:{},log:[`你在山中找到了负伤的${BOSS_NAME}。旧怨未了，战斗开始。`]};
   return save.battle;
  }
  if(FOXES[id]){
@@ -143,7 +157,7 @@ export function beginBattle(save,id,pet=null,retaliation=false){
 }
 export function playRound(save,action='attack',now=Date.now()){
  const battle=save.battle;if(!battle)throw new Error('没有正在进行的战斗。');
- const tournament=['sect-tournament','sect-senior'].includes(battle.kind),foxFight=battle.kind==='fox-npc',armored=tournament||battle.kind==='wounded-boss'||foxFight||battle.kind==='zhang-intro';
+ const tournament=['sect-tournament','sect-senior'].includes(battle.kind),foxFight=battle.kind==='fox-npc',armored=tournament||battle.kind==='wounded-pursuer'||battle.kind==='wounded-boss'||foxFight||battle.kind==='zhang-intro';
  if(foxFight&&battle.foxParalyzeRound===battle.round+1)action='skip';
  const skill=TECHNIQUES[action];
  if(!['attack','skip'].includes(action)&&skill?.type!=='combat')throw new Error('请选择可用的行动。');
@@ -246,7 +260,7 @@ export function useBattleArray(save,uid){
  const battle=save.battle;if(!battle)throw new Error('没有正在进行的战斗。');
  if(battle.arrayRound===battle.round+1)throw new Error('本轮已经使用过阵盘。');
  const ids=['binding-array','crafted-binding-array','foundation-binding-array','foundation-crafted-array'];
- const targetFoundation=battle.stage==='筑基'||battle.kind==='wounded-boss'||String(save.player.realm).startsWith('筑基')&&['sect-tournament','sect-senior'].includes(battle.kind);
+ const targetFoundation=battle.stage==='筑基'||String(save.player.realm).startsWith('筑基')&&['sect-tournament','sect-senior'].includes(battle.kind);
  const entry=uid?save.inventory.find(item=>item.uid===uid):save.inventory.find(item=>ids.includes(item.itemId)&&(!item.itemId.includes('crafted')||item.usesLeft>0)&&(!targetFoundation||ITEMS[item.itemId]?.stage==='筑基'));
  if(!entry||!ids.includes(entry.itemId))throw new Error('储物中没有可用的阵盘。');
  if(targetFoundation&&ITEMS[entry.itemId].stage!=='筑基')throw new Error('此阵灵力不足，困不住筑基修士。');

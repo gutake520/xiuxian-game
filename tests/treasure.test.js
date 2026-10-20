@@ -40,35 +40,46 @@ test('human retaliation must finish before advancing and fleeing never advances'
 });
 test('minigame waits for post-battle stories and rejects premature or stale settlement',()=>{
  const s=make(),map=ready(s);for(const key of ['battle','encounterPending','divinationPending','seniorRewardPending','yanEncounterPending','yanAftermath']){s[key]={};assert.equal(treasureCanDig(s),false);assert.throws(()=>startTreasureGame(s,map.id,now));delete s[key]}
- startTreasureGame(s,map.id,now);assert.throws(()=>finishTreasureGame(s,map.id,now+17999));assert.throws(()=>finishTreasureGame(s,'old',now+18000));
+ startTreasureGame(s,map.id,now);assert.throws(()=>finishTreasureGame(s,map.id,now+11999));assert.throws(()=>finishTreasureGame(s,'old',now+12000));
 });
 test('mole windows and hits persist across reload; duplicate and wrong-hole taps cannot score',()=>{
  const s=make(),map=ready(s),game=startTreasureGame(s,map.id,now,()=>0);
  assert.equal(startTreasureGame(s,map.id,now+10000),game);assert.deepEqual(activeTreasureMole(game,now),{frame:0,hole:0});
  assert.equal(hitTreasureMole(s,map.id,0,1,now),false);assert.equal(hitTreasureMole(s,map.id,0,0,now),true);assert.equal(hitTreasureMole(s,map.id,0,0,now),false);
- assert.equal(activeTreasureMole(game,now+1100),null);assert.equal(activeTreasureMole(game,now+18000),null);
- const copy=migrateSave(JSON.parse(JSON.stringify(s)),now);assert.deepEqual(copy.treasure.game.hits,[0]);assert.equal(startTreasureGame(copy,map.id,now+10000).endsAt,now+18000);
+ assert.equal(activeTreasureMole(game,now+1100),null);assert.equal(activeTreasureMole(game,now+12000),null);
+ const copy=migrateSave(JSON.parse(JSON.stringify(s)),now);assert.deepEqual(copy.treasure.game.hits,[0]);assert.equal(startTreasureGame(copy,map.id,now+10000).endsAt,now+12000);
 });
-test('truth alone decides payout on wins and losses; poor players lose no more than their balance',()=>{
+test('true maps pay per hit and fake maps keep their loss; poor players lose no more than their balance',()=>{
  for(const real of [true,false])for(const win of [true,false])for(const stones of [0,1.25,3,20]){
   const s=make(),map=ready(s,real);s.player.spiritStones=stones;const game=startTreasureGame(s,map.id,now,()=>0);
   if(win)for(let frame=0;frame<game.target;frame++)hitTreasureMole(s,map.id,frame,0,now+frame*game.intervalMs);
-  const result=finishTreasureGame(s,map.id,game.endsAt);assert.equal(result.won,win);assert.equal(s.player.spiritStones,real?stones+10:Math.max(0,stones-3));assert.equal(result.text.includes('这么穷不许打地鼠'),!real&&stones<3);
+  const result=finishTreasureGame(s,map.id,game.endsAt);assert.equal(result.won,win);assert.equal(s.player.spiritStones,real?stones+game.hits.length:Math.max(0,stones-3));assert.equal(result.text.includes('这么穷不许打地鼠'),!real&&stones<3);
   const before=structuredClone(s);assert.throws(()=>finishTreasureGame(s,map.id,game.endsAt));assert.deepEqual(s,before);
  }
- const s=make('筑基一层'),map=ready(s);startTreasureGame(s,map.id,now);finishTreasureGame(s,map.id,now+18000);assert.equal(s.player.spiritStones,35);
+ const s=make('筑基一层'),map=ready(s);startTreasureGame(s,map.id,now);finishTreasureGame(s,map.id,now+12000);assert.equal(s.player.spiritStones,20);
 });
 test('concurrent settlements write exactly once',async()=>{
  globalThis.indexedDB=indexedDB;const s=make(),map=ready(s);startTreasureGame(s,map.id,now);await writeSave(s);
- const results=await Promise.allSettled([1,2].map(()=>updateSave(s.slot,next=>{finishTreasureGame(next,map.id,now+18000);return next})));
- assert.equal(results.filter(r=>r.status==='fulfilled').length,1);assert.equal((await readSave(s.slot)).player.spiritStones,30);
+ const results=await Promise.allSettled([1,2].map(()=>updateSave(s.slot,next=>{finishTreasureGame(next,map.id,now+12000);return next})));
+ assert.equal(results.filter(r=>r.status==='fulfilled').length,1);assert.equal((await readSave(s.slot)).player.spiritStones,20);
 });
 test('UI hides truth, supports tapping and resuming expired games, and shows dig only after chain',async t=>{
  const {document,MutationObserver}=parseHTML('<html><body><main id="xg-panel"><div id="xg-content"></div></main></body></html>');const old={document:globalThis.document,MutationObserver:globalThis.MutationObserver};Object.assign(globalThis,{document,MutationObserver});t.after(()=>Object.assign(globalThis,old));
  const s=make(),map=ready(s);const api={getSave:()=>s,actions:{mutate:async fn=>({result:fn(s)})},activate:()=>{},onExit:()=>{},onYanEncounter:()=>{}};
  showTreasure(api,()=>{});assert.doesNotMatch(document.body.textContent,/真假|30%|70%|真图|假图/);await document.querySelector('[data-dig]').onclick();assert.equal(document.querySelectorAll('[data-hole]').length,9);
  const mole=activeTreasureMole(map.game);await document.querySelector(`[data-hole="${mole.hole}"]`).onclick();assert.equal(map.game.hits.length,1);
- document.querySelector('[data-close]').click();map.game.endsAt=Date.now()-1;showTreasure(api,()=>{});await new Promise(r=>setImmediate(r));assert.equal(s.treasure,null);assert.match(document.body.textContent,/获得 10 灵石/);document.querySelector('[data-close]').click();
+ document.querySelector('[data-close]').click();map.game.endsAt=Date.now()-1;showTreasure(api,()=>{});await new Promise(r=>setImmediate(r));assert.equal(s.treasure,null);assert.match(document.body.textContent,/获得 1 灵石/);document.querySelector('[data-close]').click();
  ready(s);s.lastBattle={outcome:'victory',log:[]};showBattle(api);assert.ok(document.querySelector('[data-treasure-dig]'));
  s.battle={kind:'normal',round:0,skillReady:{},log:[],name:'追兵',hp:1,maxHp:1};showBattle(api);assert.equal(document.querySelector('[data-treasure-dig]'),null);
+});
+
+test('new games expose exactly ten moles and true maps pay zero, partial or full scores in both realms',()=>{
+ for(const realm of ['炼气七层','筑基一层'])for(const real of [true,false])for(const hits of [0,1,7,10]){
+  const s=make(realm),map=ready(s,real),game=startTreasureGame(s,map.id,now,()=>0);
+  assert.equal(game.holes.length,10);assert.equal(game.target,10);
+  for(let frame=0;frame<hits;frame++)assert.equal(hitTreasureMole(s,map.id,frame,0,now+frame*game.intervalMs),true);
+  assert.equal(activeTreasureMole(game,game.endsAt),null);
+  const result=finishTreasureGame(s,map.id,game.endsAt);
+  assert.equal(result.score,hits);assert.equal(s.player.spiritStones,real?20+hits:17);
+ }
 });
