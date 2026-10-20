@@ -31,6 +31,7 @@ export function playPeakPuzzle(save,id,action,now=Date.now()){
  const p=save.peakPuzzle;
  if(!p||p.id!==id)throw new Error('这场奇遇已经结束。');
  if(save.battle)throw new Error('请先结束战斗。');
+ if(action==='surrender'&&p.leisure){save.peakPuzzle=null;return {completed:true,outcome:'surrender'}}
  if(action==='reset'){p.player=p.initial.player;p.boxes=[...p.initial.boxes];p.history=[];p.moves=0;return {}}
  if(action==='undo'){
   const last=p.history.pop();if(last){p.player=last.player;p.boxes=last.boxes;p.moves=last.moves}return {};
@@ -45,6 +46,7 @@ export function playPeakPuzzle(save,id,action,now=Date.now()){
  p.player=target;p.moves++;if(box>=0)p.boxes[box]=beyond;
  const won=p.kind==='maze'?p.player===p.goals[0]:p.goals.every(g=>p.boxes.includes(g));
  if(!won)return {};
+ if(p.leisure){save.peakPuzzle=null;return {completed:true,outcome:'win'}}
  let text;
  if(p.kind==='sokoban'){
   // Older active puzzles have no level index; identify their original board without resetting play.

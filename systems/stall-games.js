@@ -17,13 +17,14 @@ function checkBet(save,bet,min=0){
 export function startGomoku(save,id,difficulty,bet){
  const game=requireGame(save,'gomoku',id,'offer');
  if(!Object.hasOwn(GOMOKU_DIFFICULTIES,difficulty))throw new Error('请选择难度。');
+ if(game.leisure&&bet!==0)throw new Error('陪玩不下注。');
  checkBet(save,bet);if(difficulty==='easy'&&bet!==0)throw new Error('低难度只切磋，不下注。');
  save.player.spiritStones=round(save.player.spiritStones-bet);
  Object.assign(game,{phase:'playing',difficulty,bet,board:Array(GOMOKU_SIZE**2).fill(0),ply:0,lastMove:null});
  return {text:bet?`棋局开盘，已押 ${bet} 灵石。`:'摆好棋盘，执黑先行。'};
 }
 function settle(save,game,outcome,text){
- const payout=outcome==='win'?game.bet*2:outcome==='draw'?game.bet:0;
+ const payout=game.leisure?0:outcome==='win'?game.bet*2:outcome==='draw'?game.bet:0;
  save.player.spiritStones=round(save.player.spiritStones+payout);game.phase='done';game.outcome=outcome;game.payout=payout;
  game.text=text+(game.bet?outcome==='win'?` 返还 ${payout} 灵石。`:outcome==='draw'?` 退回 ${payout} 灵石。`:` 押下的 ${game.bet} 灵石归了摊主。`:'');
  return {completed:true,text:game.text};
@@ -42,11 +43,12 @@ export function moveGomoku(save,id,pos,expectedPly,random=Math.random){
 }
 export function startDice(save,id,guess,bet,random=Math.random){
  const game=requireGame(save,'dice',id,'offer');
- if(!['small','big'].includes(guess))throw new Error('请先猜大小。');checkBet(save,bet,1);
- const won=random()<DICE_WIN_CHANCE,big=won?guess==='big':guess!=='big';
+ if(!['small','big'].includes(guess))throw new Error('请先猜大小。');if(game.leisure&&bet!==0)throw new Error('陪玩不下注。');checkBet(save,bet,game.leisure?0:1);
+ const won=random()<(game.leisure ? .5 : DICE_WIN_CHANCE),big=won?guess==='big':guess!=='big';
  const face=(big?4:1)+Math.min(2,Math.floor(random()*3));
  save.player.spiritStones=round(save.player.spiritStones-bet);
- Object.assign(game,{phase:'rolling',guess,bet,face,won,suspicious:!won&&random()<.3});
+ Object.assign(game,{phase:'rolling',guess,bet,face,won,suspicious:!game.leisure&&!won&&random()<.3});
+ if(game.leisure)return {text:'你选好大小，她将骰盅扣在桌上。'};
  return {text:`押${guess==='big'?'大':'小'}，${bet} 灵石已放上赌桌。`};
 }
 export function revealDice(save,id){

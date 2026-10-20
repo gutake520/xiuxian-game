@@ -1,3 +1,5 @@
+import {showZhang} from './zhang-huaijin.js';
+import {ZHANG_CAVE} from '../data/zhang-huaijin.js';
 import {showTreasure} from './treasure.js';
 import {showStroll} from './stroll.js';
 import {showSpiritPeak} from './spirit-peak.js';
@@ -24,7 +26,7 @@ export function createMapUI({getSave,activate,actions,onSectBattleExit}){
  const content=()=>document.getElementById('xg-content');
  const foundationPlayer=()=>String(getSave()?.player?.realm||'').startsWith('筑基');
  const petChoices=(save,name)=>{const foundation=String(save.player.realm).startsWith('筑基'),rented=(foundation?save.foundationPetRentals:save.petRentals)>0,attack=beastCanFight(save,'attack'),guard=beastCanFight(save,'guard');return rented||attack||guard?`<fieldset class="xg-card"><legend>灵兽出战</legend><label><input type="radio" name="${name}" value="" checked> 不出战</label>${['attack','guard'].filter(type=>beastCanFight(save,type)||rented).map(type=>`<label><input type="radio" name="${name}" value="${type}"> ${escapeHTML(beastCanFight(save,type)?beastName(save,type):'租借灵兽')} · ${type==='attack'?`追击 +${foundation?'0.80':'0.50'}`:`守护 −${foundation?'0.50':'0.30'}`}</label>`).join('')}</fieldset>`:''};
- const battle=outcome=>showBattle({getSave,activate,actions,onYanEncounter:renderYanEncounter,onExit:getSave().bossLine?.phase==='ambush'||getSave().bossLine?.rescuePending?renderMonsters:['sect-tournament','sect-senior'].includes(getSave().battle?.kind||getSave().lastBattle?.kind)?onSectBattleExit:(getSave().battle?.kind||getSave().lastBattle?.kind)==='fox-npc'?()=>renderNpc(QI_PEAKS.find(p=>p.id===(getSave().battle?.monsterId||getSave().lastBattle?.monsterId))):FOUNDATION_MONSTERS.some(monster=>monster.id===(getSave().battle?.monsterId||getSave().lastBattle?.monsterId))?renderFoundation:renderMonsters},outcome);
+ const battle=outcome=>showBattle({getSave,activate,actions,onYanEncounter:renderYanEncounter,onExit:(getSave().battle?.kind||getSave().lastBattle?.kind)==='zhang-intro'?()=>showZhang({getSave,actions},render):getSave().bossLine?.phase==='ambush'||getSave().bossLine?.rescuePending?renderMonsters:['sect-tournament','sect-senior'].includes(getSave().battle?.kind||getSave().lastBattle?.kind)?onSectBattleExit:(getSave().battle?.kind||getSave().lastBattle?.kind)==='fox-npc'?()=>renderNpc(QI_PEAKS.find(p=>p.id===(getSave().battle?.monsterId||getSave().lastBattle?.monsterId))):FOUNDATION_MONSTERS.some(monster=>monster.id===(getSave().battle?.monsterId||getSave().lastBattle?.monsterId))?renderFoundation:renderMonsters},outcome);
  function heading(title,subtitle){return `<div class="xg-map-heading"><h2>${title}</h2>${subtitle?`<p>${subtitle}</p>`:''}</div>`}
  const peaks=(locations,kind)=>`<div class="xg-map-landscape xg-map-${kind}">${locations.map((place,i)=>`<button type="button" class="xg-map-hill${place.locked?' xg-map-locked':''}" style="--hill-x:${place.x}%;--hill-y:${place.y}%;--hill-size:${place.size||1}" ${place.locked?'disabled':''} ${place.id?`data-${kind}="${place.id}"`:''}><span class="xg-map-label">${place.name}</span><span class="xg-map-summit" aria-hidden="true"></span></button>`).join('')}</div>`;
  function render(){
@@ -40,6 +42,7 @@ export function createMapUI({getSave,activate,actions,onSectBattleExit}){
    foundationPlayer()?{name:'望川岭',id:'foundation',x:36,y:37,size:.85}:{name:'远山 · 待定',x:36,y:37,locked:true,size:.85},{name:'九宗山门',id:'sects',x:8,y:69,size:1.08},
    {name:'灵兽峰',id:'spirit-peak',x:10,y:34,size:.7},
    {name:'丰原镇',id:'monsters',x:64,y:62,size:1.04},
+   ...(getSave().zhangHuaijin?.unlocked?[{name:ZHANG_CAVE,id:'zhang-cave',x:39,y:5,size:.72}]:[]),
    ...(yanState(getSave()).unlocked?[{name:YAN_HILL,id:'yan-hill',x:74,y:39,size:.72}]:[])
   ],'map')}</section>`;
   content().querySelector('[data-treasure]')?.addEventListener('click',()=>showTreasure({getSave,actions},render));
@@ -50,6 +53,7 @@ export function createMapUI({getSave,activate,actions,onSectBattleExit}){
   content().querySelector('[data-map="market"]').onclick=renderMarket;
   content().querySelector('[data-map="blackmarket"]').onclick=renderBlackMarket;
   content().querySelector('[data-map="foundation"]')?.addEventListener('click',renderFoundation);
+  content().querySelector('[data-map="zhang-cave"]')?.addEventListener('click',()=>showZhang({getSave,actions},render));
   content().querySelector('[data-map="yan-hill"]')?.addEventListener('click',renderYanHill);
  }
  function back(fn){content().querySelector('.xg-map-back').onclick=fn}

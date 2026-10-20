@@ -18,7 +18,7 @@ export function showStroll(api,onClose){
   const buttons=[...body.querySelectorAll('[data-stroll-place]')];buttons.forEach(b=>b.disabled=true);
   try{
    await api.actions.mutate(s=>takeStroll(s,button.dataset.strollPlace),{slot,message:r=>r.message});
-   if(sheet.isConnected&&api.getSave()?.slot===slot)showStroll(api,onClose);
+   if(sheet.isConnected&&api.getSave()?.slot===slot){if(api.getSave().battle){sheet.remove();onClose()}else showStroll(api,onClose)}
   }catch(error){status.textContent=error.message}finally{busy=false;buttons.forEach(b=>b.disabled=false)}
  });
 }

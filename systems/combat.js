@@ -1,3 +1,4 @@
+import {finishZhangEncounter,tryZhangRescue} from './zhang-huaijin.js';
 import {advanceTreasure} from './treasure.js';
 import {chargedMultiplier,rootCount} from '../data/technique-slots.js';
 import {QI_MONSTERS,FOUNDATION_MONSTERS} from '../data/locations.js';
@@ -56,6 +57,7 @@ function resolveTournamentLoss(save,outcome,messages){
  result.log=[...messages];return result;
 }
 function resolveVictory(save,now,messages){
+ if(save.battle?.kind==='zhang-intro')return finishZhangEncounter(save);
  const battle=save.battle,monster=monsters.find(entry=>entry.id===battle.monsterId);
  if(battle.kind==='fox-npc'){
   save.foxes??={};save.foxes[battle.monsterId]??={affinity:0,seen:[]};save.foxes[battle.monsterId].met=true;
@@ -131,7 +133,7 @@ export function beginBattle(save,id,pet=null,retaliation=false){
 }
 export function playRound(save,action='attack',now=Date.now()){
  const battle=save.battle;if(!battle)throw new Error('没有正在进行的战斗。');
- const tournament=['sect-tournament','sect-senior'].includes(battle.kind),foxFight=battle.kind==='fox-npc',armored=tournament||battle.kind==='wounded-boss'||foxFight;
+ const tournament=['sect-tournament','sect-senior'].includes(battle.kind),foxFight=battle.kind==='fox-npc',armored=tournament||battle.kind==='wounded-boss'||foxFight||battle.kind==='zhang-intro';
  if(foxFight&&battle.foxParalyzeRound===battle.round+1)action='skip';
  const skill=TECHNIQUES[action];
  if(!['attack','skip'].includes(action)&&skill?.type!=='combat')throw new Error('请选择可用的行动。');
@@ -209,6 +211,7 @@ export function playRound(save,action='attack',now=Date.now()){
   taken=round2(Math.max(0,capped-guardAmount));save.player.hp=round2(Math.max(0,save.player.hp-taken));
   if(battle.pet==='guard')messages.push(`${battle.petName||'灵兽'}抵挡 ${guardAmount.toFixed(2)} 伤害。`);
   messages.push(`你受到 ${taken.toFixed(2)} 伤害。`);
+  const rescued=tryZhangRescue(save,now);if(rescued)messages.push(rescued);
   if(taken>0&&save.player.hp>0&&hasActiveTechnique(save,'resentment')){const reflected=round2(rawDamage*.1);battle.hp=round2(Math.max(0,battle.hp-reflected));messages.push(`以怨报怨，反弹 ${reflected.toFixed(2)} 伤害。`)}
  };
  const playerAction=()=>{playerTurn();if(battle.pet==='attack'&&battle.hp>0){const bonus=battle.petStage==='筑基'?.8:.5;battle.hp=round2(Math.max(0,battle.hp-bonus));messages.push(`${battle.petName||'灵兽'}追加 ${bonus.toFixed(2)} 伤害。`)}};
@@ -217,7 +220,8 @@ export function playRound(save,action='attack',now=Date.now()){
  if(battle.regenRounds>0&&save.player.hp>0&&battle.hp>0){const heal=round2(Math.min(2,stats.maxHp-save.player.hp));save.player.hp=round2(save.player.hp+heal);battle.regenRounds--;messages.push(`妙手回春恢复 ${heal.toFixed(2)} 生命。`)}
  battle.round++;
  battle.bindRounds=(battle.bindRounds||[]).filter(round=>round>battle.round);
- if(battle.hp<=0)resolveVictory(save,now,messages);
+ if(battle.kind==='zhang-intro'&&(battle.round>=3||battle.hp<=0||save.player.hp<=0))finishZhangEncounter(save);
+ else if(battle.hp<=0)resolveVictory(save,now,messages);
  else if(save.player.hp<=0){if(tournament)resolveTournamentLoss(save,'defeat',messages);else{const foundation=String(save.player.realm).startsWith('筑基'),loss=foundation?70:50,hp=foundation?7:5;save.player.cultivation=round2(save.player.cultivation-loss);save.player.hp=hp;messages.push(`战败：修为 −${loss}，生命恢复至 ${hp}；无战利品。`);finish(save,'defeat',{log:[...battle.log,...messages].slice(-10)})}}
  else{battle.log=[...battle.log,...messages].slice(-10)}
  return {messages,dealt,taken,result:save.lastBattle?.id===battle.id?save.lastBattle:null};
@@ -228,6 +232,7 @@ function consumeItem(save,id){
  if(entry.quantity>1)entry.quantity--;else save.inventory=save.inventory.filter(item=>item!==entry);
 }
 export function useBattleArray(save,uid){
+ if(save.battle?.kind==='zhang-intro')throw new Error('阴风太急，来不及取出阵盘。');
  const battle=save.battle;if(!battle)throw new Error('没有正在进行的战斗。');
  if(battle.arrayRound===battle.round+1)throw new Error('本轮已经使用过阵盘。');
  const ids=['binding-array','crafted-binding-array','foundation-binding-array','foundation-crafted-array'];
@@ -248,6 +253,7 @@ export function useBattleArray(save,uid){
  return message;
 }
 export function useBattleTalisman(save,id){
+ if(save.battle?.kind==='zhang-intro')throw new Error('阴风太急，来不及取出符箓。');
  const battle=save.battle;if(!battle)throw new Error('没有正在进行的战斗。');
  if(!['attack-talisman','guard-talisman','foundation-attack-talisman','foundation-guard-talisman'].includes(id))throw new Error('符箓不存在。');
  if(ITEMS[id].stage==='筑基'&&!String(save.player.realm).startsWith('筑基'))throw new Error('灵力尚浅，无法催动这张符箓。');
@@ -262,6 +268,7 @@ export function useBattleTalisman(save,id){
 }
 export function fleeBattle(save){
  if(!save.battle)throw new Error('没有正在进行的战斗。');
+ if(save.battle.kind==='zhang-intro')return finishZhangEncounter(save);
  if(['sect-tournament','sect-senior'].includes(save.battle.kind)){const result=finish(save,'fled',{log:['你结束了这场切磋。']});refillTournament(save);return result}
  const foundation=String(save.player.realm).startsWith('筑基'),fee=foundation?5:3,loss=foundation?50:30;
  const paid=save.player.spiritStones>=fee;
