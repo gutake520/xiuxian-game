@@ -20,6 +20,8 @@
 }
 #xg-panel.open{display:grid}
 #xg-panel *,#xg-panel *::before,#xg-panel *::after{box-sizing:border-box}
+/* Host themes can apply text shadows directly to every descendant. */
+#xg-panel,#xg-panel *,#xg-panel::before,#xg-panel::after,#xg-panel *::before,#xg-panel *::after{text-shadow:none!important;-webkit-text-stroke:0!important}
 #xg-panel [hidden]{display:none!important}
 #xg-panel :is(button,input,select){font:inherit;color:inherit;text-shadow:none;box-shadow:none}
 #xg-panel button{appearance:none;cursor:pointer;touch-action:manipulation;min-height:44px;padding:10px 16px;max-width:100%;border:1px solid var(--line);border-radius:12px;background:var(--surface);color:var(--ink);line-height:1.5;transition:background .18s,border-color .18s,transform .18s}
