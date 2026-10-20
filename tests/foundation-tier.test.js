@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {addCultivation,realmProgress} from '../data/realms.js';
-import {beginBattle,playRound,useBattleArray} from '../systems/combat.js';
+import {beginBattle,playRound,useBattleArray,fleeBattle} from '../systems/combat.js';
 import {addItem,purchase,sellMaterial,brewPill,usePill} from '../systems/inventory.js';
 import {repairOwnEquipment,craftSectItem} from '../systems/sect-progression.js';
 import {feedBeast} from '../systems/pets.js';
@@ -62,4 +62,17 @@ test('drop sword stun only cancels an enemy action that has not happened yet',()
    if(speed===1){assert.equal(s.battle.stunnedRound,undefined)}
   }
  }finally{Math.random=original}
+});
+
+test('combat penalties follow player realm even against old qi monsters',t=>{
+ t.mock.method(Math,'random',()=>.5);
+ for(const [realm,fee,loss,hp] of [['炼气一层',3,50,5],['筑基一层',5,70,7]]){
+  const s=save(realm);s.player.hp=1;s.player.combat.defense=0;s.player.combat.attack=1;
+  beginBattle(s,'tough');playRound(s,'attack');assert.equal(s.lastBattle.outcome,'defeat');assert.equal(s.player.cultivation,-loss);assert.equal(s.player.hp,hp);
+  for(const balance of [fee,fee-.5]){
+   const f=save(realm);f.player.spiritStones=balance;beginBattle(f,'tough');fleeBattle(f);
+   assert.equal(f.player.spiritStones,balance>=fee?0:balance);
+   assert.equal(f.player.cultivation,balance>=fee?0:realm.startsWith('筑基')?-50:-30);
+  }
+ }
 });

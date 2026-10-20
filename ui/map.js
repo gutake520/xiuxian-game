@@ -9,7 +9,7 @@ import {showBattle} from './combat.js';
 import {ITEMS,SECT_PILLS,SECT_TALISMANS} from '../data/items.js';
 import {purchase,maxDurability} from '../systems/inventory.js';
 import {showShop,showSell} from './inventory.js';
-import {startQiExploration,QI_EXPLORATION_MS,QI_SCENES} from '../systems/exploration.js';
+import {startQiExploration,explorationFee,QI_EXPLORATION_MS,QI_SCENES} from '../systems/exploration.js';
 import {localDay} from '../systems/cultivation.js';
 import {equipmentStats} from '../systems/inventory.js';
 import {repairPrice,repairEquipment,healAtSect,startMeditation,healingService,MEDITATION_MS} from '../systems/sect-services.js';
@@ -259,7 +259,7 @@ export function createMapUI({getSave,activate,actions,onSectBattleExit}){
   activate('map');
   const save=getSave(),pending=save.qiSecret,visited=save.qiSecretDay===localDay(Date.now());
   content().innerHTML=`<section class="xg-map-sheet">${pending?'':'<button class="xg-map-back" type="button">← 返回丰原镇</button>'}${heading('星落秘境',pending?'探索中':'每日一次')}
-   ${pending?`<div class="xg-card xg-secret-wait"><h3>秘境深处</h3><p data-secret-scene></p><div class="xg-progress"><i data-secret-progress></i></div><strong data-secret-clock>03:00</strong><button type="button" data-finish hidden>领取探索所得</button></div>`:`<div class="xg-card xg-map-monster"><button type="button" data-explore ${visited?'disabled':''}>${visited?'今日已探索':'探索秘境 · 1 灵石 · 3 分钟'}</button></div>${visited&&save.lastQiExploration?.result?`<div class="xg-card"><p>${save.lastQiExploration.result}</p></div>`:''}`}
+   ${pending?`<div class="xg-card xg-secret-wait"><h3>秘境深处</h3><p data-secret-scene></p><div class="xg-progress"><i data-secret-progress></i></div><strong data-secret-clock>03:00</strong><button type="button" data-finish hidden>领取探索所得</button></div>`:`<div class="xg-card xg-map-monster"><button type="button" data-explore ${visited?'disabled':''}>${visited?'今日已探索':`探索秘境 · ${explorationFee(save.player)} 灵石 · 3 分钟`}</button></div>${visited&&save.lastQiExploration?.result?`<div class="xg-card"><p>${save.lastQiExploration.result}</p></div>`:''}`}
    <p role="status" aria-live="polite"></p></section>`;
   if(!pending){
    back(renderMonsters);const button=content().querySelector('[data-explore]'),status=content().querySelector('[role=status]');

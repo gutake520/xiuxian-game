@@ -81,3 +81,8 @@ test('concurrent stored settlements apply the lightning loss exactly once',async
  const saved=await readSave('lightning');assert.equal(saved.player.cultivation,40);assert.equal(saved.events.length,1);
  assert.equal(saved.idle.lightningCheckedDay,localDay(start));assert.equal(calls(),2);
 });
+
+test('foundation lightning deducts 30 through 40 cultivation',t=>{
+ random(t,[0,0,0,.999]);
+ for(const loss of [30,40]){const s=make();s.player.realm='筑基一层';settleIdle(s,start+120*minute);assert.equal(s.player.cultivation,60-loss)}
+});

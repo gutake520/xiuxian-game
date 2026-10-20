@@ -218,7 +218,7 @@ export function playRound(save,action='attack',now=Date.now()){
  battle.round++;
  battle.bindRounds=(battle.bindRounds||[]).filter(round=>round>battle.round);
  if(battle.hp<=0)resolveVictory(save,now,messages);
- else if(save.player.hp<=0){if(tournament)resolveTournamentLoss(save,'defeat',messages);else{save.player.cultivation=round2(save.player.cultivation-50);save.player.hp=5;messages.push('战败：修为 −50，生命恢复至 5；无战利品。');finish(save,'defeat',{log:[...battle.log,...messages].slice(-10)})}}
+ else if(save.player.hp<=0){if(tournament)resolveTournamentLoss(save,'defeat',messages);else{const foundation=String(save.player.realm).startsWith('筑基'),loss=foundation?70:50,hp=foundation?7:5;save.player.cultivation=round2(save.player.cultivation-loss);save.player.hp=hp;messages.push(`战败：修为 −${loss}，生命恢复至 ${hp}；无战利品。`);finish(save,'defeat',{log:[...battle.log,...messages].slice(-10)})}}
  else{battle.log=[...battle.log,...messages].slice(-10)}
  return {messages,dealt,taken,result:save.lastBattle?.id===battle.id?save.lastBattle:null};
 }
@@ -263,8 +263,9 @@ export function useBattleTalisman(save,id){
 export function fleeBattle(save){
  if(!save.battle)throw new Error('没有正在进行的战斗。');
  if(['sect-tournament','sect-senior'].includes(save.battle.kind)){const result=finish(save,'fled',{log:['你结束了这场切磋。']});refillTournament(save);return result}
- const paid=save.player.spiritStones>=3;
- if(paid)save.player.spiritStones=round2(save.player.spiritStones-3);
- else save.player.cultivation=round2(save.player.cultivation-30);
- return finish(save,'fled',{cost:paid?'灵石 −3':'修为 −30',log:[paid?'你支付 3 灵石脱离战斗。':'灵石不足，脱离战斗扣除 30 修为。']});
+ const foundation=String(save.player.realm).startsWith('筑基'),fee=foundation?5:3,loss=foundation?50:30;
+ const paid=save.player.spiritStones>=fee;
+ if(paid)save.player.spiritStones=round2(save.player.spiritStones-fee);
+ else save.player.cultivation=round2(save.player.cultivation-loss);
+ return finish(save,'fled',{cost:paid?`灵石 −${fee}`:`修为 −${loss}`,log:[paid?`你支付 ${fee} 灵石脱离战斗。`:`灵石不足，脱离战斗扣除 ${loss} 修为。`]});
 }

@@ -1,3 +1,4 @@
+import {ITEMS} from '../data/items.js';
 import {awardItem} from './inventory.js';
 import {localDay} from './cultivation.js';
 
@@ -35,27 +36,29 @@ export const QI_SCENES=[
  '你走到秘境尽头，身后的山路渐渐隐入雾中。'
 ];
 const HERBS=['healing-herb','spirit-herb','qi-herb'];
-const herb=()=>HERBS[Math.floor(Math.random()*HERBS.length)];
+export const explorationFee=player=>String(player.realm).startsWith('筑基')?2:1;
+const herb=foundation=>(foundation?'foundation-':'')+HERBS[Math.floor(Math.random()*HERBS.length)];
 function pickScenes(){const pool=QI_SCENES.map((_,i)=>i),selected=[];for(let i=0;i<3;i++)selected.push(pool.splice(Math.floor(Math.random()*pool.length),1)[0]);return selected}
 
 export function startQiExploration(save,now=Date.now()){
  if(save.qiSecret)throw new Error('秘境探索尚未结束。');
  if(save.qiSecretDay===localDay(now))throw new Error('今天已经探索过秘境，明天再来。');
- if(save.player.spiritStones<1)throw new Error('灵石不足，无法探索秘境。');
- const chance=Math.random(),reward=chance<.9?{stones:1,ore:1,herb:herb(),herbCount:1}:chance<.99?(Math.random()<.5?{stones:1,ore:1}:{stones:1,herb:herb(),herbCount:1}):{stones:2,ore:2,herb:herb(),herbCount:2};
- save.player.spiritStones=Math.round((save.player.spiritStones-1)*100)/100;
+ const fee=explorationFee(save.player),foundation=fee===2;
+ if(save.player.spiritStones<fee)throw new Error('灵石不足，无法探索秘境。');
+ const chance=Math.random(),reward=chance<.9?{stones:1,ore:1,herb:herb(foundation),herbCount:1}:chance<.99?(Math.random()<.5?{stones:1,ore:1}:{stones:1,herb:herb(foundation),herbCount:1}):{stones:2,ore:2,herb:herb(foundation),herbCount:2};
+ save.player.spiritStones=Math.round((save.player.spiritStones-fee)*100)/100;
  save.qiSecretDay=localDay(now);
- save.qiSecret={startedAt:now,endsAt:now+QI_EXPLORATION_MS,scenes:pickScenes(),reward};
- return '你付出 1 灵石，踏入秘境。接下来三分钟只能继续探索。';
+ save.qiSecret={startedAt:now,endsAt:now+QI_EXPLORATION_MS,scenes:pickScenes(),reward:{...reward,oreId:foundation?'foundation-ore':'ore'}};
+ return `你付出 ${fee} 灵石，踏入秘境。接下来三分钟只能继续探索。`;
 }
 export function finishQiExploration(save,now=Date.now()){
  const pending=save.qiSecret;if(!pending)throw new Error('没有正在进行的秘境探索。');
  if(now<pending.endsAt)throw new Error('探索尚未结束。');
  const {reward}=pending,rewards=[`灵石×${reward.stones}`];
  save.player.spiritStones=Math.round((save.player.spiritStones+reward.stones)*100)/100;
- for(const [id,quantity] of [['ore',reward.ore],[reward.herb,reward.herbCount]]){
+ for(const [id,quantity] of [[reward.oreId||'ore',reward.ore],[reward.herb,reward.herbCount]]){
   if(!id||!quantity)continue;
-  const place=awardItem(save,id,quantity,now),name=id==='ore'?'矿石':({'healing-herb':'回血草','spirit-herb':'回灵草','qi-herb':'聚气草'})[id];
+  const place=awardItem(save,id,quantity,now),name=ITEMS[id].name;
   rewards.push(`${name}×${quantity}${place==='temporary'?'（临时储物）':''}`);
  }
  const result=`秘境所得：${rewards.join('、')}。`;

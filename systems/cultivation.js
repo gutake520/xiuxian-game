@@ -28,7 +28,7 @@ function rollIdleLightning(save,day){
  const fortune=Number(save.player.stats?.福缘);
  // The final implemented realm cannot earn cultivation to recover a loss.
  if(!Number.isFinite(fortune)||fortune>=4||realmProgress(save.player).index>=12||Math.random()>=.05)return;
- const loss=20+Math.floor(Math.random()*11);
+ const loss=(String(save.player.realm).startsWith('筑基')?30:20)+Math.floor(Math.random()*11);
  save.player.cultivation=Math.round((save.player.cultivation-loss)*100)/100;
  save.events??=[];
  appendEvent(save,`你正凝神吐纳，窗外忽然落下一道惊雷。屋顶完好无损，偏偏劈中了你。修为 −${loss}。`);
