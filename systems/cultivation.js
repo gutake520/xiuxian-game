@@ -12,7 +12,7 @@ export function worldDay(save,now=Date.now()){
  return Math.max(recorded,(created?1:recorded)+Math.max(0,calendarDay(now)-calendarDay(startedAt)));
 }
 function nextMidnight(time){const d=new Date(time);d.setHours(24,0,0,0);return d.getTime()}
-export function idleRate(save){return save.techniques.mastered.includes(save.techniques.main)?TECHNIQUES[save.techniques.main]?.idlePerMinute||0:0}
+export function idleRate(save){const rate=save.techniques.mastered.includes(save.techniques.main)?TECHNIQUES[save.techniques.main]?.idlePerMinute||0:0;return rate*(String(save.player.realm).startsWith('筑基')?2+Math.floor(Math.max(0,realmProgress(save.player).index-10)/3):1)}
 // 新的大境界只需在对应功法的 idleHoursByRealm 中追加上限。
 export function idleLimitMs(save){
  const method=TECHNIQUES[save.techniques.main],hours=method?.idleHoursByRealm;
@@ -26,8 +26,8 @@ function rollIdleLightning(save,day){
  if(idle.lightningCheckedDay===day)return;
  idle.lightningCheckedDay=day;
  const fortune=Number(save.player.stats?.福缘);
- // The final implemented realm cannot earn cultivation to recover a loss.
- if(!Number.isFinite(fortune)||fortune>=4||realmProgress(save.player).index>=12||Math.random()>=.05)return;
+ // 筑基圆满后暂停雷击；其他阶段仍按原规则结算。
+ if(!Number.isFinite(fortune)||fortune>=4||(realmProgress(save.player).index===19&&realmProgress(save.player).complete)||Math.random()>=.05)return;
  const loss=(String(save.player.realm).startsWith('筑基')?30:20)+Math.floor(Math.random()*11);
  save.player.cultivation=Math.round((save.player.cultivation-loss)*100)/100;
  save.events??=[];
@@ -35,8 +35,9 @@ function rollIdleLightning(save,day){
 }
 export function settleIdle(save,now=Date.now()){
  const idle=save.idle;if(now<=idle.lastAt)return 0;
- const rate=idleRate(save);let start=idle.lastAt,earned=0;
+ let start=idle.lastAt,earned=0;
  while(start<now){
+  const rate=idleRate(save);
   const day=localDay(start);if(idle.day!==day){idle.day=day;idle.usedMs=0}
   const end=Math.min(now,nextMidnight(start));
   if(rate>0&&realmProgress(save.player).index>=0&&!realmProgress(save.player).complete){
@@ -44,7 +45,13 @@ export function settleIdle(save,now=Date.now()){
    const counted=Math.min(end-start,Math.max(0,dailyLimit-idle.usedMs));
    idle.usedMs+=counted;
    // Settle each day before its mishap, including multi-day offline sessions.
-   earned+=addCultivation(save,counted/60000*rate);
+   let remaining=counted/60000;
+   while(remaining>0&&!realmProgress(save.player).complete){
+    const progress=realmProgress(save.player),currentRate=idleRate(save);
+    const minutes=Math.min(remaining,(progress.required-progress.current)/currentRate);
+    if(!(minutes>0))break;
+    earned+=addCultivation(save,minutes*currentRate);remaining=Math.max(0,remaining-minutes);
+   }
    if(counted>0&&idle.usedMs>=dailyLimit)rollIdleLightning(save,day);
   }
   start=end;

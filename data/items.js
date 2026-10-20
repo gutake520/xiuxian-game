@@ -1,4 +1,11 @@
 export const ITEMS={
+ 'foundation-mid-sword':{id:'foundation-mid-sword',minFoundationLevel:4,price:12,name:'照水剑',stage:'筑基',kind:'equipment',slot:'weapon',attack:2.2,glyph:'剑',description:'照水剑，攻击 +2.20。'},
+ 'foundation-mid-robe':{id:'foundation-mid-robe',minFoundationLevel:4,price:12,name:'叠云甲',stage:'筑基',kind:'equipment',slot:'armor',defense:1.1,glyph:'甲',description:'叠云甲，防御 +1.10。'},
+ 'foundation-mid-shoes':{id:'foundation-mid-shoes',minFoundationLevel:4,price:12,name:'逐岚履',stage:'筑基',kind:'equipment',slot:'shoes',speed:3.6,glyph:'履',description:'逐岚履，速度 +3.60。'},
+ 'foundation-late-sword':{id:'foundation-late-sword',minFoundationLevel:7,price:18,name:'断霞剑',stage:'筑基',kind:'equipment',slot:'weapon',attack:3.2,glyph:'剑',description:'断霞剑，攻击 +3.20。'},
+ 'foundation-late-robe':{id:'foundation-late-robe',minFoundationLevel:7,price:18,name:'玄纹甲',stage:'筑基',kind:'equipment',slot:'armor',defense:1.5,glyph:'甲',description:'玄纹甲，防御 +1.50。'},
+ 'foundation-late-shoes':{id:'foundation-late-shoes',minFoundationLevel:7,price:18,name:'踏虚履',stage:'筑基',kind:'equipment',slot:'shoes',speed:4.2,glyph:'履',description:'踏虚履，速度 +4.20。'},
+ 'foundation-completion-charm':{id:'foundation-completion-charm',name:'归元佩',stage:'筑基',kind:'equipment',slot:'accessoryVital',hp:8,mp:4,glyph:'佩',description:'封渡客赠予的归元佩。生命上限 +8，法力上限 +4。'},
  'iron-sword':{id:'iron-sword',name:'铁剑',price:5,kind:'equipment',slot:'weapon',attack:1,glyph:'剑',description:'坊市铁剑，攻击 +1。'},
  'cloth-robe':{id:'cloth-robe',name:'布衣',price:5,kind:'equipment',slot:'armor',defense:.5,glyph:'衣',description:'坊市布衣，防御 +0.50。'},
  'wild-sword':{id:'wild-sword',name:'小妖铁剑',kind:'equipment',slot:'weapon',attack:1.2,glyph:'剑',description:'小妖掉落，攻击 +1.20。'},
@@ -67,6 +74,6 @@ export const ITEMS={
  'spirit-burn-manual':{id:'spirit-burn-manual',name:'灵息尽燃',kind:'manual',methodId:'spirit-burn',glyph:'简',description:'三片玉简拼成的中级战斗功法，参悟四阶数阵后可装备。'}
 };
 for(const item of Object.values(ITEMS))if(item.kind==='manual'&&!item.blackMarketOnly&&!['gamble-manual','steal-manual','only-once-manual','spirit-burn-manual','archive-manual'].includes(item.id)){item.repeatable=true;item.stackable=true;item.sellPrice=10}
-export const SHOP_ITEMS=['iron-sword','cloth-robe','foundation-sword','foundation-robe','qi-manual','strengthen-manual','wall-manual','breath-manual','charged-manual','wait-manual','calming-jade','fox-wine','bamboo-chess','camellia-seeds'];
+export const SHOP_ITEMS=['foundation-mid-sword','foundation-mid-robe','foundation-mid-shoes','foundation-late-sword','foundation-late-robe','foundation-late-shoes','iron-sword','cloth-robe','foundation-sword','foundation-robe','qi-manual','strengthen-manual','wall-manual','breath-manual','charged-manual','wait-manual','calming-jade','fox-wine','bamboo-chess','camellia-seeds'];
 export const SECT_PILLS=['small-heal-pill','spirit-pill','mixed-pill','qi-pill','foundation-heal-pill','foundation-spirit-pill','foundation-mixed-pill','foundation-qi-pill'];
 export const SECT_TALISMANS=['attack-talisman','guard-talisman','foundation-attack-talisman','foundation-guard-talisman'];

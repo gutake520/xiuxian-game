@@ -10,11 +10,11 @@ import {practiceReward,practiceEntryFee} from '../systems/cultivation.js';
 function save(realm='筑基一层',sect='无门无派'){
  return {player:{realm,sect,spiritRoot:'木灵根',stats:{福缘:0},cultivation:0,spiritStones:100,hp:35,mp:13,combat:{hp:35,mp:13,attack:4.5,defense:1.3,speed:3,critRate:0,dodgeRate:0}},inventory:[],equipment:{weapon:null,armor:null,shoes:null,accessoryVital:null,accessoryFate:null},techniques:{mastered:[],combat:[],main:null},bagCapacity:40};
 }
-test('foundation cultivation opens and stops at the agreed third tier',()=>{
+test('foundation cultivation continues beyond the old third-tier cap',()=>{
  const s=save();assert.equal(practiceEntryFee(s.player),5);assert.equal(practiceReward(30,s.player),100);
  assert.equal(addCultivation(s,1200),1200);assert.equal(s.player.realm,'筑基二层');
- addCultivation(s,1500);assert.equal(s.player.realm,'筑基三层');assert.equal(realmProgress(s.player).complete,true);
- assert.equal(addCultivation(s,30),0);
+ addCultivation(s,1500);assert.equal(s.player.realm,'筑基三层');assert.equal(realmProgress(s.player).complete,false);
+ assert.equal(addCultivation(s,30),30);
 });
 test('foundation items stay separate from qi materials and shops',()=>{
  const s=save('炼气十层');assert.throws(()=>purchase(s,'foundation-sword'),/筑基/);

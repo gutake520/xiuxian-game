@@ -56,7 +56,7 @@ test('每一盘都能在 24 步内接通，成功原子写入筑基并禁止重�
   assert.equal(s.player.realm,'筑基一层');
   assert.equal(s.player.cultivation,0);
   assert.equal(s.breakthrough,null);
-  assert.equal(s.player.cultivationRequired,null);
+  assert.equal(s.player.cultivationRequired,1200);
   assert.throws(()=>rotateMeridian(s,session.id,10),/结束/);
   assert.throws(()=>startBreakthrough(s),/1000/);
   assert.equal(realmProgress(s.player).index,10);

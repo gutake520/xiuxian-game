@@ -65,7 +65,7 @@ function completeIfConnected(save){
  if(count===2||count===3){save.techniques??={mastered:[],combat:[]};save.techniques.mastered??=[];if(!save.techniques.mastered.includes('self-as-self'))save.techniques.mastered.push('self-as-self')}
  player.realm='筑基一层';
  player.cultivation=0;
- player.cultivationRequired=null;
+ player.cultivationRequired=1200;
  save.foundationAptitudePending=true;
  save.breakthrough=null;
  return true;

@@ -29,7 +29,8 @@ function awardVictory(save,monster,now){
  const other=pick(monster.resource==='stones'?['herbs','ore']:monster.resource==='herbs'?['stones','ore']:['stones','herbs']);
  if(other==='stones'){save.player.spiritStones=round2(save.player.spiritStones+1);rewards.push('灵石×1');loot.push({itemId:'stones',quantity:1})}
  else grant(save,other==='herbs'?pick(herbPool):ore,1,rewards,now,loot);
- for(const [id,chance] of [[foundation?'foundation-shoes':'wild-shoes',.08],[foundation?'foundation-wild-sword':'wild-sword',.04],[foundation?'foundation-wild-robe':'wild-robe',.04]])if(Math.random()<chance)grant(save,id,1,rewards,now,loot);
+ const gearTier=foundation&&monster.minLevel>=7?'late':foundation&&monster.minLevel>=4?'mid':null;
+ for(const [id,chance] of [[gearTier?`foundation-${gearTier}-shoes`:foundation?'foundation-shoes':'wild-shoes',.08],[gearTier?`foundation-${gearTier}-sword`:foundation?'foundation-wild-sword':'wild-sword',.04],[gearTier?`foundation-${gearTier}-robe`:foundation?'foundation-wild-robe':'wild-robe',.04]])if(Math.random()<chance)grant(save,id,1,rewards,now,loot);
  if(Math.random()<.04)grant(save,pick(foundation?['foundation-hp-charm','foundation-mp-charm','foundation-crit-charm','foundation-dodge-charm']:['hp-charm','mp-charm','crit-charm','dodge-charm']),1,rewards,now,loot);
  if(!foundation&&monster.minLevel>=4&&Math.random()<.02)grant(save,'sting-manual',1,rewards,now,loot);
  const xp=addCultivation(save,monster.xp??COMBAT_REWARD_XP);
@@ -84,6 +85,14 @@ function resolveVictory(save,now,messages){
   messages.push(`战胜${battle.name}，请选择一次奖励。`);
   result.log=[...messages];return result;
  }
+ if(monster.boss){
+  const place=awardItem(save,'foundation-completion-charm',1,now);
+  save.foundationEnding={defeated:true,defeatedAt:now};
+  messages.push('封渡客的剑停在半空，终于垂了下去。旧渡口的风穿过石阶，他看着你，忽然笑了一声：「筑基能走到这一步，倒不必借谁的名头了。」');
+  messages.push('他将一枚归元佩掷给你，又在石上划出一道丹纹：「待灵台圆满，再来问结丹。记住，借来的路，未必通向你自己的道。」');
+  messages.push(`获得归元佩${place==='temporary'?'（临时储物）':''}。结丹线索已记下。`);
+  return finish(save,'victory',{rewards:['归元佩×1'],xp:0,log:[...messages]});
+ }
  const result=awardVictory(save,monster,now);
  ensureBossLine(save);
  finish(save,'victory',result);
@@ -124,7 +133,8 @@ export function beginBattle(save,id,pet=null,retaliation=false){
   return save.battle;
  }
  const monster=monsters.find(entry=>entry.id===id);if(!monster)throw new Error('对手不存在。');
- if(monster.stage==='筑基'&&tier<10)throw new Error('需筑基一层方可前往此处。');
+ if(monster.stage==='筑基'&&tier-9<monster.minLevel)throw new Error(`需筑基${['一','二','三','四','五','六','七','八','九','十'][monster.minLevel-1]}层方可挑战。`);
+ if(monster.boss&&save.foundationEnding?.defeated)throw new Error('封渡客已与你罢战。');
  if(monster.stage!=='筑基'&&tier+1<monster.minLevel)throw new Error(`需炼气${['一','二','三','四','五','六','七','八','九','十'][monster.minLevel-1]}层解锁此处。`);
  selectBattlePet(save,pet);
  const maxHp=monster.hpMin+Math.floor(Math.random()*(monster.hpMax-monster.hpMin+1));

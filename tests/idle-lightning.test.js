@@ -64,9 +64,9 @@ test('partial days, absent main technique and already completed realms do not ro
  random(t,[]);const partial=make();partial.idle.lastAt=tomorrow-30*minute;
  settleIdle(partial,tomorrow+30*minute);assert.equal(partial.player.cultivation,30);assert.equal(partial.events.length,0);
  const noMain=make();noMain.techniques.main=null;settleIdle(noMain,tomorrow);assert.equal(noMain.idle.usedMs,0);
- const capped=make();capped.player.realm='筑基三层';settleIdle(capped,tomorrow);assert.equal(capped.events.length,0);
- const reachesCap=make();reachesCap.player.realm='筑基二层';reachesCap.player.cultivation=1499;
- settleIdle(reachesCap,tomorrow);assert.equal(reachesCap.player.realm,'筑基三层');assert.equal(reachesCap.player.cultivation,0);
+ const capped=make();capped.player.realm='筑基十层';capped.player.cultivation=4000;settleIdle(capped,tomorrow);assert.equal(capped.events.length,0);
+ const reachesCap=make();reachesCap.player.realm='筑基十层';reachesCap.player.cultivation=3999;
+ settleIdle(reachesCap,tomorrow);assert.equal(reachesCap.player.realm,'筑基十层');assert.equal(reachesCap.player.cultivation,4000);
 });
 
 test('a level-up keeps its realm and lightning deducts the full loss using existing cultivation debt',t=>{
@@ -84,5 +84,5 @@ test('concurrent stored settlements apply the lightning loss exactly once',async
 
 test('foundation lightning deducts 30 through 40 cultivation',t=>{
  random(t,[0,0,0,.999]);
- for(const loss of [30,40]){const s=make();s.player.realm='筑基一层';settleIdle(s,start+120*minute);assert.equal(s.player.cultivation,60-loss)}
+ for(const loss of [30,40]){const s=make();s.player.realm='筑基一层';settleIdle(s,start+120*minute);assert.equal(s.player.cultivation,120-loss)}
 });

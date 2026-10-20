@@ -51,7 +51,7 @@ test('我即我在筑基二、三层仍能装备并施放，炼气与单灵根�
   s.techniques.mastered=['self-as-self'];s.techniques.combat=[];
   toggleCombatTechnique(s,'self-as-self');
   const random=Math.random;
-  try{Math.random=()=>.99;beginBattle(s,'fierce');s.battle.hp=100;assert.equal(playRound(s,'self-as-self').dealt,5.1)}finally{Math.random=random}
+  try{Math.random=()=>.99;beginBattle(s,'fierce');s.battle.hp=100;assert.equal(playRound(s,'self-as-self').dealt,realm==='筑基二层'?5.61:6.12)}finally{Math.random=random}
  }
  const qi=make();qi.player.realm='炼气十层';qi.player.spiritRoot='金木双灵根';qi.techniques.mastered=['self-as-self'];
  assert.throws(()=>toggleCombatTechnique(qi,'self-as-self'),/须先学会/);

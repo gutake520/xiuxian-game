@@ -1,7 +1,7 @@
 import {ITEMS} from '../data/items.js';
 import {DURABILITY_MAX,TEMP_LOOT_MS} from '../data/balance.js';
 import {localDay} from './cultivation.js';
-import {realmHpBonus,realmBattleBonus} from '../data/realms.js';
+import {realmHpBonus,realmBattleBonus,realmProgress} from '../data/realms.js';
 export function hasManual(save,id='basic-qi-guide'){return save.inventory.some(entry=>ITEMS[entry.itemId]?.methodId===id)}
 export const DURABILITY_UPGRADE_COST=10;
 export const DURABILITY_UPGRADE_LIMIT=2;
@@ -18,6 +18,7 @@ export function addItem(save,id,quantity=1){
 }
 export function purchase(save,id,sectDiscount=false){
  const item=ITEMS[id];if(!item)throw new Error('商品不存在。');
+ if(item.minFoundationLevel&&realmProgress(save.player).index-9<item.minFoundationLevel)throw new Error('境界不足，尚不能购买这件法器。');
  if(item.blackMarketOnly)throw new Error('这部典籍只能从黑市抽取。');
  if(!Number.isFinite(item.price))throw new Error('此物品不供出售。');
  if(item.stage==='筑基'&&!String(save.player.realm).startsWith('筑基'))throw new Error('灵力尚浅，尚不能购买筑基货品。');
@@ -35,6 +36,7 @@ export function equipItem(save,uid){
  const entry=save.inventory.find(entry=>entry.uid===uid),item=ITEMS[entry?.itemId];
  if(!item||item.kind!=='equipment')throw new Error('无法装备这件物品。');
  if(item.stage==='筑基'&&!String(save.player.realm).startsWith('筑基'))throw new Error('灵力尚浅，无法驾驭这件法器。');
+ if(item.minFoundationLevel&&realmProgress(save.player).index-9<item.minFoundationLevel)throw new Error('境界不足，尚不能装备这件法器。');
  if(save.battle)throw new Error('战斗中不能换装。');
  if(save.equipment[item.slot]!==uid&&entry.durability<=0)throw new Error('装备已损坏，需修补后使用。');
  const before=equipmentStats(save);
@@ -46,7 +48,7 @@ export function equipItem(save,uid){
 export function equipmentName(save,slot){const entry=save.inventory.find(e=>e.uid===save.equipment?.[slot]),item=ITEMS[entry?.itemId];return item?`${item.name} ${entry.durability??maxDurability(entry)}/${maxDurability(entry)}${entry.durability<=0?'（损坏）':''}`:'未装备'}
 export function equipmentStats(save){
  const bonus=realmBattleBonus(save.player);
- const stats={attack:(save.player.combat?.attack||0)+bonus.attack,defense:(save.player.combat?.defense||0)+bonus.defense,speed:save.player.combat?.speed||0,critRate:(save.player.combat?.critRate||0)+bonus.critRate,dodgeRate:(save.player.combat?.dodgeRate||0)+bonus.dodgeRate,maxHp:(save.player.combat?.hp||save.player.hp||20)+realmHpBonus(save.player),maxMp:(save.player.combat?.mp||save.player.mp||10)+bonus.mp};
+ const stats={attack:(save.player.combat?.attack||0)+bonus.attack,defense:(save.player.combat?.defense||0)+bonus.defense,speed:(save.player.combat?.speed||0)+(bonus.speed||0),critRate:(save.player.combat?.critRate||0)+bonus.critRate,dodgeRate:(save.player.combat?.dodgeRate||0)+bonus.dodgeRate,maxHp:(save.player.combat?.hp||save.player.hp||20)+realmHpBonus(save.player),maxMp:(save.player.combat?.mp||save.player.mp||10)+bonus.mp};
  for(const uid of Object.values(save.equipment||{})){
   const entry=save.inventory.find(entry=>entry.uid===uid),item=ITEMS[entry?.itemId];if(!item||item.kind!=='equipment'||(entry.durability??DURABILITY_MAX)<=0)continue;
   for(const key of ['attack','defense','speed','critRate','dodgeRate'])stats[key]+=key==='attack'&&entry.itemId==='library-duster'?(String(save.player.realm).startsWith('筑基')?3:1.5):item[key]||0;

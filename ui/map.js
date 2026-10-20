@@ -188,19 +188,25 @@ export function createMapUI({getSave,activate,actions,onSectBattleExit}){
  function renderFoundation(){
   if(!foundationPlayer())return render();
   activate('map');
-  content().innerHTML=`<section class="xg-map-sheet"><button class="xg-map-back" type="button">← 返回地图</button>${heading('望川岭','筑基修士出没的山岭。')}${peaks(FOUNDATION_PEAKS,'foundation')}</section>`;
+  content().innerHTML=`<section class="xg-map-sheet"><button class="xg-map-back" type="button">← 返回地图</button>${heading('望川岭','筑基修士出没的山岭。')}${peaks(realmProgress(getSave().player).index>=19?[...FOUNDATION_PEAKS,{id:'foundation-ending',name:'归元渡',kind:'boss',x:65,y:72,size:.8}]:FOUNDATION_PEAKS,'foundation')}</section>`;
   back(render);
   content().querySelectorAll('[data-foundation]').forEach(button=>button.onclick=()=>renderFoundationPeak(button.dataset.foundation));
  }
  function renderFoundationPeak(id){
   if(!foundationPlayer())return render();
-  const peak=FOUNDATION_PEAKS.find(place=>place.id===id),monster=FOUNDATION_MONSTERS.find(entry=>entry.id===peak?.monsterId);
-  if(!monster)return renderFoundation();
+  const peak=id==='foundation-ending'?{name:'归元渡',monsterId:'foundation-warden'}:FOUNDATION_PEAKS.find(place=>place.id===id);
+  if(!peak)return renderFoundation();
+  const level=realmProgress(getSave().player).index-9;
+  const foes=FOUNDATION_MONSTERS.filter(m=>(m.id===peak.monsterId||m.id.startsWith(peak.monsterId+'-'))&&level>=m.minLevel);
+  if(!foes.length)return renderFoundation();
+  if(id==='foundation-ending'&&getSave().foundationEnding?.defeated){
+   activate('map');content().innerHTML=`<section class="xg-map-sheet"><button class="xg-map-back" type="button">← 返回望川岭</button>${heading('归元渡','风过旧渡，剑痕仍在。')}<div class="xg-card"><h3>叩问金丹</h3><p>${realmProgress(getSave().player).complete?'你已筑基圆满。封渡客留下的丹纹，在灵台中渐渐清晰。':'封渡客已与你罢战。待筑基十层修为圆满，再来参悟丹纹。'}</p><button type="button" disabled>金丹篇 · 待开放</button></div></section>`;back(renderFoundation);return;
+  }
   activate('map');
-  content().innerHTML=`<section class="xg-map-sheet"><button class="xg-map-back" type="button">← 返回望川岭</button>${heading(peak.name,'山中对手')}${petChoices(getSave(),'xg-foundation-pet')}<div class="xg-card xg-map-monster"><h3>${monster.name}</h3><p>生命 ${monster.hp} · 攻击 ${monster.attack} · 速度 ${monster.speed}</p><small>主要掉落：${monster.drop}</small><button type="button" data-foundation-foe>迎战</button></div><p role="status" aria-live="polite"></p></section>`;
+  content().innerHTML=`<section class="xg-map-sheet"><button class="xg-map-back" type="button">← 返回望川岭</button>${heading(peak.name,id==='foundation-ending'?'一名灰衣剑客守着旧渡口，邀你以剑问道。':'山中对手')}${petChoices(getSave(),'xg-foundation-pet')}${foes.map(monster=>`<div class="xg-card xg-map-monster"><h3>${monster.name}</h3><p>生命 ${monster.hp} · 攻击 ${monster.attack} · 速度 ${monster.speed}</p><small>${monster.drop}</small><button type="button" data-foundation-foe="${monster.id}">迎战</button></div>`).join('')}<p role="status" aria-live="polite"></p></section>`;
   back(renderFoundation);
-  const button=content().querySelector('[data-foundation-foe]');
-  button.onclick=async()=>{button.disabled=true;try{const pet=content().querySelector('[name="xg-foundation-pet"]:checked')?.value||null;await actions.startBattle(monster.id,pet);battle()}catch(error){content().querySelector('[role=status]').textContent=error.message;button.disabled=false}};
+  content().querySelectorAll('[data-foundation-foe]').forEach(button=>button.onclick=async()=>{button.disabled=true;try{const pet=content().querySelector('[name="xg-foundation-pet"]:checked')?.value||null;await actions.startBattle(button.dataset.foundationFoe,pet);battle()}catch(error){content().querySelector('[role=status]').textContent=error.message;button.disabled=false}});
+
  }
  function renderEncounter(id){
   if(getSave().battle||getSave().encounterPending||getSave().bossLine?.phase==='ambush'||getSave().bossLine?.rescuePending)return battle();
