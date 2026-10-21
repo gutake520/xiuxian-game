@@ -79,7 +79,6 @@
 #xg-panel .xg-spirit-peak-sheet>.xg-feature-header{flex:0 0 auto}
 #xg-panel .xg-spirit-peak-sheet>[data-body]{flex:1 1 auto;min-height:0;min-width:0;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:#806b44 transparent}
 #xg-panel .xg-spirit-peak-sheet>.xg-feature-message{flex:0 0 auto;max-height:25%;overflow-y:auto}
-#xg-panel .xg-map-hill[data-map="sects"] .xg-map-label,#xg-panel .xg-map-hill[data-map="monsters"] .xg-map-label{font-size:9px}
 
 #xg-panel #xg-feature-sheet.xg-stroll-sheet{display:flex;flex-direction:column;overflow:hidden}
 #xg-panel .xg-stroll-sheet>.xg-feature-header{flex:0 0 auto}

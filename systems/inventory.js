@@ -202,3 +202,13 @@ export function brewPill(save,id){
  }
  addItem(save,id);return `炼成一枚${ITEMS[id].name}。`;
 }
+
+export function expandStorageBag(save){
+ if(save.bagExpanded)throw new Error('已完成首次扩充，后续扩充待开放。');
+ if(!Number.isFinite(save.player.spiritStones)||save.player.spiritStones<50)throw new Error('灵石不足，扩充储物袋需要 50 灵石。');
+ if(!Number.isSafeInteger(save.bagCapacity))throw new Error('储物袋容量异常，请重新读取存档。');
+ save.player.spiritStones=Math.round((save.player.spiritStones-50)*100)/100;
+ save.bagCapacity+=10;
+ save.bagExpanded=true;
+ return `储物袋增加 10 格，现有 ${save.bagCapacity} 格。后续扩充待开放。`;
+}

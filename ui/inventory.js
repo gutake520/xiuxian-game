@@ -1,6 +1,6 @@
 import {realmProgress} from '../data/realms.js';
 import {ITEMS,SHOP_ITEMS} from '../data/items.js';
-import {saleUnitPrice,sellInventoryBatch,sellExtra,discardJunk,purchase,equipItem,ownsTechnique,claimLoot,sellEquipment,discardEquipment,usePill,equipmentSalePrice,maxDurability,sellMaterial,materialSalePrice,sellPill,pillSalePrice} from '../systems/inventory.js';
+import {expandStorageBag,saleUnitPrice,sellInventoryBatch,sellExtra,discardJunk,purchase,equipItem,ownsTechnique,claimLoot,sellEquipment,discardEquipment,usePill,equipmentSalePrice,maxDurability,sellMaterial,materialSalePrice,sellPill,pillSalePrice} from '../systems/inventory.js';
 import {createSheet,escapeHTML,format,buttonTask} from './shared.js';
 import {techniqueLibrary} from './techniques.js';
 export function renderInventory(api,selection=null){
@@ -11,7 +11,15 @@ export function renderInventory(api,selection=null){
  if(selected)for(const [uid,quantity] of selected){const entry=save.inventory.find(e=>e.uid===uid);if(saleUnitPrice(save,entry)===null||quantity>(entry.quantity||1))selected.delete(uid)}
  content.innerHTML=`<section class="xg-feature xg-bag"><div class="xg-section-heading"><div><small class="xg-eyebrow">行囊 · 随身之物</small><h2>方寸乾坤</h2></div></div><div class="xg-bag-caption"><span>灵石 <b>${format(save.player.spiritStones)}</b></span><span>储物 ${save.inventory.length}/${save.bagCapacity}</span></div><div class="xg-bag-grid">${Array.from({length:Math.max(save.bagCapacity,save.inventory.length)},(_,i)=>{const entry=save.inventory[i],item=ITEMS[entry?.itemId];return entry?`<button type="button" data-item="${escapeHTML(entry.uid)}" ${selected?`aria-pressed="${selected.has(entry.uid)}" ${saleUnitPrice(save,entry)===null?'disabled':''}`:''}><b>${escapeHTML(item?.glyph||'物')}</b><small>${escapeHTML(item?.name||entry.name||'旧物')}${entry.quantity>1?' ×'+entry.quantity:''}${['crafted-binding-array','foundation-crafted-array'].includes(entry.itemId)?(entry.usesLeft>0?' · '+entry.usesLeft+'/6':' · 损坏'):''}</small>${Object.values(save.equipment).includes(entry.uid)?'<em>已装备</em>':''}</button>`:'<div class="xg-bag-empty" aria-label="空储物格">·</div>'}).join('')}</div>${save.temporaryLoot?.length?`<div class="xg-temp-loot"><h3>临时储物 · 每批保留 30 分钟</h3>${save.temporaryLoot.map(entry=>`<button type="button" data-claim="${escapeHTML(entry.id)}">领取 ${escapeHTML(ITEMS[entry.itemId]?.name||'物品')} ×${entry.quantity} · 剩余 ${Math.max(0,Math.ceil((entry.expiresAt-Date.now())/60000))} 分钟</button>`).join('')}</div>`:''}<div class="xg-feature-row">${selected?`<button type="button" data-select-all>全选可售</button><button type="button" data-sell-selected ${selected.size?'':'disabled'}>出售所选 · ${selected.size} 组 · ${format([...selected].reduce((sum,[uid,quantity])=>sum+saleUnitPrice(save,save.inventory.find(e=>e.uid===uid))*quantity,0))} 灵石</button><button type="button" data-cancel-sale>取消</button>`:'<button type="button" data-batch-sale>多选出售</button><button type="button" data-expand>扩充储物</button>'}</div><p class="xg-feature-message" role="status"></p></section>`;
  const message=content.querySelector('[role=status]');
- content.querySelector('[data-expand]')?.addEventListener('click',()=>message.textContent='扩容价格尚未确定，暂不扣除灵石。');
+ const expand=content.querySelector('[data-expand]');
+ if(expand){
+  expand.textContent=save.bagExpanded?'后续扩充待开放':'扩充 10 格 · 50 灵石';
+  expand.disabled=Boolean(save.bagExpanded);
+  expand.addEventListener('click',()=>buttonTask(expand,async()=>{
+   const {result}=await api.actions.mutate(expandStorageBag,{slot:save.slot,message:r=>r});
+   if(expand.isConnected&&api.getSave()?.slot===save.slot){renderInventory(api);content.querySelector('[role=status]').textContent=result}
+  },message));
+ }
  content.querySelector('[data-batch-sale]')?.addEventListener('click',()=>renderInventory(api,{slot:save.slot,items:new Map()}));
  content.querySelector('[data-cancel-sale]')?.addEventListener('click',()=>renderInventory(api));
  content.querySelector('[data-select-all]')?.addEventListener('click',()=>{for(const entry of save.inventory)if(saleUnitPrice(save,entry)!==null)selected.set(entry.uid,ITEMS[entry.itemId].kind==='equipment'?1:entry.quantity||1);renderInventory(api,selection)});
