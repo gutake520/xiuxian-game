@@ -75,7 +75,7 @@ export const ITEMS={
  'spirit-burn-manual':{id:'spirit-burn-manual',name:'灵息尽燃',kind:'manual',methodId:'spirit-burn',glyph:'简',description:'三片玉简拼成的中级战斗功法，参悟四阶数阵后可装备。'}
 };
 export const ELEMENTAL_MANUALS=ELEMENTAL_TECHNIQUES.map(id=>id+'-manual');
-for(const methodId of ELEMENTAL_TECHNIQUES){const method=TECHNIQUES[methodId],id=methodId+'-manual';ITEMS[id]={id,name:method.name,price:35,sectPrice:29,minFoundationLevel:1,kind:'manual',methodId,rank:'中级',glyph:'诀',description:'筑基中级功法 · 四阶数阵。'+method.description}}
+for(const methodId of ELEMENTAL_TECHNIQUES){const method=TECHNIQUES[methodId],id=methodId+'-manual';ITEMS[id]={id,name:method.name,price:35,sectPrice:29,minFoundationLevel:1,kind:'manual',methodId,rank:'中级',glyph:'诀',description:'中级战斗功法，参悟四阶数阵后可装备。'}}
 for(const item of Object.values(ITEMS))if(item.kind==='manual'&&!item.blackMarketOnly&&!['gamble-manual','steal-manual','only-once-manual','spirit-burn-manual','archive-manual'].includes(item.id)){item.repeatable=true;item.stackable=true;item.sellPrice=10}
 export const SHOP_ITEMS=[...ELEMENTAL_MANUALS,'foundation-mid-sword','foundation-mid-robe','foundation-mid-shoes','foundation-late-sword','foundation-late-robe','foundation-late-shoes','iron-sword','cloth-robe','foundation-sword','foundation-robe','qi-manual','strengthen-manual','wall-manual','breath-manual','charged-manual','wait-manual','calming-jade','fox-wine','bamboo-chess','camellia-seeds'];
 export const SECT_PILLS=['small-heal-pill','spirit-pill','mixed-pill','qi-pill','foundation-heal-pill','foundation-spirit-pill','foundation-mixed-pill','foundation-qi-pill'];
