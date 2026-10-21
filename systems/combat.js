@@ -222,10 +222,11 @@ export function playRound(save,action='attack',now=Date.now()){
    else if((battle.enemySkillReady||0)<=battle.round+1){enemyAction='strengthen-attack';battle.mp--;battle.enemySkillReady=battle.round+4;messages.push(`${battle.name}使出强化普通。`)}
   }
  const monster=monsters.find(entry=>entry.id===battle.monsterId);
-  const empowered=!tournament&&!silenced&&monster?.attackBoost&&(battle.mp||0)>0&&(battle.enemySkillReady||0)<=battle.round+1;
+  const monsterSkill=TECHNIQUES[monster?.skill],monsterMpCost=monsterSkill?.mpCost??1;
+  const empowered=!tournament&&!silenced&&monster?.attackBoost&&(battle.mp||0)>=monsterMpCost&&(battle.enemySkillReady||0)<=battle.round+1;
   const enemyCrit=armored&&enemyAction!=='iron-wall'&&Math.random()<battle.critRate/100;
   const rawDamage=round2(enemyAction==='fox-bloom'?2:armored?(enemyAction==='iron-wall'?1:battle.attack*(enemyAction==='strengthen-attack'?1.1:1)*(enemyCrit?1.5:1)):battle.attack*(empowered?monster.attackBoost:1));
-  if(empowered){battle.mp--;battle.enemySkillReady=battle.round+monster.boostCooldown+2;messages.push(`${battle.name}使出强化攻击。`)}
+  if(empowered){battle.mp=round2(battle.mp-monsterMpCost);battle.enemySkillReady=battle.round+(monsterSkill?.cooldown??monster.boostCooldown)+2;messages.push(`${battle.name}使出${monsterSkill?.name||'强化攻击'}。`)}
   if(enemyCrit)messages.push(`${battle.name}打出暴击。`);
   if(Math.random()<stats.dodgeRate/100){messages.push('你闪开了对手的攻击。');return}
   if(battle.guard){battle.guard=false;messages.push('护身符抵挡了这次伤害。');return}

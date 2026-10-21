@@ -1,8 +1,10 @@
 import test from 'node:test';
+import {FOUNDATION_MONSTERS} from '../data/locations.js';
+import {TECHNIQUES} from '../data/techniques.js';
 import assert from 'node:assert/strict';
 import {addCultivation,realmProgress} from '../data/realms.js';
 import {beginBattle,playRound,useBattleArray,fleeBattle} from '../systems/combat.js';
-import {addItem,purchase,sellMaterial,brewPill,usePill} from '../systems/inventory.js';
+import {equipmentStats,addItem,purchase,sellMaterial,brewPill,usePill} from '../systems/inventory.js';
 import {repairOwnEquipment,craftSectItem} from '../systems/sect-progression.js';
 import {feedBeast} from '../systems/pets.js';
 import {healingService} from '../systems/sect-services.js';
@@ -55,7 +57,7 @@ test('foundation drops feed the crafting and pill loop',()=>{
 test('drop sword stun only cancels an enemy action that has not happened yet',()=>{
  const original=Math.random;
  try{
-  for(const [speed,expectedHp] of [[7,35],[1,35-(4.1-1.3)]]){
+  for(const [speed,expectedHp] of [[7,35],[1,31.79]]){
    const s=save();s.player.combat.speed=speed;addItem(s,'foundation-wild-sword');s.equipment.weapon=s.inventory[0].uid;
    Math.random=()=>.05;beginBattle(s,'rock-ape');s.battle.hp=100;
    playRound(s,'attack');assert.equal(s.player.hp,expectedHp);
@@ -75,4 +77,32 @@ test('combat penalties follow player realm even against old qi monsters',t=>{
    assert.equal(f.player.cultivation,balance>=fee?0:realm.startsWith('筑基')?-50:-30);
   }
  }
+});
+
+
+test('all foundation ordinary enemies cast strengthen with four mana and player cooldown',t=>{
+ t.mock.method(Math,'random',()=>.99);
+ const enemies=FOUNDATION_MONSTERS.filter(m=>!m.boss);
+ assert.equal(enemies.length,9);
+ for(const monster of enemies){
+  const s=save('筑基九层');s.player.hp=1000;s.player.combat.hp=1000;
+  beginBattle(s,monster.id);assert.equal(s.battle.mp,4);
+  for(let round=1;round<=13;round++){
+   const result=playRound(s,'skip');
+   const casts=[1,4,7,10].includes(round);
+   assert.equal(result.messages.some(m=>m===`${monster.name}使出强化普通。`),casts,`${monster.id} round ${round}`);
+   const raw=Math.round(monster.attack*(casts?1.1:1)*100)/100;
+   assert.equal(result.taken,Math.round((raw-equipmentStats(s).defense)*100)/100);
+   if(casts)assert.equal(s.battle.enemySkillReady,round+TECHNIQUES['strengthen-attack'].cooldown+1);
+  }
+  assert.equal(s.battle.mp,0);
+ }
+});
+
+test('bound and silenced foundation enemies do not spend skill mana',t=>{
+ t.mock.method(Math,'random',()=>.99);
+ const s=save();beginBattle(s,'rock-ape');
+ s.battle.bindRounds=[1];playRound(s,'skip');assert.equal(s.battle.mp,4);
+ s.battle.silencedTurns=1;playRound(s,'skip');assert.equal(s.battle.mp,4);
+ playRound(s,'skip');assert.equal(s.battle.mp,3);
 });

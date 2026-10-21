@@ -35,7 +35,7 @@ test('offline settlement matches daily settlement across the fourth-layer rate c
 test('combat and shop enforce unlocks; bought gear contributes speed and can be equipped',()=>{
  const s=make('筑基三层');assert.throws(()=>beginBattle(s,'rock-ape-mid'),/筑基四层/);assert.throws(()=>purchase(s,'foundation-mid-shoes'),/境界不足/);
  s.player.realm='筑基四层';purchase(s,'foundation-mid-shoes');const before=equipmentStats(s).speed;equipItem(s,s.inventory[0].uid);assert.equal(equipmentStats(s).speed,before+3.6);
- beginBattle(s,'rock-ape-mid');assert.equal(s.battle.mp,3);s.battle=null;assert.throws(()=>beginBattle(s,'claw-wolf-human'),/筑基八层/);
+ beginBattle(s,'rock-ape-mid');assert.equal(s.battle.mp,4);s.battle=null;assert.throws(()=>beginBattle(s,'claw-wolf-human'),/筑基八层/);
 });
 test('foundation human retaliation ends before treasure advances and late equipment drops',t=>{
  t.mock.method(Math,'random',()=>0);
