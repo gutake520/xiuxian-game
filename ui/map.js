@@ -12,7 +12,7 @@ import {showBattle} from './combat.js';
 import {ITEMS,SECT_PILLS,SECT_TALISMANS} from '../data/items.js';
 import {purchase,maxDurability} from '../systems/inventory.js';
 import {showShop,showSell} from './inventory.js';
-import {startQiExploration,explorationFee,QI_EXPLORATION_MS,QI_SCENES} from '../systems/exploration.js';
+import {startQiExploration,startFoundationExploration,explorationFee,QI_EXPLORATION_MS,QI_SCENES} from '../systems/exploration.js';
 import {localDay} from '../systems/cultivation.js';
 import {equipmentStats} from '../systems/inventory.js';
 import {repairPrice,repairEquipment,healAtSect,startMeditation,healingService,MEDITATION_MS} from '../systems/sect-services.js';
@@ -198,6 +198,7 @@ export function createMapUI({getSave,activate,actions,onSectBattleExit}){
  function renderFoundationPeak(id){
   if(!foundationPlayer())return render();
   if(id==='foundation-ending')return renderPursuer();
+  if(id==='foundation-secret')return renderSecret('foundation');
   const peak=FOUNDATION_PEAKS.find(place=>place.id===id);
   if(!peak)return renderFoundation();
   const level=realmProgress(getSave().player).index-9;
@@ -282,20 +283,22 @@ export function createMapUI({getSave,activate,actions,onSectBattleExit}){
    });
   }
  }
- function renderSecret(){
+ function renderSecret(tier='qi'){
   activate('map');
-  const save=getSave(),pending=save.qiSecret,visited=save.qiSecretDay===localDay(Date.now());
-  content().innerHTML=`<section class="xg-map-sheet">${pending?'':'<button class="xg-map-back" type="button">← 返回丰原镇</button>'}${heading('星落秘境',pending?'探索中':'每日一次')}
-   ${pending?`<div class="xg-card xg-secret-wait"><h3>秘境深处</h3><p data-secret-scene></p><div class="xg-progress"><i data-secret-progress></i></div><strong data-secret-clock>03:00</strong><button type="button" data-finish hidden>领取探索所得</button></div>`:`<div class="xg-card xg-map-monster"><button type="button" data-explore ${visited?'disabled':''}>${visited?'今日已探索':`探索秘境 · ${explorationFee(save.player)} 灵石 · 3 分钟`}</button></div>${visited&&save.lastQiExploration?.result?`<div class="xg-card"><p>${save.lastQiExploration.result}</p></div>`:''}`}
+  const save=getSave(),pending=save.qiSecret;
+  tier=pending?.tier|| (pending?'qi':tier);
+  const foundation=tier==='foundation',visited=save[foundation?'foundationSecretDay':'qiSecretDay']===localDay(Date.now()),last=save[foundation?'lastFoundationExploration':'lastQiExploration'];
+  content().innerHTML=`<section class="xg-map-sheet">${pending?'':`<button class="xg-map-back" type="button">← 返回${foundation?'望川岭':'丰原镇'}</button>`}${heading(foundation?'筑基秘境':'星落秘境',pending?'探索中':'每日一次')}
+   ${pending?`<div class="xg-card xg-secret-wait"><h3>秘境深处</h3><p data-secret-scene></p><div class="xg-progress"><i data-secret-progress></i></div><strong data-secret-clock>03:00</strong><button type="button" data-finish hidden>领取探索所得</button></div>`:`<div class="xg-card xg-map-monster"><button type="button" data-explore ${visited?'disabled':''}>${visited?'今日已探索':`探索秘境 · ${explorationFee(tier)} 灵石 · 3 分钟`}</button></div>${visited&&last?.result?`<div class="xg-card"><p>${last.result}</p></div>`:''}`}
    <p role="status" aria-live="polite"></p></section>`;
   if(!pending){
-   back(renderMonsters);const button=content().querySelector('[data-explore]'),status=content().querySelector('[role=status]');
-   button.onclick=async()=>{button.disabled=true;try{await actions.mutate(s=>startQiExploration(s),{message:result=>result});renderSecret()}catch(error){status.textContent=error.message;button.disabled=false}};
+   back(foundation?renderFoundation:renderMonsters);const button=content().querySelector('[data-explore]'),status=content().querySelector('[role=status]');
+   button.onclick=async()=>{button.disabled=true;try{await actions.mutate(s=>(foundation?startFoundationExploration:startQiExploration)(s),{message:result=>result});renderSecret(tier)}catch(error){status.textContent=error.message;button.disabled=false}};
    return;
   }
   const slot=save.slot,scene=content().querySelector('[data-secret-scene]'),clock=content().querySelector('[data-secret-clock]'),progress=content().querySelector('[data-secret-progress]'),status=content().querySelector('[role=status]'),finishButton=content().querySelector('[data-finish]');
   let finishing=false,failed=false;
-  const finish=async()=>{if(finishing||!getSave()?.qiSecret)return;finishing=true;finishButton.disabled=true;try{await actions.finishExploration();clearInterval(timer);renderSecret()}catch(error){failed=true;status.textContent=error.message;finishButton.hidden=false;finishButton.disabled=false;finishing=false}};
+  const finish=async()=>{if(finishing||!getSave()?.qiSecret)return;finishing=true;finishButton.disabled=true;try{await actions.finishExploration();clearInterval(timer);renderSecret(tier)}catch(error){failed=true;status.textContent=error.message;finishButton.hidden=false;finishButton.disabled=false;finishing=false}};
   finishButton.onclick=finish;
   const tick=()=>{
    if(!scene.isConnected||getSave()?.slot!==slot){clearInterval(timer);return}

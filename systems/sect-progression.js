@@ -26,7 +26,7 @@ export function dailyTasks(save,now=Date.now()){
  const day=localDay(now);
  if(save.sectDaily?.day!==day)save.sectDaily={day,kills:0,spent:0,explored:0,practice:0,gift:0,repair:0,claimed:[]};
  if(save.player.sect&&save.player.sect!=='无门无派'&&!Array.isArray(save.sectDaily.selected))save.sectDaily.selected=chooseTasks(save,save.sectDaily.claimed);
- if(save.lastQiExploration?.completedAt&&localDay(save.lastQiExploration.completedAt)===day)save.sectDaily.explored=1;
+ if([save.lastQiExploration,save.lastFoundationExploration].some(entry=>entry?.completedAt&&localDay(entry.completedAt)===day))save.sectDaily.explored=1;
  return save.sectDaily;
 }
 export function recordDailyPractice(save,earned,now=Date.now()){

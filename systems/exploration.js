@@ -36,19 +36,23 @@ export const QI_SCENES=[
  '你走到秘境尽头，身后的山路渐渐隐入雾中。'
 ];
 const HERBS=['healing-herb','spirit-herb','qi-herb'];
-export const explorationFee=player=>String(player.realm).startsWith('筑基')?2:1;
+export const explorationFee=(tier='qi')=>tier==='foundation'?2:1;
 const herb=foundation=>(foundation?'foundation-':'')+HERBS[Math.floor(Math.random()*HERBS.length)];
 function pickScenes(){const pool=QI_SCENES.map((_,i)=>i),selected=[];for(let i=0;i<3;i++)selected.push(pool.splice(Math.floor(Math.random()*pool.length),1)[0]);return selected}
 
-export function startQiExploration(save,now=Date.now()){
+export function startQiExploration(save,now=Date.now()){return startExploration(save,'qi',now)}
+export function startFoundationExploration(save,now=Date.now()){return startExploration(save,'foundation',now)}
+function startExploration(save,tier,now){
  if(save.qiSecret)throw new Error('秘境探索尚未结束。');
- if(save.qiSecretDay===localDay(now))throw new Error('今天已经探索过秘境，明天再来。');
- const fee=explorationFee(save.player),foundation=fee===2;
+ const foundation=tier==='foundation',dayKey=foundation?'foundationSecretDay':'qiSecretDay';
+ if(foundation&&!String(save.player.realm).startsWith('筑基'))throw new Error('筑基秘境需达到筑基期。');
+ if(save[dayKey]===localDay(now))throw new Error('今天已经探索过秘境，明天再来。');
+ const fee=explorationFee(tier);
  if(save.player.spiritStones<fee)throw new Error('灵石不足，无法探索秘境。');
  const chance=Math.random(),reward=chance<.9?{stones:1,ore:1,herb:herb(foundation),herbCount:1}:chance<.99?(Math.random()<.5?{stones:1,ore:1}:{stones:1,herb:herb(foundation),herbCount:1}):{stones:2,ore:2,herb:herb(foundation),herbCount:2};
  save.player.spiritStones=Math.round((save.player.spiritStones-fee)*100)/100;
- save.qiSecretDay=localDay(now);
- save.qiSecret={startedAt:now,endsAt:now+QI_EXPLORATION_MS,scenes:pickScenes(),reward:{...reward,oreId:foundation?'foundation-ore':'ore'}};
+ save[dayKey]=localDay(now);
+ save.qiSecret={tier,startedAt:now,endsAt:now+QI_EXPLORATION_MS,scenes:pickScenes(),reward:{...reward,oreId:foundation?'foundation-ore':'ore'}};
  return `你付出 ${fee} 灵石，踏入秘境。接下来三分钟只能继续探索。`;
 }
 export function finishQiExploration(save,now=Date.now()){
@@ -62,7 +66,7 @@ export function finishQiExploration(save,now=Date.now()){
   rewards.push(`${name}×${quantity}${place==='temporary'?'（临时储物）':''}`);
  }
  const result=`秘境所得：${rewards.join('、')}。`;
- save.lastQiExploration={completedAt:now,result,scenes:pending.scenes};
+ save[pending.tier==='foundation'?'lastFoundationExploration':'lastQiExploration']={completedAt:now,result,scenes:pending.scenes};
  save.qiSecret=null;
  return result;
 }
