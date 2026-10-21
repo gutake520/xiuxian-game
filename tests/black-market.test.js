@@ -48,3 +48,16 @@ test('reset uses an action and five MP, clears cooldowns, keeps per-battle limit
  s=JSON.parse(JSON.stringify(s));assert.throws(()=>playRound(s,'cooldown-reset'));assert.throws(()=>playRound(s,'only-once'));
  assert.equal(random(.9,()=>playRound(s,'charged-strike')).dealt,3.6);
 });
+
+test('foundation black market adds all foundation materials while retaining qi materials',t=>{
+ for(const [category,ids] of [[.6,['ore','foundation-ore']],[.9,['healing-herb','spirit-herb','qi-herb','foundation-healing-herb','foundation-spirit-herb','foundation-qi-herb']]]){
+  for(let i=0;i<ids.length;i++){
+   const s=save();s.player.realm='筑基一层';let rolls=[category,(i+.1)/ids.length];
+   const mock=t.mock.method(Math,'random',()=>rolls.shift()??0);
+   drawBlackMarket(s,1,ids[i]);assert.equal(s.inventory[0].itemId,ids[i]);assert.equal(s.player.spiritStones,98);
+   mock.mock.restore();
+  }
+ }
+ const s=save();random(.99,()=>drawBlackMarket(s,10,'qi-only'));
+ assert.ok(s.inventory.every(i=>!i.itemId.startsWith('foundation-')));
+});

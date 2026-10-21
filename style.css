@@ -60,7 +60,7 @@
 #xg-panel nav button small{font-size:10px;line-height:1.3;color:inherit}
 #xg-fab{position:fixed;z-index:9998;right:8px;top:50%;transform:translateY(-50%);display:flex;align-items:center;justify-content:center;width:52px;height:52px;padding:0;border:0;background:transparent;box-shadow:none;touch-action:none;cursor:pointer}
 #xg-fab.hide{display:none}
-#xg-fab .xg-moon-emoji{font-size:31px;line-height:1;filter:drop-shadow(0 3px 5px #173b3340)}
+#xg-fab .xg-moon-emoji{font-size:27px;line-height:1;filter:drop-shadow(0 3px 5px #173b3340)}
 #xg-fab:focus-visible{outline:2px solid #557e68;border-radius:50%}
 #xg-panel .xg-card{padding:20px;margin:14px 0;border:1px solid var(--line);border-radius:16px;background:var(--surface);box-shadow:0 2px 4px #253b2803}
 #xg-panel .xg-card:first-child{margin-top:0}

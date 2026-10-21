@@ -48,5 +48,5 @@ export const FOUNDATION_PEAKS=[
  {id:'rock-hollow',name:'磐石坳',kind:'monster',monsterId:'rock-ape',x:7,y:12,size:.83},
  {id:'cloud-gorge',name:'穿云涧',kind:'monster',monsterId:'cloud-falcon',x:61,y:8,size:.78},
  {id:'blade-slope',name:'断刃坡',kind:'monster',monsterId:'claw-wolf',x:33,y:55,size:.84},
- {id:'foundation-secret',name:'筑基秘境',kind:'secret',x:7,y:72,size:.8}
+ {id:'foundation-secret',name:'云岫秘境',kind:'secret',x:7,y:72,size:.8}
 ];

@@ -288,7 +288,7 @@ export function createMapUI({getSave,activate,actions,onSectBattleExit}){
   const save=getSave(),pending=save.qiSecret;
   tier=pending?.tier|| (pending?'qi':tier);
   const foundation=tier==='foundation',visited=save[foundation?'foundationSecretDay':'qiSecretDay']===localDay(Date.now()),last=save[foundation?'lastFoundationExploration':'lastQiExploration'];
-  content().innerHTML=`<section class="xg-map-sheet">${pending?'':`<button class="xg-map-back" type="button">← 返回${foundation?'望川岭':'丰原镇'}</button>`}${heading(foundation?'筑基秘境':'星落秘境',pending?'探索中':'每日一次')}
+  content().innerHTML=`<section class="xg-map-sheet">${pending?'':`<button class="xg-map-back" type="button">← 返回${foundation?'望川岭':'丰原镇'}</button>`}${heading(foundation?'云岫秘境':'星落秘境',pending?'探索中':'每日一次')}
    ${pending?`<div class="xg-card xg-secret-wait"><h3>秘境深处</h3><p data-secret-scene></p><div class="xg-progress"><i data-secret-progress></i></div><strong data-secret-clock>03:00</strong><button type="button" data-finish hidden>领取探索所得</button></div>`:`<div class="xg-card xg-map-monster"><button type="button" data-explore ${visited?'disabled':''}>${visited?'今日已探索':`探索秘境 · ${explorationFee(tier)} 灵石 · 3 分钟`}</button></div>${visited&&last?.result?`<div class="xg-card"><p>${last.result}</p></div>`:''}`}
    <p role="status" aria-live="polite"></p></section>`;
   if(!pending){

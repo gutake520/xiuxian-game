@@ -48,7 +48,7 @@ test('map offers independent town and foundation entrances, costs and return des
  const s=migrateSave({...make('筑基一层'),slot:'secrets',bossLine:{phase:'defeated',insight:true}});
  const map=createMapUI({getSave:()=>s,activate:()=>{},actions:{}});
  map.render();document.querySelector('[data-map="foundation"]').click();document.querySelector('[data-foundation="foundation-secret"]').click();
- assert.match(document.body.textContent,/筑基秘境/);assert.match(document.body.textContent,/2 灵石/);assert.match(document.body.textContent,/返回望川岭/);
+ assert.match(document.body.textContent,/云岫秘境/);assert.match(document.body.textContent,/2 灵石/);assert.match(document.body.textContent,/返回望川岭/);
  document.querySelector('.xg-map-back').click();assert.ok(document.querySelector('[data-foundation="rock-hollow"]'));
  // Use the town entrance after a completed foundation exploration today.
  startFoundationExploration(s);finishQiExploration(s,Date.now()+QI_EXPLORATION_MS);

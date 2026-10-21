@@ -16,6 +16,9 @@ export function drawBlackMarket(save,count,requestId,now=Date.now()){
  const state=save.blackMarket;
  state.pity=Number.isSafeInteger(state.pity)?Math.max(0,Math.min(65,state.pity)):0;
  save.player.spiritStones=Math.round((save.player.spiritStones-price)*100)/100;
+ const foundation=String(save.player.realm).startsWith('筑基');
+ const orePool=foundation?['ore','foundation-ore']:['ore'];
+ const herbPool=foundation?[...herbs,...herbs.map(id=>'foundation-'+id)]:herbs;
  const results=[];
  const revealedManuals=[];
  for(let i=0;i<count;i++){
@@ -26,8 +29,8 @@ export function drawBlackMarket(save,count,requestId,now=Date.now()){
    if(roll<.305){results.push('摊主掀开空匣：你被骗了，什么也没得到。');continue}
    if(roll<.505)id=pick(junk);
    else if(roll<.555)id=pick(gifts);
-   else if(roll<.7775)id='ore';
-   else id=pick(herbs);
+   else if(roll<.7775)id=foundation?pick(orePool):'ore';
+   else id=pick(herbPool);
   }
   const place=awardItem(save,id,1,now);
   if(ITEMS[id].kind==='manual')revealedManuals.push(ITEMS[id].name);
