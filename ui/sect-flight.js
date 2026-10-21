@@ -42,7 +42,7 @@ export function showSectFlight(api,onClose){
   });
   if(!result||!current())return;runId=result.id;token=result.token;targetLane=null;status.textContent='';
   const run=api.getSave().sectFlight.run;
-  body.innerHTML=`<p data-flight-hud></p><div class="xg-flight-sky" role="img" aria-label="御剑航道：金环可穿越，山石须避让"><div class="xg-flight-track"></div>${run.gates.map((g,i)=>`<span class="xg-flight-ring" data-gate="${i}" style="left:${(g.ring+.5)/3*100}%" aria-label="剑环">○</span><span class="xg-flight-rock" data-gate="${i}" style="left:${(g.rock+.5)/3*100}%" aria-label="山石">◆</span>`).join('')}<span class="xg-flight-sword" data-sword>剑</span></div><div class="xg-flight-controls">${['左','中','右'].map((name,i)=>`<button data-lane="${i}" aria-label="飞向${name}路">${name}</button>`).join('')}</div><p>穿金环，避山石。返回可暂停。</p>`;
+  body.innerHTML=`<p data-flight-hud></p><div class="xg-flight-sky" role="img" aria-label="御剑航道：金环可穿越，山石须避让"><div class="xg-flight-track"></div>${run.gates.map((g,i)=>`<span class="xg-flight-ring" data-gate="${i}" style="left:${(g.ring+.5)/3*100}%" aria-label="剑环"></span><span class="xg-flight-rock" data-gate="${i}" style="left:${(g.rock+.5)/3*100}%" aria-label="山石"></span>`).join('')}<span class="xg-flight-sword" data-sword role="img" aria-label="青玉飞剑"></span></div><div class="xg-flight-controls">${['左','中','右'].map((name,i)=>`<button data-lane="${i}" aria-label="飞向${name}路">${name}</button>`).join('')}</div><p>穿金环，避山石。返回可暂停。</p>`;
   body.querySelectorAll('[data-lane]').forEach(b=>b.onclick=()=>choose(Number(b.dataset.lane)));
   timer=setInterval(step,200);paint();sheet.focus();
  };

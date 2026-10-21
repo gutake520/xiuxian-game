@@ -125,3 +125,10 @@
 #xg-panel .xg-flight-controls>button[aria-pressed=true]{background:var(--jade);color:#fffefa!important;border-color:var(--jade)}
 #xg-panel .xg-feature [data-discard],#xg-panel .xg-feature [data-move=surrender]{color:var(--cinnabar)!important;background:transparent}
 @media(max-width:420px){#xg-panel #xg-feature-sheet{padding:20px}#xg-panel .xg-feature-header{top:-20px}#xg-panel .xg-feature-card{padding:17px}#xg-panel .xg-bag-grid{gap:6px}#xg-panel .xg-bag-grid>button,#xg-panel .xg-bag-empty{min-height:82px}}
+
+/* Illustrated flight pieces retain the original lane positions and timing. */
+#xg-panel .xg-flight-sky{background:linear-gradient(#f1f5edc4,#e4eee3a6),url('../assets/landscape.svg') center bottom/auto 100% no-repeat,#e5eee4}
+#xg-panel .xg-flight-track{background:linear-gradient(90deg,transparent 33.2%,#7d9e8026 33.2%,#7d9e8026 33.5%,transparent 33.5%,transparent 66.5%,#7d9e8026 66.5%,#7d9e8026 66.8%,transparent 66.8%)}
+#xg-panel .xg-flight-ring{width:46px;height:52px;background:url('../assets/flight-ring.svg') center/contain no-repeat}
+#xg-panel .xg-flight-rock{width:42px;height:42px;background:url('../assets/flight-rock.svg') center/contain no-repeat}
+#xg-panel .xg-flight-sword{width:48px;height:96px;background:url('../assets/flight-sword.svg') center/contain no-repeat;border:0;border-radius:0;box-shadow:none;filter:drop-shadow(0 4px 4px #365b4930);pointer-events:none}

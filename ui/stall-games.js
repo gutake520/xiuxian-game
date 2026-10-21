@@ -29,7 +29,7 @@ export function showStallGame(api,kind,onClose){
    body.querySelector('[data-leave]').onclick=()=>run(next=>leaveStallGame(next,kind,id));return;
   }
   if(kind==='dice'){
-   body.innerHTML=`<article class="xg-feature-card"><h3>${leisure?'猜定了？':'买定离手'}</h3><p>${leisure?'你猜':'你押了'}${g.guess==='big'?'大':'小'}${leisure?'':` · ${g.bet} 灵石`}</p><div class="xg-dice-cup" aria-label="骰盅未揭开">盅</div><button data-reveal>揭盅</button></article>`;
+   body.innerHTML=`<article class="xg-feature-card"><h3>${leisure?'猜定了？':'买定离手'}</h3><p>${leisure?'你猜':'你押了'}${g.guess==='big'?'大':'小'}${leisure?'':` · ${g.bet} 灵石`}</p><div class="xg-dice-cup" role="img" aria-label="骰盅未揭开"></div><button data-reveal>揭盅</button></article>`;
    body.querySelector('[data-reveal]').onclick=()=>run(next=>revealDice(next,id));return;
   }
   body.innerHTML=`<p>棋力${GOMOKU_DIFFICULTIES[g.difficulty]} · ${g.bet?'已押 '+g.bet+' 灵石':'切磋'} · 你执黑</p><div class="xg-gomoku-board" role="group" aria-label="五子棋盘">${g.board.map((stone,pos)=>`<button type="button" data-cell="${pos}" class="${stone===1?'is-black':stone===2?'is-white':''} ${g.lastMove===pos?'is-last':''}" aria-label="第${Math.floor(pos/N)+1}行第${pos%N+1}列，${stone===1?'黑子':stone===2?'白子':'空位'}" ${stone?'disabled':''}></button>`).join('')}</div><div class="xg-stall-form"><p data-selection>点选空位，再确认落子。</p><button data-confirm disabled>确认落子</button><button data-resign>认输${g.bet?'（不退下注）':''}</button></div>`;
