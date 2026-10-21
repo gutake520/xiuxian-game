@@ -1,4 +1,4 @@
-import {castElement,elementalEffect,elementalBonus,expireElements} from './five-elements.js';
+import {castElement,hasElementalEffect,elementalEffect,elementalBonus,expireElements} from './five-elements.js';
 import {foundationStoryPending} from './foundation-story.js';
 import {finishZhangEncounter,tryZhangRescue} from './zhang-huaijin.js';
 import {advanceTreasure} from './treasure.js';
@@ -166,7 +166,7 @@ export function playRound(save,action='attack',now=Date.now()){
  const messages=[];let dealt=0,taken=0;
  if(battle.stingRound===battle.round+1){battle.stingRound=0;const dot=round2(2*(hasActiveTechnique(save,'one-sword')?1.1:1));battle.hp=round2(Math.max(0,battle.hp-dot));messages.push(`蛰一下继续生效，对手失去 ${dot.toFixed(2)} 生命。`);if(battle.hp<=0){battle.round++;const result=resolveVictory(save,now,messages);return {messages,dealt,taken,result}}}
  const mpCost=action==='spirit-burn'?save.player.mp:save.techniques.upgraded?.includes(action)?action==='only-once'?3:2:skill?.mpCost??1;
- if(skill){if(skill.passive)throw new Error('被动功法无需主动施放。');if(!hasActiveTechnique(save,action))throw new Error('尚未装备这门功法。');if(action==='cooldown-reset'&&battle.cooldownResetUsed)throw new Error('本场已经使用过重置功法。');if(action==='only-once'&&battle.criticalFocus)throw new Error('本场战斗已使用过这门功法。');if((battle.skillReady?.[action]||0)>battle.round+1)throw new Error('这门功法仍在冷却。');if(save.player.mp<mpCost||action==='spirit-burn'&&save.player.mp<=0)throw new Error('法力不足，无法施放。')}
+ if(skill){if(skill.passive)throw new Error('被动功法无需主动施放。');if(!hasActiveTechnique(save,action))throw new Error('尚未装备这门功法。');if(action==='cooldown-reset'&&battle.cooldownResetUsed)throw new Error('本场已经使用过重置功法。');if(action==='only-once'&&battle.criticalFocus)throw new Error('本场战斗已使用过这门功法。');if(hasElementalEffect(battle,action))throw new Error('这门功法的效果尚未结束，不能再次施放。');if((battle.skillReady?.[action]||0)>battle.round+1)throw new Error('这门功法仍在冷却。');if(save.player.mp<mpCost||action==='spirit-burn'&&save.player.mp<=0)throw new Error('法力不足，无法施放。')}
  const stats=equipmentStats(save),playerFirst=stats.speed>=battle.speed;
  const guarded=action==='iron-wall';
  let enemyAction='attack';

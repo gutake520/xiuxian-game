@@ -26,5 +26,8 @@ test('battle renders compact effect status and fractional mana disables skill co
  const root=document.getElementById('xg-content');assert.match(root.textContent,/攻击 \+1 · 余 3 轮/);
  assert.equal(root.querySelector('[data-fight="metal-edge"]').disabled,true);
  s.player.mp=1.5;showBattle({getSave:()=>s,actions:{},activate:()=>{}});
+ assert.equal(root.querySelector('[data-fight="metal-edge"]').disabled,true);
+ assert.match(root.querySelector('[data-fight="metal-edge"]').textContent,/效果持续中/);
+ s.battle.elements={};showBattle({getSave:()=>s,actions:{},activate:()=>{}});
  assert.equal(root.querySelector('[data-fight="metal-edge"]').disabled,false);
 });

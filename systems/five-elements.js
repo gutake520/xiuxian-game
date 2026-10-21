@@ -4,6 +4,9 @@ export function elementalEffect(battle,id,round=battle.round+1){
  const effect=battle.elements?.[id];
  return effect&&round>=effect.start&&round<=effect.end?effect:null;
 }
+export function hasElementalEffect(battle,id){
+ return ELEMENTAL_TECHNIQUES.includes(id)&&(battle.elements?.[id]?.end??-1)>=battle.round+1;
+}
 export function elementalBonus(battle,id){
  const effect=elementalEffect(battle,id);
  return effect?DECAY[battle.round+1-effect.start]||0:0;

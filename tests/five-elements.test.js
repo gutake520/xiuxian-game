@@ -27,7 +27,7 @@ test('all five casts spend exactly 1.5 MP, no immediate direct attack, and rejec
  steady(t);
  for(const id of ELEMENTAL_TECHNIQUES){
   const s=fight();const r=playRound(s,id);assert.equal(s.player.mp,18.5);assert.equal(r.dealt,0);
-  s.player.mp=1.49;const before=JSON.stringify(s);assert.throws(()=>playRound(s,id),/法力不足/);assert.equal(JSON.stringify(s),before);
+  const low=fight();low.player.mp=1.49;const before=JSON.stringify(low);assert.throws(()=>playRound(low,id),/法力不足/);assert.equal(JSON.stringify(low),before);
  }
 });
 test('wood releases with third-round normal action and survives reload, without a forced attack',t=>{
@@ -75,13 +75,13 @@ test('a slower burn caster cannot burn an action already taken; lethal burn canc
  playRound(slow,'skip');playRound(slow,'skip');playRound(slow,'skip');assert.equal(slow.battle.hp,194);
  const s=fight();s.battle.hp=3;const r=playRound(s,'fire-burn');assert.equal(r.taken,0);assert.equal(s.lastBattle.outcome,'victory');
 });
-test('metal and earth decay by round, refresh without stacking, and leave base stats untouched',t=>{
+test('metal and earth decay by round, cannot refresh while active, and leave base stats untouched',t=>{
  steady(t);
  const earth=fight();assert.equal(playRound(earth,'earth-rampart').taken,7.8);
  for(const expected of [8,8.2,8.4,9])assert.equal(playRound(earth,'skip').taken,expected);
  const metal=fight();playRound(metal,'metal-edge');
  for(const expected of [11,10.8,10.6,10])assert.equal(playRound(metal,'attack').dealt,expected);
- const s=fight();playRound(s,'metal-edge');playRound(s,'metal-edge');assert.equal(elementalBonus(s.battle,'metal-edge'),1);
+ const s=fight();playRound(s,'metal-edge');assert.throws(()=>playRound(s,'metal-edge'),/效果尚未结束/);assert.equal(elementalBonus(s.battle,'metal-edge'),1);
  assert.equal(s.player.combat.attack,10);assert.equal(s.player.combat.defense,1);
  fleeBattle(s);beginBattle(s,'rock-ape');assert.equal(elementalBonus(s.battle,'metal-edge'),0);assert.equal(elementalStatus(s.battle),'');
 });
@@ -95,4 +95,28 @@ test('wood resolves while paralyzed and respects armor on its independent hit',t
  steady(t);const s=fight();playRound(s,'wood-hidden');playRound(s,'skip');
  Object.assign(s.battle,{kind:'fox-npc',foxParalyzeRound:3,defense:2,dodgeRate:0,critRate:0});
  const r=playRound(s,'attack');assert.equal(r.dealt,12);assert.ok(r.messages.some(m=>m.includes('无法行动')));
+});
+
+test('five elements require full five/four round cooldowns even after effects end and reload',t=>{
+ steady(t);
+ for(const id of ELEMENTAL_TECHNIQUES){
+  let s=fight();const cooldown=['metal-edge','earth-rampart'].includes(id)?5:4;
+  assert.equal(TECHNIQUES[id].cooldown,cooldown);playRound(s,id);
+  s=JSON.parse(JSON.stringify(s));
+  for(let n=0;n<cooldown;n++){
+   const before=JSON.stringify(s);assert.throws(()=>playRound(s,id),/效果尚未结束|冷却/);assert.equal(JSON.stringify(s),before);
+   playRound(s,'skip');
+  }
+  const mp=s.player.mp;playRound(s,id);assert.equal(s.player.mp,mp-1.5);
+ }
+});
+
+test('cooldown reset cannot refresh elemental effects that are still present',t=>{
+ steady(t);
+ for(const id of ELEMENTAL_TECHNIQUES){
+  const s=fight();s.techniques.mastered.push('cooldown-reset');s.techniques.combat.push('cooldown-reset');
+  playRound(s,id);playRound(s,'cooldown-reset');
+  assert.equal(s.battle.skillReady[id],undefined);
+  const before=JSON.stringify(s);assert.throws(()=>playRound(s,id),/效果尚未结束/);assert.equal(JSON.stringify(s),before);
+ }
 });
