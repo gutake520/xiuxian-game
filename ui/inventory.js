@@ -34,9 +34,22 @@ export function renderInventory(api,selection=null){
  content.querySelectorAll('[data-claim]').forEach(button=>button.onclick=()=>buttonTask(button,async()=>{await api.actions.mutate(s=>claimLoot(s,button.dataset.claim));renderInventory(api)},message));
 }
 export function showShop(api,gearOnly=false,onClose=()=>{api.closeFeature();renderInventory(api)}){
- const sheet=createSheet(gearOnly?'购买装备':'坊市商店',onClose),body=sheet.querySelector('[data-body]'),message=sheet.querySelector('[role=status]');
- const save=api.getSave();body.innerHTML=`<p>随身灵石：<b>${format(save.player.spiritStones)}</b></p>${SHOP_ITEMS.filter(id=>(!gearOnly||ITEMS[id].kind==='equipment')&&(!ITEMS[id].minFoundationLevel||realmProgress(save.player).index-9>=ITEMS[id].minFoundationLevel)&&(!ITEMS[id].stage||String(save.player.realm).startsWith('筑基'))).map(id=>{const item=ITEMS[id],owned=item.kind==='manual'&&!item.repeatable&&ownsTechnique(save,item.methodId);return `<article class="xg-feature-card"><h3>${item.name}<small>${item.price} 灵石</small></h3><p>${item.description}</p><button type="button" data-buy="${id}" ${owned?'disabled':''}>${owned?'已拥有':'购买'}</button></article>`}).join('')}`;
- body.querySelectorAll('[data-buy]').forEach(button=>button.onclick=()=>buttonTask(button,async()=>{await api.actions.mutate(s=>purchase(s,button.dataset.buy),{message:result=>result});if(!sheet.isConnected)return;showShop(api,gearOnly,onClose);document.querySelector('#xg-feature-sheet [role=status]').textContent='已收入储物格。'},message));
+ const sheet=createSheet(gearOnly?'购买装备':'坊市商店',onClose),body=sheet.querySelector('[data-body]');
+ const save=api.getSave();body.innerHTML=`<p>随身灵石：<b data-shop-stones>${format(save.player.spiritStones)}</b></p>${SHOP_ITEMS.filter(id=>(!gearOnly||ITEMS[id].kind==='equipment')&&(!ITEMS[id].minFoundationLevel||realmProgress(save.player).index-9>=ITEMS[id].minFoundationLevel)&&(!ITEMS[id].stage||String(save.player.realm).startsWith('筑基'))).map(id=>{const item=ITEMS[id],owned=item.kind==='manual'&&!item.repeatable&&ownsTechnique(save,item.methodId);return `<article class="xg-feature-card"><h3>${item.name}<small>${item.price} 灵石</small></h3><p>${item.description}</p><button type="button" data-buy="${id}" ${owned?'disabled':''}>${owned?'已拥有':'购买'}</button><p class="xg-feature-message" data-purchase-status role="status" aria-live="polite"></p></article>`}).join('')}`;
+ body.querySelectorAll('[data-buy]').forEach(button=>button.onclick=async()=>{
+  if(button.disabled)return;
+  const id=button.dataset.buy,item=ITEMS[id],status=button.parentElement.querySelector('[data-purchase-status]');
+  button.disabled=true;status.textContent='';
+  try{
+   await api.actions.mutate(s=>purchase(s,id),{message:result=>result});
+   if(!sheet.isConnected)return;
+   body.querySelector('[data-shop-stones]').textContent=format(api.getSave().player.spiritStones);
+   status.textContent=`购买成功：${item.name}已收入储物格。`;
+  }catch(error){if(sheet.isConnected)status.textContent=error.message}
+  finally{
+   if(sheet.isConnected){const owned=item.kind==='manual'&&!item.repeatable&&ownsTechnique(api.getSave(),item.methodId);button.disabled=owned;button.textContent=owned?'已拥有':'购买'}
+  }
+ });
 }
 export function showSell(api,onClose=()=>{api.closeFeature();renderInventory(api)}){
  const sheet=createSheet('出售物品',onClose),body=sheet.querySelector('[data-body]'),message=sheet.querySelector('[role=status]');
