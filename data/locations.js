@@ -33,15 +33,15 @@ export const QI_PEAKS = [
  {id:'star-realm',name:'星落秘境',kind:'secret',x:58,y:70,size:.82}
 ];
 export const FOUNDATION_MONSTERS=[
- {id:'rock-ape',name:'岩背猿',hp:'24～28',hpMin:24,hpMax:28,attack:2.8,speed:3,drop:'灵石 2～3',resource:'stones',minLevel:1,stage:'筑基',xp:30},
- {id:'claw-wolf',name:'裂爪狼',hp:'13～16',hpMin:13,hpMax:16,attack:4.2,speed:4,drop:'草药 2～3',resource:'herbs',minLevel:1,stage:'筑基',xp:30},
- {id:'cloud-falcon',name:'掠云隼',hp:'16～19',hpMin:16,hpMax:19,attack:3.5,speed:6,drop:'矿石 2～3',resource:'ore',minLevel:1,stage:'筑基',xp:30},
- {id:'rock-ape-mid',name:'玄甲猿',hp:'40～44',hpMin:40,hpMax:44,attack:4,speed:4,drop:'灵石 2～3',resource:'stones',minLevel:4,stage:'筑基',xp:45,attackBoost:1.2,boostCooldown:3,mp:3,humanoid:false},
- {id:'claw-wolf-mid',name:'赤牙狼王',hp:'29～33',hpMin:29,hpMax:33,attack:5.8,speed:5,drop:'草药 2～3',resource:'herbs',minLevel:4,stage:'筑基',xp:45,attackBoost:1.2,boostCooldown:3,mp:3,humanoid:false},
- {id:'cloud-falcon-mid',name:'惊雷隼',hp:'32～36',hpMin:32,hpMax:36,attack:4.8,speed:8,drop:'矿石 2～3',resource:'ore',minLevel:4,stage:'筑基',xp:45,attackBoost:1.2,boostCooldown:3,mp:3,humanoid:false},
- {id:'rock-ape-human',name:'磐石散修',hp:'52～56',hpMin:52,hpMax:56,attack:4.8,speed:5,drop:'灵石 2～3',resource:'stones',minLevel:7,stage:'筑基',xp:65,attackBoost:1.2,boostCooldown:3,mp:3,humanoid:true},
- {id:'claw-wolf-human',name:'断刃刀客',hp:'40～44',hpMin:40,hpMax:44,attack:7,speed:7,drop:'草药 2～3',resource:'herbs',minLevel:8,stage:'筑基',xp:75,attackBoost:1.2,boostCooldown:3,mp:3,humanoid:true},
- {id:'cloud-falcon-human',name:'穿云剑客',hp:'44～48',hpMin:44,hpMax:48,attack:6.2,speed:10,drop:'矿石 2～3',resource:'ore',minLevel:9,stage:'筑基',xp:85,attackBoost:1.2,boostCooldown:3,mp:3,humanoid:true},
+ {id:'rock-ape',name:'岩背猿',hp:'24～28',hpMin:24,hpMax:28,attack:3.6,speed:3,drop:'灵石 2～3',resource:'stones',minLevel:1,stage:'筑基',xp:30},
+ {id:'claw-wolf',name:'裂爪狼',hp:'13～16',hpMin:13,hpMax:16,attack:5.0,speed:4,drop:'草药 2～3',resource:'herbs',minLevel:1,stage:'筑基',xp:30},
+ {id:'cloud-falcon',name:'掠云隼',hp:'16～19',hpMin:16,hpMax:19,attack:4.3,speed:6,drop:'矿石 2～3',resource:'ore',minLevel:1,stage:'筑基',xp:30},
+ {id:'rock-ape-mid',name:'玄甲猿',hp:'40～44',hpMin:40,hpMax:44,attack:4.8,speed:4,drop:'灵石 2～3',resource:'stones',minLevel:4,stage:'筑基',xp:45,attackBoost:1.2,boostCooldown:3,mp:3,humanoid:false},
+ {id:'claw-wolf-mid',name:'赤牙狼王',hp:'29～33',hpMin:29,hpMax:33,attack:6.6,speed:5,drop:'草药 2～3',resource:'herbs',minLevel:4,stage:'筑基',xp:45,attackBoost:1.2,boostCooldown:3,mp:3,humanoid:false},
+ {id:'cloud-falcon-mid',name:'惊雷隼',hp:'32～36',hpMin:32,hpMax:36,attack:5.6,speed:8,drop:'矿石 2～3',resource:'ore',minLevel:4,stage:'筑基',xp:45,attackBoost:1.2,boostCooldown:3,mp:3,humanoid:false},
+ {id:'rock-ape-human',name:'磐石散修',hp:'52～56',hpMin:52,hpMax:56,attack:5.6,speed:5,drop:'灵石 2～3',resource:'stones',minLevel:7,stage:'筑基',xp:65,attackBoost:1.2,boostCooldown:3,mp:3,humanoid:true},
+ {id:'claw-wolf-human',name:'断刃刀客',hp:'40～44',hpMin:40,hpMax:44,attack:7.8,speed:7,drop:'草药 2～3',resource:'herbs',minLevel:8,stage:'筑基',xp:75,attackBoost:1.2,boostCooldown:3,mp:3,humanoid:true},
+ {id:'cloud-falcon-human',name:'穿云剑客',hp:'44～48',hpMin:44,hpMax:48,attack:7.0,speed:10,drop:'矿石 2～3',resource:'ore',minLevel:9,stage:'筑基',xp:85,attackBoost:1.2,boostCooldown:3,mp:3,humanoid:true},
  {id:'foundation-warden',name:'封渡客',hp:'70',hpMin:70,hpMax:70,attack:7.5,speed:9,drop:'首次获赠归元佩与结丹线索',resource:'stones',minLevel:10,stage:'筑基',xp:0,attackBoost:1.25,boostCooldown:3,mp:4,boss:true}
 ];
 export const FOUNDATION_PEAKS=[
