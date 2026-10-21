@@ -13,10 +13,10 @@ export function elementalBonus(battle,id){
 }
 export function castElement(battle,id,messages){
  if(!ELEMENTAL_TECHNIQUES.includes(id))return false;
- const round=battle.round+1,start=id==='water-mist'?round+1:round;
+ const round=battle.round+1,start=['water-mist','fire-burn'].includes(id)?round+1:round;
  const duration=id==='water-mist'?2:['metal-edge','earth-rampart'].includes(id)?4:3;
  battle.elements??={};battle.elements[id]={start,end:start+duration-1};
- messages.push(`${TECHNIQUES[id].name}生效。${id==='wood-hidden'?'第三轮额外出手。':id==='water-mist'?'对手接下来两轮攻击固定造成 2 点伤害。':id==='fire-burn'?'对手行动时受到 3 点灼烧伤害，持续三轮。':`本轮${id==='metal-edge'?'攻击':'防御'}增加 1.2，随后逐轮衰减。`}`);
+ messages.push(`${TECHNIQUES[id].name}生效。${id==='wood-hidden'?'第三轮额外出手。':id==='water-mist'?'对手接下来两轮攻击固定造成 2 点伤害。':id==='fire-burn'?'下轮起持续三轮，对手行动时受到 3 点灼烧伤害。':`本轮${id==='metal-edge'?'攻击':'防御'}增加 1.2，随后逐轮衰减，仍可行动。`}`);
  return true;
 }
 export function expireElements(battle){
