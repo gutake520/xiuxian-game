@@ -1,4 +1,4 @@
-import {ELEMENTAL_MANUALS} from './data/items.js';
+import {ITEMS,ELEMENTAL_MANUALS} from './data/items.js';
 import {foundationStoryPending} from './systems/foundation-story.js';
 import {showSectFlight} from './ui/sect-flight.js';
 import {sectEligibility} from './systems/sect-eligibility.js';
