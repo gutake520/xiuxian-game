@@ -1,3 +1,4 @@
+import {ELEMENTAL_TECHNIQUES,TECHNIQUES} from './techniques.js';
 export const ITEMS={
  'foundation-mid-sword':{id:'foundation-mid-sword',minFoundationLevel:4,price:12,name:'照水剑',stage:'筑基',kind:'equipment',slot:'weapon',attack:2.2,glyph:'剑',description:'照水剑，攻击 +2.20。'},
  'foundation-mid-robe':{id:'foundation-mid-robe',minFoundationLevel:4,price:12,name:'叠云甲',stage:'筑基',kind:'equipment',slot:'armor',defense:1.1,glyph:'甲',description:'叠云甲，防御 +1.10。'},
@@ -73,7 +74,9 @@ export const ITEMS={
  'wait-manual':{id:'wait-manual',name:'等等再来',price:40,kind:'manual',methodId:'wait-then-strike',glyph:'诀',description:'中级战斗功法，参悟四阶数阵后可装备。'},
  'spirit-burn-manual':{id:'spirit-burn-manual',name:'灵息尽燃',kind:'manual',methodId:'spirit-burn',glyph:'简',description:'三片玉简拼成的中级战斗功法，参悟四阶数阵后可装备。'}
 };
+export const ELEMENTAL_MANUALS=ELEMENTAL_TECHNIQUES.map(id=>id+'-manual');
+for(const methodId of ELEMENTAL_TECHNIQUES){const method=TECHNIQUES[methodId],id=methodId+'-manual';ITEMS[id]={id,name:method.name,price:35,sectPrice:29,minFoundationLevel:1,kind:'manual',methodId,rank:'中级',glyph:'诀',description:'中级战斗功法，参悟四阶数阵后可装备。'+method.description}}
 for(const item of Object.values(ITEMS))if(item.kind==='manual'&&!item.blackMarketOnly&&!['gamble-manual','steal-manual','only-once-manual','spirit-burn-manual','archive-manual'].includes(item.id)){item.repeatable=true;item.stackable=true;item.sellPrice=10}
-export const SHOP_ITEMS=['foundation-mid-sword','foundation-mid-robe','foundation-mid-shoes','foundation-late-sword','foundation-late-robe','foundation-late-shoes','iron-sword','cloth-robe','foundation-sword','foundation-robe','qi-manual','strengthen-manual','wall-manual','breath-manual','charged-manual','wait-manual','calming-jade','fox-wine','bamboo-chess','camellia-seeds'];
+export const SHOP_ITEMS=[...ELEMENTAL_MANUALS,'foundation-mid-sword','foundation-mid-robe','foundation-mid-shoes','foundation-late-sword','foundation-late-robe','foundation-late-shoes','iron-sword','cloth-robe','foundation-sword','foundation-robe','qi-manual','strengthen-manual','wall-manual','breath-manual','charged-manual','wait-manual','calming-jade','fox-wine','bamboo-chess','camellia-seeds'];
 export const SECT_PILLS=['small-heal-pill','spirit-pill','mixed-pill','qi-pill','foundation-heal-pill','foundation-spirit-pill','foundation-mixed-pill','foundation-qi-pill'];
 export const SECT_TALISMANS=['attack-talisman','guard-talisman','foundation-attack-talisman','foundation-guard-talisman'];

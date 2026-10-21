@@ -1,3 +1,4 @@
+import {castElement,elementalEffect,elementalBonus,expireElements} from './five-elements.js';
 import {foundationStoryPending} from './foundation-story.js';
 import {finishZhangEncounter,tryZhangRescue} from './zhang-huaijin.js';
 import {advanceTreasure} from './treasure.js';
@@ -177,6 +178,7 @@ export function playRound(save,action='attack',now=Date.now()){
   const prepared=!!battle.pendingStrike;if(prepared&&action!=='skip')battle.pendingStrike=false;
   if(action==='skip'){messages.push(foxFight&&battle.foxParalyzeRound===battle.round+1?'落英缤纷困住了你，本轮无法行动。':'你选择跳过本轮。');return}
   if(skill&&!prepared){save.player.mp=round2(save.player.mp-mpCost);if(skill.cooldown){battle.skillReady??={};battle.skillReady[action]=battle.round+skill.cooldown+2}if(['only-once','empty-hands','gamble-strike'].includes(action)){save.techniques.usage??={};save.techniques.usage[action]=(save.techniques.usage[action]||0)+1}}
+  if(castElement(battle,action,messages))return;
   if(action==='wait-then-strike'){battle.pendingStrike=true;messages.push('凝聚攻势，下轮自动出手。');return}
   if(action==='cooldown-reset'){battle.cooldownResetUsed=true;for(const id of save.techniques.combat||[])if(id!==action&&battle.skillReady)delete battle.skillReady[id];messages.push('其他已装备功法的冷却已重置。');return}
   if(action==='only-once'){battle.criticalFocus=true;messages.push(`凝聚心神，本场战斗暴击率提高 ${save.techniques.upgraded?.includes(action)?20:15} 个百分点。`);return}
@@ -189,7 +191,7 @@ export function playRound(save,action='attack',now=Date.now()){
    const crit=Math.random()<Math.min(1,(stats.critRate+(battle.criticalFocus?(save.techniques.upgraded?.includes('only-once')?20:15):0))/100);
    const upgraded=save.techniques.upgraded?.includes(action);
    const multiplier=prepared?(rootCount(save.player)===1?2.5:rootCount(save.player)<=3?2.4:2.3):action==='self-as-self'?1.7:action==='charged-strike'||action==='silent-strike'?chargedMultiplier(save.player):action==='strengthen-attack'?1.1:action==='gamble-strike'?(Math.random()<.5?(upgraded?1.6:1.5):(upgraded?0.9:0.8)):1;
-   dealt=round2(Math.max(1,stats.attack*(crit?1.5:1)*multiplier));
+   dealt=round2(Math.max(1,(stats.attack+elementalBonus(battle,'metal-edge'))*(crit?1.5:1)*multiplier));
    damageIntro=`${prepared?'等等再来：':skill?skill.name+'：':''}你${crit?'暴击，':''}造成`;
   }
   if(action==='catch-breath'){const gained=round2(Math.min(1,stats.maxMp-save.player.mp));save.player.mp=round2(save.player.mp+gained);messages.push(`法力恢复 ${gained.toFixed(2)}。`)}
@@ -210,7 +212,9 @@ export function playRound(save,action='attack',now=Date.now()){
   if(action==='empty-hands'&&battle.hp>0&&Math.random()<(save.techniques.upgraded?.includes(action)?.3:.2)){const stolen=round2(Math.min(round2((save.techniques.upgraded?.includes(action)?5:2)*(hasActiveTechnique(save,'one-sword')?1.1:1)),battle.hp)),healed=round2(Math.min(stolen,stats.maxHp-save.player.hp));battle.hp=round2(battle.hp-stolen);save.player.hp=round2(save.player.hp+healed);dealt=round2(dealt+stolen);messages.push(`妙手空空抽取 ${stolen.toFixed(2)} 生命，恢复 ${healed.toFixed(2)}。`)}
  };
  const enemyTurn=()=>{
+  if(battle.skipRounds?.includes(battle.round+1)){messages.push('对手选择跳过本轮。');return}
   if(battle.bindRounds?.includes(battle.round+1)||battle.stunnedRound===battle.round+1){messages.push(battle.stunnedRound===battle.round+1?'对手被裂风剑震晕，本轮无法行动。':'对手被阵盘困住，无法行动。');return}
+  if(elementalEffect(battle,'fire-burn')){battle.hp=round2(Math.max(0,battle.hp-3));messages.push('火·灼烧：对手受到 3.00 点伤害。');if(battle.hp<=0)return}
   const silenced=(battle.silencedTurns||0)>0;
   if(silenced){battle.silencedTurns--;messages.push(`${battle.name}被压制，只能普攻。`)}
   if(tournament){
@@ -230,20 +234,37 @@ export function playRound(save,action='attack',now=Date.now()){
   if(enemyCrit)messages.push(`${battle.name}打出暴击。`);
   if(Math.random()<stats.dodgeRate/100){messages.push('你闪开了对手的攻击。');return}
   if(battle.guard){battle.guard=false;messages.push('护身符抵挡了这次伤害。');return}
-  const afterDefense=enemyAction==='fox-bloom'?2:Math.max(1,rawDamage-stats.defense-(guarded?1:0));
+  const mist=!!elementalEffect(battle,'water-mist');
+  const afterDefense=mist||enemyAction==='fox-bloom'?2:Math.max(1,rawDamage-stats.defense-elementalBonus(battle,'earth-rampart')-(guarded?1:0));
   const capped=action==='only-one'&&playerFirst?Math.min(1,afterDefense):afterDefense;
-  const guardAmount=battle.pet==='guard'?(battle.petStage==='筑基'?.5:.3):0;
+  const guardAmount=!mist&&battle.pet==='guard'?(battle.petStage==='筑基'?.5:.3):0;
   taken=round2(Math.max(0,capped-guardAmount));save.player.hp=round2(Math.max(0,save.player.hp-taken));
-  if(battle.pet==='guard')messages.push(`${battle.petName||'灵兽'}抵挡 ${guardAmount.toFixed(2)} 伤害。`);
+  if(guardAmount)messages.push(`${battle.petName||'灵兽'}抵挡 ${guardAmount.toFixed(2)} 伤害。`);
   messages.push(`你受到 ${taken.toFixed(2)} 伤害。`);
   const rescued=tryZhangRescue(save,now);if(rescued)messages.push(rescued);
   if(taken>0&&save.player.hp>0&&hasActiveTechnique(save,'resentment')){const reflected=round2(rawDamage*.1);battle.hp=round2(Math.max(0,battle.hp-reflected));messages.push(`以怨报怨，反弹 ${reflected.toFixed(2)} 伤害。`)}
  };
- const playerAction=()=>{playerTurn();if(battle.pet==='attack'&&battle.hp>0){const bonus=battle.petStage==='筑基'?.8:.5;battle.hp=round2(Math.max(0,battle.hp-bonus));messages.push(`${battle.petName||'灵兽'}追加 ${bonus.toFixed(2)} 伤害。`)}};
+ // 藏锋是独立的延迟攻击，跳过或被麻痹也不占用当轮行动。
+ const releaseHidden=()=>{
+ const hidden=elementalEffect(battle,'wood-hidden');
+ if(hidden?.end===battle.round+1&&save.player.hp>0&&battle.hp>0){
+  delete battle.elements['wood-hidden'];
+  if(armored&&Math.random()<(battle.dodgeRate||0)/100)messages.push(`${battle.name}避开了木·藏锋。`);
+  else{
+   let damage=round2(Math.max(1,(stats.attack+elementalBonus(battle,'metal-edge'))*1.4-(armored?(battle.defense||0)+(enemyAction==='iron-wall'?1:0):0)));
+   if(hasActiveTechnique(save,'one-sword'))damage=round2(damage*1.1);
+   const actual=Math.min(battle.hp,damage);battle.hp=round2(Math.max(0,battle.hp-damage));dealt=round2(dealt+damage);
+   messages.push(`木·藏锋额外造成 ${damage.toFixed(2)} 伤害。`);
+   if(hasActiveTechnique(save,'life-steal')){const heal=round2(Math.min(stats.maxHp-save.player.hp,actual*.1));save.player.hp=round2(save.player.hp+heal);if(heal>0)messages.push(`吸取生命 ${heal.toFixed(2)}。`)}
+  }
+ }
+ };
+ const playerAction=()=>{playerTurn();releaseHidden();if(battle.pet==='attack'&&battle.hp>0){const bonus=battle.petStage==='筑基'?.8:.5;battle.hp=round2(Math.max(0,battle.hp-bonus));messages.push(`${battle.petName||'灵兽'}追加 ${bonus.toFixed(2)} 伤害。`)}};
  if(playerFirst){playerAction();if(battle.hp>0)enemyTurn()}
  else{enemyTurn();if(save.player.hp>0&&battle.hp>0)playerAction()}
  if(battle.regenRounds>0&&save.player.hp>0&&battle.hp>0){const heal=round2(Math.min(2,stats.maxHp-save.player.hp));save.player.hp=round2(save.player.hp+heal);battle.regenRounds--;messages.push(`妙手回春恢复 ${heal.toFixed(2)} 生命。`)}
  battle.round++;
+ expireElements(battle);
  battle.bindRounds=(battle.bindRounds||[]).filter(round=>round>battle.round);
  if(battle.kind==='zhang-intro'&&(battle.round>=3||battle.hp<=0||save.player.hp<=0))finishZhangEncounter(save);
  else if(battle.hp<=0)resolveVictory(save,now,messages);

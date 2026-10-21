@@ -1,3 +1,4 @@
+import {ELEMENTAL_MANUALS} from './data/items.js';
 import {foundationStoryPending} from './systems/foundation-story.js';
 import {showSectFlight} from './ui/sect-flight.js';
 import {sectEligibility} from './systems/sect-eligibility.js';
@@ -226,7 +227,7 @@ function renderSectIntro(sect){
 }
 const sectAPI={getSave:()=>currentSave,actions:game};
 const closeSectFeature=sect=>()=>{document.getElementById('xg-feature-sheet')?.remove();renderSectHall(sect)};
-const SECT_MANUALS=[['strengthen-manual','strengthen-attack'],['wall-manual','iron-wall'],['gamble-manual','gamble-strike'],['steal-manual','empty-hands'],['breath-manual','catch-breath'],['charged-manual','charged-strike'],['only-once-manual','only-once'],['wait-manual','wait-then-strike']];
+const SECT_MANUALS=[...ELEMENTAL_MANUALS.map(id=>[id,ITEMS[id].methodId]),['strengthen-manual','strengthen-attack'],['wall-manual','iron-wall'],['gamble-manual','gamble-strike'],['steal-manual','empty-hands'],['breath-manual','catch-breath'],['charged-manual','charged-strike'],['only-once-manual','only-once'],['wait-manual','wait-then-strike']];
 const SECT_ROOMS={danxia:'炼丹房',tiangong:'锻兵室',wanling:'灵兽苑',taixu:'符箓室',xuanji:'阵盘室'};
 function showSectTournamentBattle(sect){
  document.getElementById('xg-sect-sheet')?.classList.remove('open');
@@ -250,7 +251,7 @@ function renderSectHall(sect){
 }
 function renderSectShop(sect){
  const sheet=sectOverlay();
- sheet.innerHTML=`${sectHeader(sect,'返回宗门')}<div class="xg-card"><h3>门派商店</h3><p>通用典籍 15 灵石，可精进的三部典籍 25 灵石；「等等再来」30 灵石。多余的通用典籍可在坊市出售。</p>${SECT_MANUALS.map(([itemId,methodId])=>{const price=itemId==='wait-manual'?30:['gamble-manual','steal-manual','only-once-manual'].includes(itemId)?25:15;return `<button type="button" data-sect-manual="${itemId}">${escapeHTML(TECHNIQUES[methodId].name)} · ${price} 灵石</button>`}).join('')}</div><p id="xg-sect-status" role="status"></p>`;
+ sheet.innerHTML=`${sectHeader(sect,'返回宗门')}<div class="xg-card"><h3>门派商店</h3><p>通用典籍 15 灵石，可精进的三部典籍 25 灵石；「等等再来」30 灵石；五行中级功法 29 灵石。多余的通用典籍可在坊市出售。</p>${SECT_MANUALS.filter(([id])=>!ITEMS[id].minFoundationLevel||String(currentSave.player.realm).startsWith('筑基')).map(([itemId,methodId])=>{const price=ITEMS[itemId].sectPrice??(itemId==='wait-manual'?30:['gamble-manual','steal-manual','only-once-manual'].includes(itemId)?25:15);return `<button type="button" data-sect-manual="${itemId}">${escapeHTML(TECHNIQUES[methodId].name)} · ${price} 灵石</button>`}).join('')}</div><p id="xg-sect-status" role="status"></p>`;
  sheet.querySelector('#xg-sect-back').onclick=()=>renderSectHall(sect);
  sheet.querySelectorAll('[data-sect-manual]').forEach(button=>button.onclick=async()=>{
   button.disabled=true;

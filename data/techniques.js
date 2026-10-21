@@ -1,6 +1,13 @@
 import {rootCount} from './technique-slots.js';
 import {realmProgress} from './realms.js';
+export const ELEMENTAL_TECHNIQUES=['metal-edge', 'wood-hidden', 'water-mist', 'fire-burn', 'earth-rampart'];
 export const TECHNIQUES={
+ 'metal-edge':{id:'metal-edge',name:'金·锋利',rank:'中级',type:'combat',minRealmIndex:10,mpCost:1.5,description:'筑基通用。消耗 1.5 点法力，占一次行动。施放当轮起四轮攻击分别增加 1.2、1、0.8、0.6，不累加。重复施放刷新、不叠加，无额外冷却。'},
+ 'wood-hidden':{id:'wood-hidden',name:'木·藏锋',rank:'中级',type:'combat',minRealmIndex:10,mpCost:1.5,description:'筑基通用。消耗 1.5 点法力，占一次行动。施放当轮计第一轮，第三轮正常行动后额外结算攻击力 1.4 倍伤害，不占行动，跳过行动也会触发。重复施放刷新、不叠加，无额外冷却。'},
+ 'water-mist':{id:'water-mist',name:'水·迷雾',rank:'中级',type:'combat',minRealmIndex:10,mpCost:1.5,description:'筑基通用。消耗 1.5 点法力，占一次行动。给对手施加迷雾，施放后的两轮攻击命中时固定造成 2 点伤害；跳过或无法行动仍消耗持续轮数。重复施放刷新、不叠加，无额外冷却。'},
+ 'fire-burn':{id:'fire-burn',name:'火·灼烧',rank:'中级',type:'combat',minRealmIndex:10,mpCost:1.5,description:'筑基通用。消耗 1.5 点法力，占一次行动。施放当轮起持续三轮，对手行动前受到固定 3 点伤害；跳过、定身或眩晕时不触发，但持续时间不顺延。重复施放刷新、不叠加，无额外冷却。'},
+ 'earth-rampart':{id:'earth-rampart',name:'土·余垒',rank:'中级',type:'combat',minRealmIndex:10,mpCost:1.5,description:'筑基通用。消耗 1.5 点法力，占一次行动。施放当轮起四轮防御分别增加 1.2、1、0.8、0.6，不累加。重复施放刷新、不叠加，无额外冷却。'},
+
  'basic-qi-guide':{id:'basic-qi-guide',name:'引气诀',rank:'初级',size:3,type:'cultivation',idlePerMinute:0.5,description:'凝神引气，炼气每分钟积累 0.5 修为；筑基随境界提升。'},
  'archive-meditation':{id:'archive-meditation',name:'藏元诀',rank:'中级',size:4,type:'cultivation',idlePerMinute:0.5,idleHoursByRealm:{炼气:3,筑基:5},description:'炼气每分钟积累 0.5 修为，筑基随境界提升；每日修炼上限炼气三小时、筑基五小时。'},
  'strengthen-attack':{id:'strengthen-attack',name:'强化普通',rank:'普通',type:'combat',cooldown:2,description:'本次攻击造成攻击力 1.1 倍的伤害，再结算防御；冷却两轮。'},
@@ -34,6 +41,7 @@ export function hintAllowance(spirit){return Number(spirit)>=10?2:Number(spirit)
 
 export function techniqueEligible(player,method){
  if(!method)return false;
+ if(method.minRealmIndex&&realmProgress(player).index<method.minRealmIndex)return false;
  if(method.rootCounts&&(!method.rootCounts.includes(rootCount(player))||realmProgress(player).index<10))return false;
  if(!method.sect)return true;
  if(player.sect!==method.sect)return false;
