@@ -55,7 +55,7 @@ test('foundation drops feed the crafting and pill loop',()=>{
 test('drop sword stun only cancels an enemy action that has not happened yet',()=>{
  const original=Math.random;
  try{
-  for(const [speed,expectedHp] of [[7,35],[1,35-(3.6-1.3)]]){
+  for(const [speed,expectedHp] of [[7,35],[1,35-(4.1-1.3)]]){
    const s=save();s.player.combat.speed=speed;addItem(s,'foundation-wild-sword');s.equipment.weapon=s.inventory[0].uid;
    Math.random=()=>.05;beginBattle(s,'rock-ape');s.battle.hp=100;
    playRound(s,'attack');assert.equal(s.player.hp,expectedHp);
