@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import {parseHTML} from 'linkedom';
 import {SOKOBAN_LEVELS} from '../data/peak-puzzles.js';
 import {maybeFindPeakPuzzle,makeMaze,playPeakPuzzle} from '../systems/peak-puzzles.js';
-import {takeStroll} from '../systems/stroll.js';
+import {takeStroll} from './helpers/stroll.js';
 import {migrateSave} from '../storage/migrations.js';
 import {showPeakPuzzle} from '../ui/peak-puzzles.js';
 const make=()=>migrateSave({slot:'puzzle',player:{realm:'炼气一层',spiritStones:0},inventory:[]});

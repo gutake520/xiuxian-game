@@ -4,7 +4,7 @@ import {indexedDB} from 'fake-indexeddb';
 import {parseHTML} from 'linkedom';
 import {migrateSave} from '../storage/migrations.js';
 import {writeSave,readSave,updateSave} from '../storage/saves.js';
-import {takeStroll} from '../systems/stroll.js';
+import {takeStroll} from './helpers/stroll.js';
 import {maybeFindTreasure,advanceTreasure,treasureCanDig,startTreasureGame,activeTreasureMole,hitTreasureMole,finishTreasureGame} from '../systems/treasure.js';
 import {beginBattle,playRound,fleeBattle} from '../systems/combat.js';
 import {showTreasure} from '../ui/treasure.js';

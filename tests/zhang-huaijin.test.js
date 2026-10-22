@@ -5,7 +5,7 @@ import {indexedDB} from 'fake-indexeddb';
 import {migrateSave} from '../storage/migrations.js';
 import {writeSave,readSave} from '../storage/saves.js';
 import {createActions} from '../core/actions.js';
-import {takeStroll} from '../systems/stroll.js';
+import {takeStroll} from './helpers/stroll.js';
 import {maybeMeetZhang,finishZhangEncounter,startZhangPlay,finishZhangPlay,zhangPlayStatus,giveZhangGift,answerZhang,leaveZhang,tryZhangRescue,seenZhangScene} from '../systems/zhang-huaijin.js';
 import {beginBattle,playRound,fleeBattle,useBattleTalisman} from '../systems/combat.js';
 import {equipmentStats,addItem} from '../systems/inventory.js';

@@ -6,7 +6,8 @@ import {migrateSave} from '../storage/migrations.js';
 import {writeSave,readSave,updateSave} from '../storage/saves.js';
 import {offerStallGame,startGomoku,moveGomoku,startDice,revealDice,leaveStallGame} from '../systems/stall-games.js';
 import {fiveInRow,chooseGomokuMove} from '../systems/gomoku.js';
-import {takeStroll,strollEncounterCount} from '../systems/stroll.js';
+import {strollEncounterCount} from '../systems/stroll.js';
+import {takeStroll} from './helpers/stroll.js';
 import {showStallGame} from '../ui/stall-games.js';
 const make=()=>migrateSave({slot:'stall',player:{realm:'炼气一层',spiritRoot:'金灵根',spiritStones:20,stats:{福缘:5}},inventory:[]});
 function offer(s,kind){offerStallGame(s,kind);return s.stallGames[kind].id}

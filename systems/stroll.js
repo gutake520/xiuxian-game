@@ -1,3 +1,4 @@
+import {maybeMeetThief} from './thief.js';
 import {maybeMeetZhang} from './zhang-huaijin.js';
 import {offerStallGame} from './stall-games.js';
 import {STALL_CHANCES} from '../data/stall-games.js';
@@ -19,11 +20,17 @@ export function takeStroll(save,id,now=Date.now(),random=Math.random){
  const count=strollCount(save,now);
  const encounters=strollEncounterCount(save,now),canEncounter=encounters<STROLL_ENCOUNTER_LIMIT;
  const index=Math.min(place.stories.length-1,Math.max(0,Math.floor(random()*place.stories.length)));
+ const thief=canEncounter&&maybeMeetThief(save,id,random);
+ if(thief){
+  const result={placeId:id,kind:'thief',text:thief.text,stolen:thief.stolen,theftSucceeded:thief.success};
+  save.stroll={day:localDay(now),count:count+1,encounters:encounters+1,last:result};
+  return {...result,message:`${place.name}闲逛：${result.text}`};
+ }
  const hadTreasure=Boolean(save.treasure);
  const found=canEncounter&&id==='blackmarket'&&maybeFindTreasure(save,random);
  const puzzle=canEncounter&&id==='spirit-peak'&&maybeFindPeakPuzzle(save,random);
  const stallKind=id==='market'?'gomoku':id==='blackmarket'?'dice':null;
- // Treasure takes priority; conditional dice probability preserves a 30% overall chance.
+ // After the thief misses, treasure takes priority; dice keeps its original conditional chance.
  const stallChance=stallKind==='dice'&&!hadTreasure?STALL_CHANCES.dice/(1-TREASURE_FIND_CHANCE):STALL_CHANCES[stallKind];
  const stall=canEncounter&&!found&&stallKind&&(!save.stallGames?.[stallKind]||save.stallGames[stallKind].phase==='done')&&random()<stallChance&&offerStallGame(save,stallKind);
  const ghost=canEncounter&&id==='foundation'&&maybeMeetZhang(save,random);
