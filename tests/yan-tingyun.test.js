@@ -25,7 +25,7 @@ test('five-percent roll happens once after other post-battle events, and three r
  queueYanAfterVictory(s,'later');assert.equal(fixed(0,()=>maybeMeetYan(s)),false);assert.equal(s.yanEncounterPending,null);
 });
 
-test('third choice follows the saved charisma branch and applies each stone outcome exactly once',()=>{
+test('third choice follows current charisma and applies each stone outcome exactly once',()=>{
  for(const [charm,choice,stones,unlocked] of [[7,'stones',130,false],[7,'together',70,false],[8,'stones',130,false],[8,'together',100,true]]){
   const s=make(charm);const id=reachThird(s);assert.equal(s.yanEncounterPending.highCharm,charm>=8);
   assert.throws(()=>resolveYanEncounter(s,id,'continue'),/请选择回应/);

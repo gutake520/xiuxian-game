@@ -1,3 +1,4 @@
+import {syncTitles} from '../systems/titles.js';
 import {syncAchievements} from '../systems/achievements.js';
 import {combatSlots} from '../data/technique-slots.js';
 import {TECHNIQUES,techniqueEligible} from '../data/techniques.js';
@@ -17,6 +18,7 @@ export function migrateSave(save,now=Date.now()){
   if(!(Number.isFinite(save.world.dayAnchorAt)&&save.world.dayAnchorAt>0))save.world.dayAnchorAt=Number.isFinite(save.updatedAt)&&save.updatedAt>0?save.updatedAt:now;
  }
  const p=save.player;
+ syncTitles(save);
  // Earlier builds used an extra “炼气圆满” realm with zero cultivation.
  // Preserve any cultivation debt while converting that cleared tier to 1000 / 1000.
  if(p.realm==='炼气圆满'){

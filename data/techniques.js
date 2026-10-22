@@ -1,3 +1,4 @@
+import {effectiveStat} from './titles.js';
 import {rootCount} from './technique-slots.js';
 import {realmProgress} from './realms.js';
 export const ELEMENTAL_TECHNIQUES=['metal-edge', 'wood-hidden', 'water-mist', 'fire-burn', 'earth-rampart'];
@@ -45,7 +46,7 @@ export function techniqueEligible(player,method){
  if(method.rootCounts&&(!method.rootCounts.includes(rootCount(player))||realmProgress(player).index<10))return false;
  if(!method.sect)return true;
  if(player.sect!==method.sect)return false;
- const enough=([key,min])=>Number(player.stats?.[key])>=min;
+ const enough=([key,min])=>effectiveStat(player,key)>=min;
  return method.allStats?method.allStats.every(enough):Boolean(method.roots?.some(root=>String(player.spiritRoot||'').includes(root))||(method.stat&&enough(method.stat)));
 }
 export function hasActiveTechnique(save,id){return Boolean(save.techniques?.mastered?.includes(id)&&techniqueEligible(save.player,TECHNIQUES[id])&&(TECHNIQUES[id].type==='craft'||save.techniques?.combat?.includes(id)))}

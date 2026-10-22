@@ -1,3 +1,4 @@
+import {beastPower} from '../data/titles.js';
 import {castElement,hasElementalEffect,elementalEffect,elementalBonus,expireElements} from './five-elements.js';
 import {foundationStoryPending} from './foundation-story.js';
 import {finishZhangEncounter,tryZhangRescue} from './zhang-huaijin.js';
@@ -245,7 +246,7 @@ export function playRound(save,action='attack',now=Date.now()){
   const mist=!!elementalEffect(battle,'water-mist');
   const afterDefense=mist||enemyAction==='fox-bloom'?2:Math.max(1,rawDamage-stats.defense-elementalBonus(battle,'earth-rampart')-(guarded?1:0));
   const capped=action==='only-one'&&playerFirst?Math.min(1,afterDefense):afterDefense;
-  const guardAmount=!mist&&battle.pet==='guard'?(battle.petStage==='筑基'?.5:.3):0;
+  const guardAmount=!mist&&battle.pet==='guard'?beastPower(save,'guard',battle.petStage):0;
   taken=round2(Math.max(0,capped-guardAmount));save.player.hp=round2(Math.max(0,save.player.hp-taken));
   if(guardAmount)messages.push(`${battle.petName||'灵兽'}抵挡 ${guardAmount.toFixed(2)} 伤害。`);
   messages.push(`你受到 ${taken.toFixed(2)} 伤害。`);
@@ -267,7 +268,7 @@ export function playRound(save,action='attack',now=Date.now()){
   }
  }
  };
- const playerAction=()=>{playerTurn();releaseHidden();if(battle.pet==='attack'&&battle.hp>0){const bonus=battle.petStage==='筑基'?.8:.5;battle.hp=round2(Math.max(0,battle.hp-bonus));messages.push(`${battle.petName||'灵兽'}追加 ${bonus.toFixed(2)} 伤害。`)}};
+ const playerAction=()=>{playerTurn();releaseHidden();if(battle.pet==='attack'&&battle.hp>0){const bonus=beastPower(save,'attack',battle.petStage);battle.hp=round2(Math.max(0,battle.hp-bonus));messages.push(`${battle.petName||'灵兽'}追加 ${bonus.toFixed(2)} 伤害。`)}};
  if(playerFirst){playerAction();if(battle.hp>0)enemyTurn()}
  else{enemyTurn();if(save.player.hp>0&&battle.hp>0)playerAction()}
  if(battle.regenRounds>0&&save.player.hp>0&&battle.hp>0){const heal=round2(Math.min(2,stats.maxHp-save.player.hp));save.player.hp=round2(save.player.hp+heal);battle.regenRounds--;messages.push(`妙手回春恢复 ${heal.toFixed(2)} 生命。`)}

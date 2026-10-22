@@ -1,3 +1,4 @@
+import {syncTitles} from './titles.js';
 import {spiritPeakCompleted,SPIRIT_PEAK_ACHIEVEMENT} from '../data/spirit-peak.js';
 export const ACHIEVEMENTS=[
  {id:SPIRIT_PEAK_ACHIEVEMENT,name:'万物有灵',description:'将灵兽峰的五只异兽喂养圆满，获得万灵山入宗资格。',reward:5},
@@ -5,6 +6,7 @@ export const ACHIEVEMENTS=[
  {id:'first-sect',name:'拜师学艺',description:'第一次加入宗门。',reward:5}
 ];
 export function syncAchievements(save){
+ syncTitles(save);
  save.achievements??={unlocked:[],claimed:[]};
  save.achievements.unlocked??=[];save.achievements.claimed??=[];
  const unlock=id=>{if(!save.achievements.unlocked.includes(id))save.achievements.unlocked.push(id)};

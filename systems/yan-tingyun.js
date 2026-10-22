@@ -1,3 +1,4 @@
+import {effectiveStat} from '../data/titles.js';
 import {foundationStoryPending} from './foundation-story.js';
 import {YAN_NAME,YAN_ENCOUNTERS,YAN_ENDINGS,YAN_GIFTS,YAN_OTHER_GIFTS,YAN_SCENES} from '../data/yan-tingyun.js';
 import {giveCompanionGift,addCompanion,removeCompanion} from './relationships.js';
@@ -17,7 +18,7 @@ export function maybeMeetYan(save){
  delete save.yanEncounterBattleId;
  const state=yanState(save);
  if(state.closed||state.unlocked||state.rescues>=3||Math.random()>=.05)return false;
- save.yanEncounterPending={id:crypto.randomUUID(),step:state.rescues+1,highCharm:Number(save.player.stats?.魅力)>=8};
+ save.yanEncounterPending={id:crypto.randomUUID(),step:state.rescues+1,highCharm:effectiveStat(save.player,'魅力')>=8};
  return true;
 }
 export function resolveYanEncounter(save,id,choice){
@@ -27,16 +28,17 @@ export function resolveYanEncounter(save,id,choice){
  if(pending.step!==state.rescues+1||pending.step>3)throw new Error('相遇进度无效。');
  if(pending.step<3){if(choice!=='continue')throw new Error('请先听他说完。');state.rescues++;save.yanEncounterPending=null;return `第 ${state.rescues} 次救下${YAN_NAME}。`}
  if(!['stones','together'].includes(choice))throw new Error('请选择回应。');
+ const highCharm=effectiveStat(save.player,'魅力')>=8;
  state.rescues=3;save.yanEncounterPending=null;
  if(choice==='stones'){
   save.player.spiritStones=round2(save.player.spiritStones+30);
   state.closed=true;
- }else if(pending.highCharm)state.unlocked=true;
+ }else if(highCharm)state.unlocked=true;
  else{
   save.player.spiritStones=round2(Math.max(0,save.player.spiritStones-round2(save.player.spiritStones*.3)));
   state.closed=true;
  }
- const text=YAN_ENDINGS[`${pending.highCharm?'high':'low'}${choice==='stones'?'Stones':'Together'}`];
+ const text=YAN_ENDINGS[`${highCharm?'high':'low'}${choice==='stones'?'Stones':'Together'}`];
  save.yanAftermath={id:crypto.randomUUID(),text};
  return text;
 }

@@ -1,3 +1,5 @@
+import {effectiveStat,titleName} from './data/titles.js';
+import {showTitles} from './ui/titles.js';
 import {ITEMS,ELEMENTAL_MANUALS} from './data/items.js';
 import {foundationStoryPending} from './systems/foundation-story.js';
 import {showSectFlight} from './ui/sect-flight.js';
@@ -136,10 +138,11 @@ function renderCharacter(){
  <div class="xg-card"><div class="xg-character-title"><small>人物 · 道途</small><h2>${escapeHTML(p.name||'未命名')}</h2></div>
  <div class="xg-info-grid">${cell('性别',escapeHTML(p.gender||'未设'))}${cell('境界',escapeHTML(p.realm||'未详'))}${cell('门派',escapeHTML(p.sect||'无门无派'))}${cell('灵根类型',escapeHTML(type))}</div>
  <div class="xg-root-detail"><strong>${escapeHTML(p.spiritRoot||'未详')}</strong><small>${escapeHTML(p.rootDesc||'')}</small></div>
+ <button type="button" id="xg-titles">称号 · ${titleName(p)}</button>
  ${progressMarkup(p)}
  </div>
  ${companionMarkup(p)}
- <div class="xg-card"><h3>资质</h3><div class="xg-aptitude-grid">${['悟性','根骨','神识','魅力','福缘'].map(k=>`<div><span>${k}</span><strong>${sheetValue(stats[k])}</strong></div>`).join('')}</div></div>
+ <div class="xg-card"><h3>资质</h3><div class="xg-aptitude-grid">${['悟性','根骨','神识','魅力','福缘'].map(k=>`<div><span>${k}</span><strong>${sheetValue(effectiveStat(p,k))}</strong></div>`).join('')}</div></div>
  <div class="xg-card"><h3>战斗属性</h3><div class="xg-combat-grid">${[
  ['生命 HP',`${combatValue(p.hp)} / ${combatValue(combat.maxHp)}`],['法力 MP',`${combatValue(p.mp)} / ${combatValue(combat.maxMp)}`],['攻击',combatValue(combat.attack)],['防御',combatValue(combat.defense)],['速度',combatValue(combat.speed)],['暴击率',combatValue(combat.critRate,'%')],['闪避率',combatValue(combat.dodgeRate,'%')]
  ].map(([label,value])=>cell(label,value)).join('')}</div>
@@ -149,6 +152,7 @@ function renderCharacter(){
  <button type="button" id="xg-methods" class="xg-methods-button">查看功法典籍</button><h4>战斗功法</h4><p class="xg-empty-note">${(currentSave.techniques?.combat||[]).map(id=>escapeHTML(TECHNIQUES[id]?.name||'')).join(' · ')||'尚未装备战斗功法'} · 最多 ${combatSlots(p)} 门</p></div>
  <div class="xg-character-actions"><button type="button" id="xg-sect">门派</button><button type="button" id="xg-cultivate">修炼</button><button type="button" id="xg-breakthrough" ${breakthroughReady(currentSave)||currentSave.foundationAptitudePending?'':'disabled'}>${currentSave.foundationAptitudePending?'选资质':'突破'}<small>${currentSave.foundationAptitudePending?'筑基奖励待领取':breakthroughReady(currentSave)?currentSave.breakthrough?'继续灵脉':'筑基':'需十层满修为与感悟'}</small></button></div>
  <p id="xg-character-message" role="status" aria-live="polite"></p></section>`;
+ document.getElementById('xg-titles').onclick=()=>showTitles({getSave:()=>currentSave,actions:game},renderCharacter);
  document.getElementById('xg-sect').onclick=showSect;document.getElementById('xg-cultivate').onclick=()=>runAction(async()=>{await game.refresh();featureUI.cultivation()});document.getElementById('xg-methods').onclick=featureUI.library;
  document.getElementById('xg-breakthrough').onclick=()=>runAction(async()=>{if(!currentSave.foundationAptitudePending)await game.startBreakthrough();showBreakthrough({getSave:()=>currentSave,actions:game},()=>{document.getElementById('xg-feature-sheet')?.remove();renderCharacter()})});
 }

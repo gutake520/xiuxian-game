@@ -1,3 +1,4 @@
+import {beastPower} from '../data/titles.js';
 import {TECHNIQUES,techniqueEligible,hasActiveTechnique} from '../data/techniques.js';
 import {ITEMS} from '../data/items.js';
 import {DAILY_TASKS,dailyTasks,claimDailyTask,redeemInheritance,craftSectItem,repairOwnEquipment,temperEquipment} from '../systems/sect-progression.js';
@@ -31,7 +32,7 @@ export function showSectWorkshop(api,sectId,onClose){
  if(sectId==='xuanji')body.innerHTML=`<p>自制阵盘每枚消耗 20 份对应境界的矿石，可使用六次。</p><button type="button" data-craft="crafted-binding-array">制作自制定身阵盘</button>${String(save.player.realm).startsWith('筑基')?'<button type="button" data-craft="foundation-crafted-array">制作自制锁灵阵盘 · 玄纹铁×20</button>':''}`;
  if(sectId==='wanling'){
   const beasts=ensureSpiritBeasts(save),herbs=String(save.player.realm).startsWith('筑基')?['foundation-healing-herb','foundation-spirit-herb','foundation-qi-herb']:['healing-herb','spirit-herb','qi-herb'];
-  body.innerHTML=`<p>每只灵兽每日喂养一次，需使用对应境界的药草。</p>${BEAST_TYPES.map(type=>{const beast=beasts[type],fed=beastCanFight(save,type);return `<article class="xg-feature-card"><h3>${escapeHTML(beast.name)} · ${type==='attack'?'追击':'守护'}</h3><p>${escapeHTML(beast.stage)} · ${fed?'今日已喂养，可出战':'今日尚未喂养'} · ${type==='attack'?(beast.stage==='筑基'?'每轮追加 0.80 伤害':'每轮追加 0.50 伤害'):(beast.stage==='筑基'?'每轮抵挡 0.50 伤害':'每轮抵挡 0.30 伤害')}</p><label>取名 <input type="text" data-beast-name="${type}" maxlength="12" value="${escapeHTML(beast.name)}"></label><button type="button" data-rename="${type}">保存名字</button>${fed?'':hasActiveTechnique(save,'beast-keeper')?`<label>选择药草 <select data-feed-herb="${type}">${herbs.map(id=>`<option value="${id}">${ITEMS[id].name}</option>`).join('')}</select></label><button type="button" data-feed="${type}">喂养 · 3 株</button>`:'<p>学会《铲屎官手册》后可喂养。</p>'}</article>`}).join('')}`;
+  body.innerHTML=`<p>每只灵兽每日喂养一次，需使用对应境界的药草。</p>${BEAST_TYPES.map(type=>{const beast=beasts[type],fed=beastCanFight(save,type);return `<article class="xg-feature-card"><h3>${escapeHTML(beast.name)} · ${type==='attack'?'追击':'守护'}</h3><p>${escapeHTML(beast.stage)} · ${fed?'今日已喂养，可出战':'今日尚未喂养'} · ${type==='attack'?'每轮追加':'每轮抵挡'} ${beastPower(save,type,beast.stage).toFixed(2)} 伤害</p><label>取名 <input type="text" data-beast-name="${type}" maxlength="12" value="${escapeHTML(beast.name)}"></label><button type="button" data-rename="${type}">保存名字</button>${fed?'':hasActiveTechnique(save,'beast-keeper')?`<label>选择药草 <select data-feed-herb="${type}">${herbs.map(id=>`<option value="${id}">${ITEMS[id].name}</option>`).join('')}</select></label><button type="button" data-feed="${type}">喂养 · 3 株</button>`:'<p>学会《铲屎官手册》后可喂养。</p>'}</article>`}).join('')}`;
  }
  if(sectId==='tiangong'){
   const gear=save.inventory.filter(entry=>ITEMS[entry.itemId]?.kind==='equipment');

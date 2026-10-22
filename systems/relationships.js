@@ -1,3 +1,4 @@
+import {syncTitles} from './titles.js';
 import {ITEMS} from '../data/items.js';
 import {maxDurability} from './inventory.js';
 import {recordDailyGift} from './sect-progression.js';
@@ -30,12 +31,15 @@ export function addCompanion(save,name,now=Date.now()){
  if((save.companionRejoinAt||0)>now)throw new Error(`解除道侣后三天内不能再结缘，尚余 ${Math.ceil((save.companionRejoinAt-now)/3600000)} 小时。`);
  save.player.companions??=[];
  if(save.player.companions.length>=(save.player.sect==='合欢宗'?3:1))throw new Error('当前道侣名额已满，请先解除原有关系。');
+ if(save.player.companions.some(c=>(typeof c==='string'?c:c?.name)===name))throw new Error('已经与此人结为道侣。');
  save.player.companions.push(name);
+ syncTitles(save);
 }
 
 export function removeCompanion(save,name,fee,now=Date.now()){
  if(fee===null)throw new Error('当前境界的解除道侣费用尚未设定。');
  if(save.player.spiritStones<fee)throw new Error(`解除关系需支付 ${fee} 灵石。`);
+ syncTitles(save);
  save.player.spiritStones=round2(save.player.spiritStones-fee);
  save.player.companions=(save.player.companions||[]).filter(value=>(typeof value==='string'?value:value?.name)!==name);
  save.companionRejoinAt=now+3*24*60*60*1000;
