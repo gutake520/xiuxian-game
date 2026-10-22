@@ -110,6 +110,8 @@
 #xg-panel .xg-root-detail{margin-top:18px;padding:12px 14px;border-radius:10px;background:var(--wash)}
 #xg-panel .xg-root-detail strong{font-size:13px;color:var(--jade)}
 #xg-panel .xg-root-detail small{display:block;margin-top:4px;font-size:10px}
+#xg-panel #xg-titles{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;min-height:44px;margin:12px 0 4px;padding:10px 14px;border-radius:10px;background:transparent;color:var(--jade);font-size:12px;text-align:left}
+#xg-panel #xg-titles::after{content:"›";flex:none;color:var(--muted);font-size:18px;line-height:1}
 #xg-panel .xg-cultivation{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:14px;font-size:11px}
 #xg-panel .xg-cultivation strong{font-variant-numeric:tabular-nums;color:var(--jade)}
 #xg-panel .xg-aptitude-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px}
