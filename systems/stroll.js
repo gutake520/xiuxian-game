@@ -14,12 +14,25 @@ import {localDay} from './cultivation.js';
 export const strollPlaces=save=>STROLL_PLACES.filter(p=>!p.foundation||String(save.player.realm).startsWith('筑基'));
 export const strollCount=(save,now=Date.now())=>save.stroll?.day===localDay(now)?save.stroll.count||0:0;
 export const strollEncounterCount=(save,now=Date.now())=>save.stroll?.day===localDay(now)?save.stroll.encounters||0:0;
+export const STROLL_EXTRA_PRICE=20;
+export const STROLL_EXTRA_DAILY_LIMIT=2;
+export const strollExtraCount=(save,now=Date.now())=>save.strollExtra?.day===localDay(now)?Math.min(STROLL_EXTRA_DAILY_LIMIT,Math.max(0,Math.floor(Number(save.strollExtra.purchased)||0))):0;
+export const strollEncounterLimit=(save,now=Date.now())=>STROLL_ENCOUNTER_LIMIT+strollExtraCount(save,now);
+export function buyStrollEncounter(save,now=Date.now()){
+ if(save.battle)throw new Error('请先结束战斗。');
+ const purchased=strollExtraCount(save,now);
+ if(purchased>=STROLL_EXTRA_DAILY_LIMIT)throw new Error('今日已购买两次额外奇遇。');
+ if(!Number.isFinite(save.player.spiritStones)||save.player.spiritStones<STROLL_EXTRA_PRICE)throw new Error('灵石不足，需要 20 灵石。');
+ save.player.spiritStones-=STROLL_EXTRA_PRICE;
+ save.strollExtra={day:localDay(now),purchased:purchased+1};
+ return {message:'购买成功：今日奇遇上限 +1，仅当天有效。'};
+}
 export function takeStroll(save,id,now=Date.now(),random=Math.random){
  if(save.battle)throw new Error('请先结束战斗。');
  const place=strollPlaces(save).find(p=>p.id===id);
  if(!place)throw new Error('此处尚不能闲逛。');
  const count=strollCount(save,now);
- const encounters=strollEncounterCount(save,now),canEncounter=encounters<STROLL_ENCOUNTER_LIMIT;
+ const encounters=strollEncounterCount(save,now),canEncounter=encounters<strollEncounterLimit(save,now);
  const index=Math.min(place.stories.length-1,Math.max(0,Math.floor(random()*place.stories.length)));
  const thief=canEncounter&&maybeMeetThief(save,id,random);
  if(thief){
