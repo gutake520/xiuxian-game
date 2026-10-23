@@ -45,3 +45,17 @@ test('atomic visits share the last encounter slot and persist a single deduction
  await Promise.all([1,2].map(()=>updateSave(s.slot,next=>{takeStroll(next,'monsters',now,()=>0);return next})));
  const saved=await readSave(s.slot);assert.equal(saved.player.spiritStones,80);assert.equal(saved.stroll.encounters,7);
 });
+test('real action pipeline excludes stolen stones but still counts subsequent purchases',async t=>{
+ const {createActions}=await import('../core/actions.js');
+ const {buyStrollEncounter}=await import('../systems/stroll.js');
+ const {localDay}=await import('../systems/cultivation.js');
+ globalThis.indexedDB=indexedDB;t.mock.method(Date,'now',()=>now);
+ let current=make();current.player.sect='青岚谷';current.player.cultivation=0;
+ current.sectDaily={day:localDay(now),kills:0,spent:1,explored:0,practice:0,gift:0,repair:0,claimed:[],selected:['kills','spent','explored']};
+ await writeSave(current);
+ const api=createActions({getSave:()=>current,setSave:s=>{current=s}});
+ await api.mutate(s=>takeStroll(s,'market',now,()=>0));
+ assert.equal(current.player.spiritStones,80);assert.equal(current.sectDaily.spent,1);assert.equal((await readSave(current.slot)).sectDaily.spent,1);
+ await api.mutate(s=>takeStroll(s,'market',now,rolls(0,0,.99)));assert.equal(current.sectDaily.spent,1);
+ await api.mutate(s=>buyStrollEncounter(s,now));assert.equal(current.player.spiritStones,60);assert.equal(current.sectDaily.spent,3);
+});

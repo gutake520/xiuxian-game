@@ -47,3 +47,22 @@ test('purchase UI guards double clicks, shows errors and refreshes quota until c
  s.player.spiritStones=20;pending=b.onclick();release();await pending;
  assert.equal(document.querySelector('[data-buy-encounter]').disabled,true);assert.match(document.body.textContent,/今日奇遇 0 \/ 9/);
 });
+test('open stroll sheet refreshes at midnight and on resume without writes, and stops after closing',async t=>{
+ const old=globalThis.document;const {document,window}=parseHTML('<html><body><section id="xg-panel"></section></body></html>');globalThis.document=document;
+ t.after(()=>{globalThis.document=old});
+ let clock=now,timer,delay,writes=0;
+ t.mock.method(Date,'now',()=>clock);
+ t.mock.method(globalThis,'setTimeout',(fn,ms)=>{timer=fn;delay=ms;return 123});
+ const clear=t.mock.method(globalThis,'clearTimeout',()=>{});
+ const s=make();buyStrollEncounter(s);buyStrollEncounter(s);takeStroll(s,'spirit-peak',clock,()=>0);const puzzle=structuredClone(s.peakPuzzle);
+ const api={getSave:()=>s,actions:{mutate:async fn=>{writes++;return {result:fn(s)}}}};
+ showStroll(api,()=>{});const sheet=document.querySelector('#xg-feature-sheet');
+ assert.equal(document.querySelector('[data-buy-encounter]').disabled,true);assert.ok(delay>=60000&&delay<=60100);
+ clock=new Date(2026,9,24).getTime();timer();
+ assert.equal(document.querySelector('#xg-feature-sheet'),sheet);assert.match(sheet.textContent,/今日奇遇 0 \/ 7/);assert.match(sheet.textContent,/今日已购 0 \/ 2/);assert.equal(document.querySelector('[data-buy-encounter]').disabled,false);assert.equal(writes,0);assert.deepEqual(s.peakPuzzle,puzzle);
+ await document.querySelector('[data-buy-encounter]').onclick();assert.equal(s.player.spiritStones,40);assert.equal(writes,1);assert.match(document.body.textContent,/今日奇遇 0 \/ 8/);
+ clock=new Date(2026,9,25,8).getTime();document.dispatchEvent(new window.Event('visibilitychange'));
+ assert.match(document.body.textContent,/今日奇遇 0 \/ 7/);assert.equal(writes,1);
+ const queued=timer;document.querySelector('[data-close]').click();await Promise.resolve();queued();window.dispatchEvent(new window.Event('focus'));
+ assert.equal(document.querySelector('#xg-feature-sheet'),null);assert.ok(clear.mock.calls.length>0);assert.equal(writes,1);
+});
