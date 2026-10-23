@@ -60,3 +60,17 @@ test('map entry opens without consuming, persists result, returns and restores b
  s.player.realm='筑基一层';showStroll(api,()=>{});assert.equal(document.querySelectorAll('[data-stroll-place]').length,6);
  s.stroll.encounters=5;for(let i=1;i<20;i++)takeStroll(s,'market');showStroll(api,()=>{});assert.ok([...document.querySelectorAll('[data-stroll-place]')].every(b=>!b.disabled));
 });
+test('visits, extra purchases and returning from puzzles retain scroll; fresh entry starts at top',async t=>{
+ const previous=globalThis.document;globalThis.document=parseHTML('<html><body><main id="xg-panel"></main></body></html>').document;t.after(()=>globalThis.document=previous);
+ t.mock.method(Math,'random',()=>.99);
+ const s=make();s.player.spiritStones=100;let fail=false,release;
+ const api={getSave:()=>s,actions:{mutate:async fn=>{if(fail)throw Error('保存失败');if(release!==undefined)await new Promise(resolve=>release=resolve);return {result:fn(s)}}}};
+ showStroll(api,()=>{});let sheet=document.querySelector('#xg-feature-sheet');sheet.querySelector('[data-body]').scrollTop=180;
+ await sheet.querySelector('[data-stroll-place]').onclick();sheet=document.querySelector('#xg-feature-sheet');assert.equal(sheet.querySelector('[data-body]').scrollTop,180);assert.equal(strollCount(s),1);
+ sheet.querySelector('[data-body]').scrollTop=230;await sheet.querySelector('[data-buy-encounter]').onclick();sheet=document.querySelector('#xg-feature-sheet');assert.equal(sheet.querySelector('[data-body]').scrollTop,230);assert.equal(s.player.spiritStones,80);
+ fail=true;sheet.querySelector('[data-body]').scrollTop=170;await sheet.querySelector('[data-stroll-place]').onclick();assert.equal(sheet.querySelector('[data-body]').scrollTop,170);assert.match(sheet.textContent,/保存失败/);fail=false;
+ release=null;const pending=sheet.querySelector('[data-stroll-place]').onclick();sheet.querySelector('[data-body]').scrollTop=250;release();await pending;release=undefined;assert.equal(document.querySelector('#xg-feature-sheet [data-body]').scrollTop,250);
+ const {maybeFindPeakPuzzle}=await import('../systems/peak-puzzles.js');maybeFindPeakPuzzle(s,()=>0);showStroll(api,()=>{});sheet=document.querySelector('#xg-feature-sheet');sheet.querySelector('[data-body]').scrollTop=210;
+ sheet.querySelector('[data-peak-puzzle]').click();document.querySelector('[data-close]').click();assert.equal(document.querySelector('#xg-feature-sheet [data-body]').scrollTop,210);
+ showStroll(api,()=>{});assert.equal(document.querySelector('#xg-feature-sheet [data-body]').scrollTop,0);
+});
