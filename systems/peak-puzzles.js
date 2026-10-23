@@ -1,17 +1,10 @@
+import {makeMaze,mazeDetails} from './maze.js';
+export {makeMaze} from './maze.js';
 import {PEAK_PUZZLE_CHANCES,SOKOBAN_LEVELS} from '../data/peak-puzzles.js';
 import {ITEMS} from '../data/items.js';
 import {awardItem} from './inventory.js';
 const directions={up:[0,-1],down:[0,1],left:[-1,0],right:[1,0]};
 const pick=(list,random)=>list[Math.min(list.length-1,Math.floor(random()*list.length))];
-export function makeMaze(random=Math.random){
- const grid=Array.from({length:11},()=>Array(11).fill('#')),stack=[[1,1]];grid[1][1]=' ';
- while(stack.length){
-  const [x,y]=stack.at(-1),choices=Object.values(directions).filter(([dx,dy])=>grid[y+dy*2]?.[x+dx*2]==='#'&&x+dx*2>0&&x+dx*2<10&&y+dy*2>0&&y+dy*2<10);
-  if(!choices.length){stack.pop();continue}
-  const [dx,dy]=pick(choices,random);grid[y+dy][x+dx]=' ';grid[y+dy*2][x+dx*2]=' ';stack.push([x+dx*2,y+dy*2]);
- }
- return grid.map(row=>row.join(''));
-}
 export function maybeFindPeakPuzzle(save,random=Math.random){
  if(save.peakPuzzle)return null;
  const roll=random(),kind=roll<PEAK_PUZZLE_CHANCES.sokoban?'sokoban':roll<PEAK_PUZZLE_CHANCES.sokoban+PEAK_PUZZLE_CHANCES.maze?'maze':null;
@@ -23,7 +16,7 @@ export function maybeFindPeakPuzzle(save,random=Math.random){
   rows.forEach((row,y)=>[...row].forEach((c,x)=>{const pos=y*row.length+x;if(c==='@')player=pos;if(c==='$')boxes.push(pos);if(c==='.')goals.push(pos)}));
   reward={itemId:pick(Object.values(ITEMS).filter(i=>i.kind==='gift'),random).id};
   rows=rows.map(r=>r.replace(/[@$.]/g,' '));
- }else{rows=makeMaze(random);player=12;goals=[108];reward={stones:random()<.5?1:2}}
+ }else{rows=makeMaze(random);const maze=mazeDetails(rows);player=maze.start;goals=[maze.goal];reward={stones:random()<.5?1:2}}
  save.peakPuzzle={id:crypto.randomUUID(),kind,rows,player,boxes,goals,reward,...(kind==='sokoban'?{levelIndex}:{}),initial:{player,boxes:[...boxes]},history:[],moves:0};
  return kind;
 }

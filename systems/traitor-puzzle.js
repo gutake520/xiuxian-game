@@ -41,7 +41,7 @@ export function playTraitor(save,id,action,index){
   const reward=2+Math.floor(p.levelIndex/4);
   save.player.spiritStones+=reward;
   save.traitorProgress=p.levelIndex+1;
-  const text=`你从${p.sect}的名册中找出了全部 ${level.size} 名叛徒。执事将他们带走，赠你 ${reward} 灵石作为谢礼。${save.traitorProgress===TRAITOR_LEVELS.length?'二十份名册悉数查清，九宗的这场调查终于告一段落。':'本次奇遇已结束，日后再赴山门，或有新的线索。'}`;
+  const text=`你从${p.sect}的名册中找出了全部 ${level.size} 名叛徒。执事将他们带走，赠你 ${reward} 灵石作为谢礼。${save.traitorProgress===TRAITOR_LEVELS.length?`${TRAITOR_LEVELS.length} 份名册悉数查清，九宗的这场调查终于告一段落。`:'本次奇遇已结束，日后再赴山门，或有新的线索。'}`;
   save.lastTraitorPuzzle={levelIndex:p.levelIndex,sect:p.sect,text};save.traitorPuzzle=null;
   return {completed:true,text,reward};
  }

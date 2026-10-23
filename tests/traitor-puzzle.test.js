@@ -45,8 +45,8 @@ function deduction(level){
  return {steps,advanced,maxGroup,score:steps+advanced*3};
 }
 
-test('twenty fixed connected boards each have exactly one answer and increasing deduction workload',()=>{
- assert.equal(TRAITOR_LEVELS.length,20);const boards=new Set();let previous=0;
+test('thirty fixed connected boards each have exactly one answer and increasing deduction workload',()=>{
+ assert.equal(TRAITOR_LEVELS.length,30);const boards=new Set();let previous=0;
  for(const l of TRAITOR_LEVELS){
   assert.equal(l.regions.length,l.size);assert.ok(l.regions.every(r=>r.length===l.size&&/^[0-9]+$/.test(r)));
   const n=l.size;const key=l.regions.join('/');assert.ok(!boards.has(key));boards.add(key);
@@ -62,20 +62,20 @@ test('twenty fixed connected boards each have exactly one answer and increasing 
  }
 });
 
-test('only sect strolls trigger; quota, active investigation and all twenty completions are respected',()=>{
+test('only sect strolls trigger; quota, active investigation and all thirty completions are respected',()=>{
  const now=Date.now(),s=make();takeStroll(s,'market',now,()=>.99);assert.equal(s.traitorPuzzle,undefined);
  takeStroll(s,'sects',now,()=>0);assert.equal(s.traitorPuzzle.levelIndex,0);assert.equal(strollEncounterCount(s,now),1);
  const first=structuredClone(s.traitorPuzzle);takeStroll(s,'sects',now,()=>0);assert.deepEqual(s.traitorPuzzle,first);assert.equal(strollEncounterCount(s,now),1);
  s.traitorPuzzle=null;s.stroll.encounters=7;takeStroll(s,'sects',now,()=>0);assert.equal(s.traitorPuzzle,null);
  takeStroll(s,'sects',now+86400000,()=>0);assert.ok(s.traitorPuzzle);assert.equal(strollEncounterCount(s,now+86400000),1);
  for(const roll of [.15,.99])assert.equal(maybeFindTraitor(make(),()=>roll),false);
- const done=make();done.traitorProgress=20;assert.equal(maybeFindTraitor(done,()=>0),false);
+ const done=make();done.traitorProgress=30;assert.equal(maybeFindTraitor(done,()=>0),false);
  for(let i=0;i<9;i++){const s=make();let call=0;maybeFindTraitor(s,()=>call++===0?0:(i+.1)/9);assert.ok(s.traitorPuzzle.sect)}
 });
 
-test('twenty encounters advance once each, survive reload, and never launch a next board on completion',()=>{
+test('thirty encounters advance once each, survive reload, and never launch a next board on completion',()=>{
  let s=make(),total=20;
- for(let i=0;i<20;i++){
+ for(let i=0;i<TRAITOR_LEVELS.length;i++){
   assert.equal(maybeFindTraitor(s,()=>0),true);const p=s.traitorPuzzle;assert.equal(p.levelIndex,i);
   const l=TRAITOR_LEVELS[i],answer=solutions(l)[0];
   for(const [r,c] of answer.entries()){playTraitor(s,p.id,'suspect',r*l.size+c);s=migrateSave(JSON.parse(JSON.stringify(s)))}
@@ -126,4 +126,11 @@ test('UI restores marks, handles write failure, and ends with a single settlemen
  document.querySelector('[data-finish]').click();assert.equal(document.querySelector('[data-traitor-puzzle]'),null);
  // An old open board cannot write into a different selected save slot.
  maybeFindTraitor(s,()=>0);showTraitorPuzzle(api,close);const marks=[...s.traitorPuzzle.marks];s.slot='another-slot';await document.querySelector('[data-cell="0"]').onclick();assert.deepEqual(s.traitorPuzzle.marks,marks);
+});
+
+test('a save that completed the former twenty levels resumes at twenty-one on a new encounter',()=>{
+ const s=make();s.traitorProgress=20;s.lastTraitorPuzzle={levelIndex:19,text:'old completion'};
+ const loaded=migrateSave(JSON.parse(JSON.stringify(s)));assert.equal(loaded.traitorPuzzle,undefined);
+ takeStroll(loaded,'sects',Date.now(),()=>0);assert.equal(loaded.traitorPuzzle.levelIndex,20);
+ assert.equal(strollEncounterCount(loaded),1);
 });
