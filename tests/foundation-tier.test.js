@@ -1,3 +1,5 @@
+import {migrateSave} from '../storage/migrations.js';
+import {bossAttributes} from '../systems/boss-line.js';
 import test from 'node:test';
 import {FOUNDATION_MONSTERS} from '../data/locations.js';
 import {TECHNIQUES} from '../data/techniques.js';
@@ -57,7 +59,7 @@ test('foundation drops feed the crafting and pill loop',()=>{
 test('drop sword stun only cancels an enemy action that has not happened yet',()=>{
  const original=Math.random;
  try{
-  for(const [speed,expectedHp] of [[7,35],[1,30.91]]){
+  for(const [speed,expectedHp] of [[7,35],[1,29.81]]){
    const s=save();s.player.combat.speed=speed;addItem(s,'foundation-wild-sword');s.equipment.weapon=s.inventory[0].uid;
    Math.random=()=>.05;beginBattle(s,'rock-ape');s.battle.hp=100;
    playRound(s,'attack');assert.equal(s.player.hp,expectedHp);
@@ -105,4 +107,40 @@ test('bound and silenced foundation enemies do not spend skill mana',t=>{
  s.battle.bindRounds=[1];playRound(s,'skip');assert.equal(s.battle.mp,4);
  s.battle.silencedTurns=1;playRound(s,'skip');assert.equal(s.battle.mp,4);
  playRound(s,'skip');assert.equal(s.battle.mp,3);
+});
+
+test('foundation enemies gain one attack and 0.8 defense and five HP without changing qi enemies',t=>{
+ t.mock.method(Math,'random',()=>.99);
+ const oldHp=[[30,34],[17,20],[20,23],[46,50],[33,37],[36,40],[58,62],[44,48],[48,52],[70,70]];
+ const oldAttacks=[4.9,6.7,5.7,6.1,8.3,7,6.9,9.5,8.4,7.5];
+ for(const [i,monster] of FOUNDATION_MONSTERS.entries()){
+  assert.equal(monster.attack,Math.round((oldAttacks[i]+1)*100)/100);assert.equal(monster.defense,.8);
+  assert.equal(monster.hpMin,oldHp[i][0]+5);assert.equal(monster.hpMax,oldHp[i][1]+5);
+  if(monster.boss)continue;
+  const s=save('筑基九层');beginBattle(s,monster.id);assert.equal(s.battle.maxHp,monster.hpMax);s.battle.mp=0;
+  const stats=equipmentStats(s),result=playRound(s,'attack');
+  assert.equal(result.dealt,Math.round((stats.attack-.8)*100)/100);
+  assert.equal(result.taken,Math.round((monster.attack-stats.defense)*100)/100);
+ }
+ const s=save('炼气一层');beginBattle(s,'tough');assert.equal(s.battle.attack,2);assert.equal(s.battle.defense,0);
+ assert.equal(playRound(s,'attack').dealt,equipmentStats(s).attack);
+});
+
+
+test('foundation pursuer and saved battles receive the bonus once, including repeated reloads',()=>{
+ for(const id of ['rock-ape','wounded-pursuer']){
+  const s=save('筑基九层');s.foundationStory={phase:'wounded',enemy:{name:'邵厉'}};
+  const original=bossAttributes(s,1.1);beginBattle(s,id);
+  if(id==='wounded-pursuer'){
+   assert.equal(s.battle.attack,Math.round((original.attack+1)*100)/100);
+   assert.equal(s.battle.defense,Math.round((original.defense+.8)*100)/100);
+  }
+  if(id==='wounded-pursuer')assert.equal(s.battle.maxHp,original.maxHp+5);
+  const expected={attack:s.battle.attack,defense:s.battle.defense,maxHp:s.battle.maxHp,hp:s.battle.hp};
+  migrateSave(s);assert.equal(s.battle.attack,expected.attack);assert.equal(s.battle.defense,expected.defense);
+  // Simulate a pre-update in-progress fight, then two consecutive reloads.
+  delete s.battle.foundationBalanceVersion;s.battle.attack-=1;s.battle.defense-=.8;s.battle.maxHp-=5;s.battle.hp-=5;
+  for(let i=0;i<2;i++){migrateSave(s);assert.equal(s.battle.attack,expected.attack);assert.equal(s.battle.defense,expected.defense);assert.equal(s.battle.maxHp,expected.maxHp);assert.equal(s.battle.hp,expected.hp)}
+ }
+ const qi=save('炼气一层');beginBattle(qi,'tough');migrateSave(qi);assert.equal(qi.battle.attack,2);assert.equal(qi.battle.defense,0);
 });

@@ -21,6 +21,11 @@ export function bossAttributes(save,multiplier){
  return Object.fromEntries(['maxHp','maxMp','attack','defense','speed','critRate','dodgeRate'].map(key=>[key,round2(stats[key]*multiplier)]));
 }
 
+export function foundationPursuerAttributes(save){
+ const foe=bossAttributes(save,1.1);
+ return {...foe,maxHp:round2(foe.maxHp+5),attack:round2(foe.attack+1),defense:round2(foe.defense+.8)};
+}
+
 export function resolveBossAmbush(save){
  if(save.battle)throw new Error('请先结束当前战斗。');
  if(save.bossLine?.phase!=='ambush')throw new Error('这段往事已经结束。');

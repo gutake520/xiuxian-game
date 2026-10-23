@@ -13,7 +13,7 @@ import {TECHNIQUES,hasActiveTechnique} from '../data/techniques.js';
 import {HERBALIST_NAME,maybeMeetHerbalist} from './encounters.js';
 import {maybeMeetDiviner} from './divination.js';
 import {startSeniorChallenge} from './sect-tournament.js';
-import {BOSS_NAME,bossAttributes,ensureBossLine} from './boss-line.js';
+import {BOSS_NAME,bossAttributes,foundationPursuerAttributes,ensureBossLine} from './boss-line.js';
 import {selectBattlePet,beastCanFight,beastName} from './pets.js';
 import {FOXES} from '../data/foxes.js';
 import {queueYanAfterVictory} from './yan-tingyun.js';
@@ -133,8 +133,8 @@ export function beginBattle(save,id,pet=null,retaliation=false){
  if(id==='foundation-warden')throw new Error('归元渡旧事已更替，请返回地图查看师父剧情。');
  if(id==='wounded-pursuer'){
   if(save.foundationStory?.phase!=='wounded')throw new Error('这里没有可挑战的仇人。');
-  const foe=bossAttributes(save,1.1),chosen=selectBattlePet(save,pet),name=save.foundationStory.enemy.name;
-  save.battle={id:crypto.randomUUID(),kind:'wounded-pursuer',stage:'筑基',monsterId:null,name,...foe,hp:foe.maxHp,mp:foe.maxMp,round:0,pet:chosen,petName:chosen?(beastCanFight(save,chosen)?beastName(save,chosen):'租借灵兽'):null,petStage:'筑基',guard:false,bindRounds:[],arrayRound:0,talismansUsed:0,talismanRound:0,freeArrayUsed:false,criticalFocus:false,skillReady:{},log:[`你循着血迹找到负伤的${name}。他认出你，撑着石台提起兵刃。`]};
+  const foe=foundationPursuerAttributes(save),chosen=selectBattlePet(save,pet),name=save.foundationStory.enemy.name;
+  save.battle={id:crypto.randomUUID(),kind:'wounded-pursuer',stage:'筑基',foundationBalanceVersion:1,monsterId:null,name,...foe,hp:foe.maxHp,mp:foe.maxMp,round:0,pet:chosen,petName:chosen?(beastCanFight(save,chosen)?beastName(save,chosen):'租借灵兽'):null,petStage:'筑基',guard:false,bindRounds:[],arrayRound:0,talismansUsed:0,talismanRound:0,freeArrayUsed:false,criticalFocus:false,skillReady:{},log:[`你循着血迹找到负伤的${name}。他认出你，撑着石台提起兵刃。`]};
   return save.battle;
  }
  if(id==='wounded-boss'){
@@ -154,7 +154,7 @@ export function beginBattle(save,id,pet=null,retaliation=false){
  if(monster.stage!=='筑基'&&tier+1<monster.minLevel)throw new Error(`需炼气${['一','二','三','四','五','六','七','八','九','十'][monster.minLevel-1]}层解锁此处。`);
  selectBattlePet(save,pet);
  const maxHp=monster.hpMin+Math.floor(Math.random()*(monster.hpMax-monster.hpMin+1));
- save.battle={id:crypto.randomUUID(),monsterId:id,name:monster.name,stage:monster.stage||'炼气',maxHp,hp:maxHp,attack:monster.attack,speed:monster.speed,mp:monster.mp||0,round:0,pet,petName:pet?(beastCanFight(save,pet)?beastName(save,pet):'租借灵兽'):null,petStage:String(save.player.realm).startsWith('筑基')?'筑基':'炼气',retaliation,guard:false,bindRounds:[],arrayRound:0,talismansUsed:0,talismanRound:0,freeArrayUsed:false,criticalFocus:false,skillReady:{},log:['狭路相逢，战斗开始。']};
+ save.battle={id:crypto.randomUUID(),monsterId:id,name:monster.name,stage:monster.stage||'炼气',maxHp,hp:maxHp,attack:monster.attack,defense:monster.defense||0,...(monster.stage==='筑基'?{foundationBalanceVersion:1}:{}),speed:monster.speed,mp:monster.mp||0,round:0,pet,petName:pet?(beastCanFight(save,pet)?beastName(save,pet):'租借灵兽'):null,petStage:String(save.player.realm).startsWith('筑基')?'筑基':'炼气',retaliation,guard:false,bindRounds:[],arrayRound:0,talismansUsed:0,talismanRound:0,freeArrayUsed:false,criticalFocus:false,skillReady:{},log:['狭路相逢，战斗开始。']};
  return save.battle;
 }
 export function playRound(save,action='attack',now=Date.now()){
@@ -207,8 +207,8 @@ export function playRound(save,action='attack',now=Date.now()){
   if(armored){
    if(Math.random()<battle.dodgeRate/100){messages.push(`${battle.name}避开了这一击。`);dealt=0;return}
    if(action==='silent-strike'&&battle.hp>0&&playerFirst)enemyAction='attack';
-   dealt=round2(Math.max(1,dealt-battle.defense-(enemyAction==='iron-wall'?1:0)));
   }
+  if(armored||battle.defense>0)dealt=round2(Math.max(1,dealt-(battle.defense||0)-(enemyAction==='iron-wall'?1:0)));
   if(hasActiveTechnique(save,'one-sword'))dealt=round2(dealt*1.1);
   messages.push(`${damageIntro} ${dealt.toFixed(2)} 伤害。`);
   const actual=Math.min(battle.hp,dealt);
@@ -260,7 +260,7 @@ export function playRound(save,action='attack',now=Date.now()){
   delete battle.elements['wood-hidden'];
   if(armored&&Math.random()<(battle.dodgeRate||0)/100)messages.push(`${battle.name}避开了木·藏锋。`);
   else{
-   let damage=round2(Math.max(1,(stats.attack+elementalBonus(battle,'metal-edge'))*1.4-(armored?(battle.defense||0)+(enemyAction==='iron-wall'?1:0):0)));
+   let damage=round2(Math.max(1,(stats.attack+elementalBonus(battle,'metal-edge'))*1.4-((battle.defense||0)+(enemyAction==='iron-wall'?1:0))));
    if(hasActiveTechnique(save,'one-sword'))damage=round2(damage*1.1);
    const actual=Math.min(battle.hp,damage);battle.hp=round2(Math.max(0,battle.hp-damage));dealt=round2(dealt+damage);
    messages.push(`木·藏锋额外造成 ${damage.toFixed(2)} 伤害。`);

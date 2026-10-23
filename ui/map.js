@@ -19,7 +19,7 @@ import {localDay} from '../systems/cultivation.js';
 import {equipmentStats} from '../systems/inventory.js';
 import {repairPrice,repairEquipment,healAtSect,startMeditation,healingService,MEDITATION_MS} from '../systems/sect-services.js';
 import {escapeHTML,format} from './shared.js';
-import {BOSS_NAME,bossAttributes} from '../systems/boss-line.js';
+import {BOSS_NAME,bossAttributes,foundationPursuerAttributes} from '../systems/boss-line.js';
 import {FOXES} from '../data/foxes.js';
 import {foxState,giftableEntries,giveFoxGift,seenFoxScene,answerFox,leaveFox,companionBreakupFee} from '../systems/foxes.js';
 import {YAN_NAME,YAN_HILL,YAN_SCENES} from '../data/yan-tingyun.js';
@@ -209,7 +209,7 @@ export function createMapUI({getSave,activate,actions,onSectBattleExit}){
   if(!foes.length)return renderFoundation();
 
   activate('map');
-  content().innerHTML=`<section class="xg-map-sheet"><button class="xg-map-back" type="button">← 返回望川岭</button>${heading(peak.name,'山中对手')}${petChoices(getSave(),'xg-foundation-pet')}${foes.map(monster=>`<div class="xg-card xg-map-monster"><h3>${monster.name}</h3><p>生命 ${monster.hp} · 攻击 ${monster.attack} · 速度 ${monster.speed}</p><small>${monster.drop}</small><button type="button" data-foundation-foe="${monster.id}">迎战</button></div>`).join('')}<p role="status" aria-live="polite"></p></section>`;
+  content().innerHTML=`<section class="xg-map-sheet"><button class="xg-map-back" type="button">← 返回望川岭</button>${heading(peak.name,'山中对手')}${petChoices(getSave(),'xg-foundation-pet')}${foes.map(monster=>`<div class="xg-card xg-map-monster"><h3>${monster.name}</h3><p>生命 ${monster.hp} · 攻击 ${monster.attack} · 防御 ${monster.defense} · 速度 ${monster.speed}</p><small>${monster.drop}</small><button type="button" data-foundation-foe="${monster.id}">迎战</button></div>`).join('')}<p role="status" aria-live="polite"></p></section>`;
   back(renderFoundation);
   content().querySelectorAll('[data-foundation-foe]').forEach(button=>button.onclick=async()=>{button.disabled=true;try{const pet=content().querySelector('[name="xg-foundation-pet"]:checked')?.value||null;await actions.startBattle(button.dataset.foundationFoe,pet);battle()}catch(error){content().querySelector('[role=status]').textContent=error.message;button.disabled=false}});
 
@@ -222,7 +222,7 @@ export function createMapUI({getSave,activate,actions,onSectBattleExit}){
   if(foundationStoryPending(getSave()))return battle();
   const line=getSave().foundationStory;
   if(!line)return renderFoundation();
-  const wounded=line.phase==='wounded',dead=line.phase==='dead',name=escapeHTML(line.enemy.name),foe=bossAttributes(getSave(),1.1);
+  const wounded=line.phase==='wounded',dead=line.phase==='dead',name=escapeHTML(line.enemy.name),foe=foundationPursuerAttributes(getSave());
   activate('map');
   content().innerHTML=`<section class="xg-map-sheet"><button class="xg-map-back" type="button">← 返回望川岭</button>${heading(wounded||dead?'栖息崖':'归元渡',name)}<div class="xg-card"><p>${wounded?escapeHTML(line.enemy.wounded):dead?`${name}已经死去，尸身仍在石台旁。`:'密信已经收好：灭门主使仍在东夏国。待突破金丹，就循信中的路线前往。'}</p>${wounded?`<p>生命 ${foe.maxHp.toFixed(2)} · 攻击 ${foe.attack.toFixed(2)} · 防御 ${foe.defense.toFixed(2)} · 速度 ${foe.speed.toFixed(2)}</p>`:''}${!wounded&&!dead?`<p>${realmProgress(getSave().player).complete?'你已筑基圆满。':'修为尚未圆满。'}</p><button type="button" disabled>金丹突破 · 待开放</button>`:''}</div>${wounded?`${petChoices(getSave(),'xg-pursuer-pet')}<button type="button" data-pursuer-fight>追杀仇人</button>`:dead?'<button type="button" data-pursuer-search>搜身</button>':''}<p role="status"></p></section>`;
   back(renderFoundation);

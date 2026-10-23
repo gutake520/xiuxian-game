@@ -7,7 +7,8 @@ import {purchase} from '../systems/inventory.js';
 import {startLearning,completeLearning,toggleCombatTechnique} from '../systems/techniques.js';
 import {elementalBonus,elementalStatus} from '../systems/five-elements.js';
 function make(speed=20){return {player:{realm:'筑基一层',sect:'镇岳宗',spiritRoot:'土灵根',stats:{根骨:8},cultivation:0,spiritStones:200,hp:200,mp:20,combat:{hp:200,mp:20,attack:10,defense:1,speed,critRate:0,dodgeRate:0}},inventory:[],equipment:{},techniques:{mastered:[...ELEMENTAL_TECHNIQUES],combat:[...ELEMENTAL_TECHNIQUES],puzzles:{}},bagCapacity:20}}
-function fight(speed=20){const s=make(speed);beginBattle(s,'rock-ape');s.battle.hp=200;s.battle.maxHp=200;s.battle.mp=0;s.battle.attack=10;return s}
+// Fixed sparring target isolates elemental timing from world-monster balance.
+function fight(speed=20){const s=make(speed);beginBattle(s,'rock-ape');s.battle.hp=200;s.battle.maxHp=200;s.battle.mp=0;s.battle.attack=10;s.battle.defense=0;return s}
 function steady(t){t.mock.method(Math,'random',()=>.99)}
 test('five middle manuals cost 35/29 and learn with the existing four-tier puzzle',()=>{
  for(const id of ELEMENTAL_MANUALS){

@@ -7,7 +7,7 @@ import {QI_REQUIREMENTS,realmProgress,addCultivation,applyRealmHp} from '../data
 import {localDay} from '../systems/cultivation.js';
 import {initialCombat} from '../data/initial-combat.js';
 import {ITEMS} from '../data/items.js';
-import {QI_MONSTERS} from '../data/locations.js';
+import {QI_MONSTERS,FOUNDATION_MONSTERS} from '../data/locations.js';
 import {expireLoot,maxDurability} from '../systems/inventory.js';
 import {ensureBossLine} from '../systems/boss-line.js';
 import {ensureSpiritBeasts} from '../systems/pets.js';
@@ -50,6 +50,14 @@ export function migrateSave(save,now=Date.now()){
  save.petRentals=Number.isSafeInteger(save.petRentals)?Math.max(0,save.petRentals):0;
  save.foundationPetRentals=Number.isSafeInteger(save.foundationPetRentals)?Math.max(0,save.foundationPetRentals):0;
  if(save.battle){save.battle.talismansUsed??=0;save.battle.talismanRound??=0;save.battle.bindRounds??=save.battle.bindRound?[save.battle.bindRound]:[];save.battle.arrayRound??=0;save.battle.freeArrayUsed??=false;save.battle.guard??=false;save.battle.pet??=null;save.battle.mp??=Math.max(0,(QI_MONSTERS.find(monster=>monster.id===save.battle.monsterId)?.mp||0)-(save.battle.enemySkillReady?1:0))}
+ // Upgrade existing foundation enemy snapshots once; sparring/NPC battles are excluded.
+ if(save.battle&&!save.battle.foundationBalanceVersion&&(save.battle.kind==='wounded-pursuer'||FOUNDATION_MONSTERS.some(m=>m.id===save.battle.monsterId))){
+  save.battle.attack=Math.round((save.battle.attack+1)*100)/100;
+  save.battle.defense=Math.round(((save.battle.defense||0)+.8)*100)/100;
+  save.battle.maxHp=Math.round((save.battle.maxHp+5)*100)/100;
+  save.battle.hp=Math.round((save.battle.hp+5)*100)/100;
+  save.battle.foundationBalanceVersion=1;
+ }
  save.techniques??={mastered:[],main:null,puzzles:{}};
  save.techniques.mastered??=[];save.techniques.puzzles??={};
  save.techniques.combat=Array.isArray(save.techniques.combat)?save.techniques.combat.filter(id=>TECHNIQUES[id]?.type==='combat'&&techniqueEligible(p,TECHNIQUES[id])&&save.techniques.mastered.includes(id)).slice(0,combatSlots(p)):[];
