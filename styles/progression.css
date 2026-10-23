@@ -132,3 +132,8 @@
 #xg-panel .xg-flight-ring{width:46px;height:52px;background:url('../assets/flight-ring.svg') center/contain no-repeat}
 #xg-panel .xg-flight-rock{width:42px;height:42px;background:url('../assets/flight-rock.svg') center/contain no-repeat}
 #xg-panel .xg-flight-sword{width:48px;height:96px;background:url('../assets/flight-sword.svg') center/contain no-repeat;border:0;border-radius:0;box-shadow:none;filter:drop-shadow(0 4px 4px #365b4930);pointer-events:none}
+
+/* Backup controls stay within narrow phone sheets. */
+#xg-panel .xg-backup-sheet label{display:block;min-width:0}
+#xg-panel .xg-backup-sheet input,#xg-panel .xg-backup-sheet select{display:block;box-sizing:border-box;width:100%;max-width:100%;min-width:0;margin-top:8px;padding:10px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);font:inherit}
+#xg-panel .xg-backup-sheet [data-restore-note]{overflow-wrap:anywhere;color:var(--muted)}

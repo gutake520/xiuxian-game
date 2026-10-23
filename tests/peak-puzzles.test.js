@@ -70,7 +70,7 @@ test('mobile puzzle controls render and return keeps unfinished game; write erro
  const {document,window}=parseHTML('<div id="xg-panel"></div>');globalThis.document=document;globalThis.window=window;
  const s=make();maybeFindPeakPuzzle(s,()=>0);let failed=true,closed=false;
  showPeakPuzzle({getSave:()=>s,actions:{mutate:async(fn)=>{if(failed){failed=false;throw Error('保存失败')}return {result:fn(s)}}}},()=>{closed=true});
- assert.equal(document.querySelectorAll('.xg-puzzle-cell').length,42);assert.equal(document.querySelectorAll('[data-move]').length,6);
+ assert.equal(document.querySelectorAll('.xg-puzzle-cell').length,42);assert.equal(document.querySelectorAll('[data-move]').length,7);
  const d=solution(s.peakPuzzle)[0];await document.querySelector(`[data-move="${d}"]`).onclick();assert.equal(document.querySelector('[role=status]').textContent,'保存失败');
  await document.querySelector(`[data-move="${d}"]`).onclick();assert.equal(s.peakPuzzle.moves,1);
  document.querySelector('[data-close]').onclick();assert.equal(closed,true);assert.ok(s.peakPuzzle);

@@ -24,6 +24,7 @@ export function playPeakPuzzle(save,id,action,now=Date.now()){
  const p=save.peakPuzzle;
  if(!p||p.id!==id)throw new Error('这场奇遇已经结束。');
  if(save.battle)throw new Error('请先结束战斗。');
+ if(action==='abandon'&&!p.leisure){save.peakPuzzle=null;return {completed:true,outcome:'abandoned',text:'你暂且离开此处。本次奇遇已放弃，未领取奖励，关卡进度不变。'}}
  if(action==='surrender'&&p.leisure){save.peakPuzzle=null;return {completed:true,outcome:'surrender'}}
  if(action==='reset'){p.player=p.initial.player;p.boxes=[...p.initial.boxes];p.history=[];p.moves=0;return {}}
  if(action==='undo'){

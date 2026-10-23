@@ -34,6 +34,7 @@ export function playTraitor(save,id,action,index){
  const p=save.traitorPuzzle;
  if(!p||p.id!==id)throw new Error('这次抓叛徒奇遇已经结束。');
  if(save.battle)throw new Error('请先结束战斗。');
+ if(action==='abandon'){save.traitorPuzzle=null;return {completed:true,outcome:'abandoned',text:'你将名册交还执事。本次奇遇已放弃，未领取奖励，关卡进度不变。'}}
  const level=TRAITOR_LEVELS[p.levelIndex];
  if(!level)throw new Error('这份名册已经失效。');
  if(action==='submit'){

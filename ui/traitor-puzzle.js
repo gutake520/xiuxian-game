@@ -18,20 +18,22 @@ export function showTraitorPuzzle(api,onClose){
    const r=Math.floor(i/n),c=i%n,g=Number(level.regions[r][c]);
    const edges=`${r===0||level.regions[r-1][c]!==String(g)?' edge-top':''}${c===0||level.regions[r][c-1]!==String(g)?' edge-left':''}${r===n-1||level.regions[r+1][c]!==String(g)?' edge-bottom':''}${c===n-1||level.regions[r][c+1]!==String(g)?' edge-right':''}`;
    return `<button type="button" class="xg-traitor-cell ${mark===1?'is-cleared':mark===2?'is-suspect':''}${edges}" data-cell="${i}" style="--group-color:${colors[g]}" aria-label="第${r+1}行第${c+1}列，第${g+1}组，${mark===1?'已排除':mark===2?'疑似叛徒':'未判断'}" aria-pressed="${mark===2}"><small aria-hidden="true">${g+1}</small>${mark===1?'<span aria-hidden="true">×</span>':disciple}</button>`;
-  }).join('')}</div></div><p class="xg-traitor-help">选好标记方式后点弟子，再点可取消。返回会保留排查进度。</p><div class="xg-traitor-tools"><button type="button" data-action="undo" ${!p.history.length?'disabled':''}>撤销</button><button type="button" data-action="reset">清空标记</button><button type="button" data-action="submit">提交名册</button></div>`;
+  }).join('')}</div></div><p class="xg-traitor-help">选好标记方式后点弟子，再点可取消。返回会保留排查进度。</p><div class="xg-traitor-tools"><button type="button" data-action="undo" ${!p.history.length?'disabled':''}>撤销</button><button type="button" data-action="reset">清空标记</button><button type="button" data-action="submit">提交名册</button></div><div class="xg-feature-row"><button type="button" data-action="abandon">放弃本次</button></div>`;
   body.querySelectorAll('[data-mode]').forEach(b=>b.onclick=()=>{if(busy)return;mode=b.dataset.mode;draw()});
   body.querySelectorAll('[data-cell]').forEach(b=>b.onclick=()=>run(mode,Number(b.dataset.cell)));
   body.querySelectorAll('[data-action]').forEach(b=>b.onclick=()=>run(b.dataset.action));
  };
  const run=async(action,index)=>{
-  if(busy||!current())return;busy=true;
+  if(busy||!current())return;
+  if(action==='abandon'&&!confirm('放弃本次奇遇？不获奖励、不退次数，关卡进度不前进。'))return;
+  busy=true;
   body.querySelectorAll('button').forEach(b=>b.disabled=true);
   try{
    const {result}=await api.actions.mutate(s=>playTraitor(s,puzzle.id,action,index),{slot,message:r=>r.completed?r.text:null});
    if(!current())return;
    status.textContent='';
    if(result.completed){
-    body.innerHTML=`<article class="xg-traitor-result"><small>名册已核实</small><h3>叛徒尽数落网</h3><p>${escapeHTML(result.text)}</p><strong>灵石 +${result.reward}</strong><button type="button" data-finish>结束本次奇遇</button></article>`;
+    body.innerHTML=`<article class="xg-traitor-result"><small>${result.outcome==='abandoned'?'名册已交还':'名册已核实'}</small><h3>${result.outcome==='abandoned'?'已放弃本次':'叛徒尽数落网'}</h3><p>${escapeHTML(result.text)}</p>${result.outcome==='abandoned'?'':`<strong>灵石 +${result.reward}</strong>`}<button type="button" data-finish>结束本次奇遇</button></article>`;
     body.querySelector('[data-finish]').onclick=()=>{sheet.remove();onClose()};
    }else draw();
   }catch(error){if(current()){draw();status.textContent=error.message}}

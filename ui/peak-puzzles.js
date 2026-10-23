@@ -9,16 +9,18 @@ export function showPeakPuzzle(api,onClose){
  const current=()=>sheet.isConnected&&api.getSave()?.slot===slot;
  const draw=()=>{
   const p=api.getSave().peakPuzzle;if(!p||p.id!==puzzle.id)return;
-  body.innerHTML=`<p>${p.kind==='sokoban'?'将石箱推到所有金色阵位。':'穿过迷林，走到「出」处。'}</p><div class="xg-puzzle-board" style="--cols:${p.rows[0].length}" role="img" aria-label="${p.kind==='sokoban'?'推箱子石阵':'迷宫'}">${p.rows.flatMap((row,y)=>[...row].map((c,x)=>{const pos=y*row.length+x,goal=p.goals.includes(pos),box=p.boxes.includes(pos),player=p.player===pos;return `<span class="xg-puzzle-cell ${c==='#'?'is-wall':''} ${goal?'is-goal':''} ${box?'is-box':''} ${player?'is-player':''}">${player?'我':box?'箱':goal?(p.kind==='maze'?'出':'◇'):''}</span>`})).join('')}</div><div class="xg-puzzle-controls"><button data-move="up" aria-label="向上">↑</button><button data-move="left" aria-label="向左">←</button><button data-move="down" aria-label="向下">↓</button><button data-move="right" aria-label="向右">→</button></div><div class="xg-puzzle-tools"><button data-move="undo" ${!p.history.length?'disabled':''}>撤销</button><button data-move="reset">重来</button></div>${p.leisure?'<div class="xg-feature-row"><button data-move="surrender">投降</button></div>':''}`;
+  body.innerHTML=`<p>${p.kind==='sokoban'?'将石箱推到所有金色阵位。':'穿过迷林，走到「出」处。'}</p><div class="xg-puzzle-board" style="--cols:${p.rows[0].length}" role="img" aria-label="${p.kind==='sokoban'?'推箱子石阵':'迷宫'}">${p.rows.flatMap((row,y)=>[...row].map((c,x)=>{const pos=y*row.length+x,goal=p.goals.includes(pos),box=p.boxes.includes(pos),player=p.player===pos;return `<span class="xg-puzzle-cell ${c==='#'?'is-wall':''} ${goal?'is-goal':''} ${box?'is-box':''} ${player?'is-player':''}">${player?'我':box?'箱':goal?(p.kind==='maze'?'出':'◇'):''}</span>`})).join('')}</div><div class="xg-puzzle-controls"><button data-move="up" aria-label="向上">↑</button><button data-move="left" aria-label="向左">←</button><button data-move="down" aria-label="向下">↓</button><button data-move="right" aria-label="向右">→</button></div><div class="xg-puzzle-tools"><button data-move="undo" ${!p.history.length?'disabled':''}>撤销</button><button data-move="reset">重来</button></div>${p.leisure?'<div class="xg-feature-row"><button data-move="surrender">投降</button></div>':'<div class="xg-feature-row"><button data-move="abandon">放弃本次</button></div>'}`;
   body.querySelectorAll('[data-move]').forEach(b=>b.onclick=()=>run(b.dataset.move));
  };
  const run=async(action)=>{
-  if(busy||!current())return;busy=true;
+  if(busy||!current())return;
+  if(action==='abandon'&&!confirm('放弃本次奇遇？不获奖励、不退次数，关卡进度不前进。'))return;
+  busy=true;
   try{
    const {result}=await api.actions.mutate(s=>playPeakPuzzle(s,puzzle.id,action),{slot,message:r=>r.completed?r.text:null});
    if(!current())return;
    status.textContent='';
-   if(result.completed)body.innerHTML=`<article class="xg-feature-card"><h3>${puzzle.leisure?'今日陪伴':'奇遇已成'}</h3><p>${escapeHTML(result.text)}</p></article>`;
+   if(result.completed)body.innerHTML=`<article class="xg-feature-card"><h3>${result.outcome==='abandoned'?'已放弃本次':puzzle.leisure?'今日陪伴':'奇遇已成'}</h3><p>${escapeHTML(result.text)}</p></article>`;
    else draw();
   }catch(error){if(current())status.textContent=error.message}finally{busy=false}
  };
