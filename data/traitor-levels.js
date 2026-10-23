@@ -1,0 +1,360 @@
+// Twenty curated, fixed boards. Regions are orthogonally connected.
+// Every board has one solution and a guess-free deduction trace (verified in tests).
+// Difficulty score = elimination steps + 3 × multi-candidate deductions.
+export const TRAITOR_LEVELS = [
+ {
+  "size": 4,
+  "regions": [
+   "1102",
+   "1112",
+   "1312",
+   "3311"
+  ],
+  "difficulty": {
+   "steps": 2,
+   "advanced": 0,
+   "maxGroup": 1,
+   "score": 2
+  }
+ },
+ {
+  "size": 4,
+  "regions": [
+   "1102",
+   "1102",
+   "3332",
+   "3333"
+  ],
+  "difficulty": {
+   "steps": 3,
+   "advanced": 1,
+   "maxGroup": 2,
+   "score": 6
+  }
+ },
+ {
+  "size": 5,
+  "regions": [
+   "22000",
+   "21100",
+   "20000",
+   "22230",
+   "24433"
+  ],
+  "difficulty": {
+   "steps": 4,
+   "advanced": 2,
+   "maxGroup": 2,
+   "score": 10
+  }
+ },
+ {
+  "size": 5,
+  "regions": [
+   "00011",
+   "00011",
+   "22221",
+   "32221",
+   "32244"
+  ],
+  "difficulty": {
+   "steps": 6,
+   "advanced": 3,
+   "maxGroup": 2,
+   "score": 15
+  }
+ },
+ {
+  "size": 5,
+  "regions": [
+   "00000",
+   "00211",
+   "02211",
+   "34411",
+   "34441"
+  ],
+  "difficulty": {
+   "steps": 6,
+   "advanced": 4,
+   "maxGroup": 3,
+   "score": 18
+  }
+ },
+ {
+  "size": 6,
+  "regions": [
+   "011111",
+   "024100",
+   "024003",
+   "024033",
+   "044035",
+   "000005"
+  ],
+  "difficulty": {
+   "steps": 9,
+   "advanced": 4,
+   "maxGroup": 2,
+   "score": 21
+  }
+ },
+ {
+  "size": 6,
+  "regions": [
+   "000000",
+   "000011",
+   "200011",
+   "244431",
+   "244331",
+   "245555"
+  ],
+  "difficulty": {
+   "steps": 10,
+   "advanced": 5,
+   "maxGroup": 3,
+   "score": 25
+  }
+ },
+ {
+  "size": 6,
+  "regions": [
+   "111100",
+   "112103",
+   "112223",
+   "144333",
+   "444333",
+   "553333"
+  ],
+  "difficulty": {
+   "steps": 10,
+   "advanced": 7,
+   "maxGroup": 3,
+   "score": 31
+  }
+ },
+ {
+  "size": 6,
+  "regions": [
+   "011133",
+   "022103",
+   "024003",
+   "024033",
+   "044005",
+   "000005"
+  ],
+  "difficulty": {
+   "steps": 12,
+   "advanced": 7,
+   "maxGroup": 4,
+   "score": 33
+  }
+ },
+ {
+  "size": 7,
+  "regions": [
+   "0000000",
+   "0111200",
+   "1122200",
+   "3300000",
+   "0004400",
+   "0504600",
+   "5566660"
+  ],
+  "difficulty": {
+   "steps": 14,
+   "advanced": 8,
+   "maxGroup": 3,
+   "score": 38
+  }
+ },
+ {
+  "size": 7,
+  "regions": [
+   "0000000",
+   "3311000",
+   "0312204",
+   "0302204",
+   "0000004",
+   "5005506",
+   "5555666"
+  ],
+  "difficulty": {
+   "steps": 14,
+   "advanced": 9,
+   "maxGroup": 4,
+   "score": 41
+  }
+ },
+ {
+  "size": 7,
+  "regions": [
+   "0000000",
+   "3312200",
+   "3311200",
+   "0333004",
+   "0000064",
+   "0055064",
+   "5556666"
+  ],
+  "difficulty": {
+   "steps": 15,
+   "advanced": 10,
+   "maxGroup": 3,
+   "score": 45
+  }
+ },
+ {
+  "size": 7,
+  "regions": [
+   "1000000",
+   "1111200",
+   "3122200",
+   "3300000",
+   "0004400",
+   "0564600",
+   "5566660"
+  ],
+  "difficulty": {
+   "steps": 17,
+   "advanced": 11,
+   "maxGroup": 6,
+   "score": 50
+  }
+ },
+ {
+  "size": 8,
+  "regions": [
+   "00000000",
+   "11022000",
+   "10002200",
+   "11106203",
+   "44566003",
+   "55556073",
+   "05006073",
+   "00000073"
+  ],
+  "difficulty": {
+   "steps": 18,
+   "advanced": 12,
+   "maxGroup": 5,
+   "score": 54
+  }
+ },
+ {
+  "size": 8,
+  "regions": [
+   "00000000",
+   "11000020",
+   "01002220",
+   "00033200",
+   "05003400",
+   "05506440",
+   "00566644",
+   "70000000"
+  ],
+  "difficulty": {
+   "steps": 19,
+   "advanced": 13,
+   "maxGroup": 3,
+   "score": 58
+  }
+ },
+ {
+  "size": 8,
+  "regions": [
+   "00000000",
+   "01000020",
+   "11000220",
+   "50033440",
+   "55003400",
+   "55506444",
+   "75506604",
+   "75000000"
+  ],
+  "difficulty": {
+   "steps": 20,
+   "advanced": 14,
+   "maxGroup": 4,
+   "score": 62
+  }
+ },
+ {
+  "size": 8,
+  "regions": [
+   "00000000",
+   "01002220",
+   "51034420",
+   "55033440",
+   "55053400",
+   "75555440",
+   "75566600",
+   "77000000"
+  ],
+  "difficulty": {
+   "steps": 22,
+   "advanced": 15,
+   "maxGroup": 4,
+   "score": 67
+  }
+ },
+ {
+  "size": 9,
+  "regions": [
+   "000000000",
+   "002001110",
+   "002001410",
+   "022333444",
+   "020004444",
+   "000500000",
+   "005500666",
+   "000880667",
+   "088800077"
+  ],
+  "difficulty": {
+   "steps": 23,
+   "advanced": 16,
+   "maxGroup": 5,
+   "score": 71
+  }
+ },
+ {
+  "size": 9,
+  "regions": [
+   "000000000",
+   "000001110",
+   "002111300",
+   "022333340",
+   "025554440",
+   "000500000",
+   "005500666",
+   "055880067",
+   "088800777"
+  ],
+  "difficulty": {
+   "steps": 25,
+   "advanced": 17,
+   "maxGroup": 4,
+   "score": 76
+  }
+ },
+ {
+  "size": 10,
+  "regions": [
+   "0000000000",
+   "4440021111",
+   "4000220000",
+   "4000000300",
+   "4440056300",
+   "4705556330",
+   "7700556660",
+   "7000000000",
+   "7000998880",
+   "7700099000"
+  ],
+  "difficulty": {
+   "steps": 28,
+   "advanced": 19,
+   "maxGroup": 8,
+   "score": 85
+  }
+ }
+];

@@ -1,0 +1,32 @@
+/* Compact mobile-first investigation board; all styles stay inside the game. */
+#xg-panel .xg-traitor-sheet .xg-traitor-meta{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;font-size:12px;color:var(--muted)}
+#xg-panel .xg-traitor-sheet .xg-traitor-meta strong{color:var(--jade);white-space:nowrap}
+#xg-panel .xg-traitor-sheet .xg-traitor-intro{font-size:12px;line-height:1.65;margin:12px 0}
+#xg-panel .xg-traitor-sheet .xg-traitor-rules{display:flex;flex-wrap:wrap;gap:5px 12px;padding:10px 0;border-block:1px solid var(--line);font-size:11px;color:var(--muted)}
+#xg-panel .xg-traitor-sheet .xg-traitor-mode{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:14px 0 10px}
+#xg-panel .xg-traitor-sheet .xg-traitor-mode button{margin:0;min-width:0;padding:9px 4px;font-size:12px}
+#xg-panel .xg-traitor-sheet .xg-traitor-mode [aria-pressed=true]{background:var(--jade);color:#fff!important;border-color:var(--jade)}
+#xg-panel .xg-traitor-sheet .xg-traitor-scroll{overflow:auto;max-width:100%;padding:2px}
+#xg-panel .xg-traitor-sheet .xg-traitor-board{display:grid;grid-template-columns:repeat(var(--cols),minmax(0,1fr));width:100%;max-width:420px;min-width:220px;margin:auto;padding:3px;background:var(--surface);border:1px solid var(--line);border-radius:8px}
+#xg-panel .xg-traitor-sheet .xg-traitor-cell{position:relative;display:grid;place-items:center;aspect-ratio:1;min-width:0;min-height:0;width:100%;margin:0;padding:0;border:1px solid #ffffff90;border-radius:3px;background:var(--group-color);color:#354b43;box-shadow:none;touch-action:manipulation}
+#xg-panel .xg-traitor-sheet .xg-traitor-cell.edge-top{border-top-color:#637569}
+#xg-panel .xg-traitor-sheet .xg-traitor-cell.edge-bottom{border-bottom-color:#637569}
+#xg-panel .xg-traitor-sheet .xg-traitor-cell.edge-left{border-left-color:#637569}
+#xg-panel .xg-traitor-sheet .xg-traitor-cell.edge-right{border-right-color:#637569}
+#xg-panel .xg-traitor-sheet .xg-traitor-cell svg{width:57%;height:57%;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;opacity:.65}
+#xg-panel .xg-traitor-sheet .xg-traitor-cell small{position:absolute;top:0;left:2px;font:8px/1.15 var(--sans);color:#354b43}
+#xg-panel .xg-traitor-sheet .xg-traitor-cell.is-suspect::after{content:'';position:absolute;inset:12%;border:2px solid #923e32;border-radius:50%}
+#xg-panel .xg-traitor-sheet .xg-traitor-cell.is-suspect svg{stroke:#923e32;opacity:1}
+#xg-panel .xg-traitor-sheet .xg-traitor-cell.is-cleared span{font-size:clamp(18px,5vw,28px);line-height:1;color:#53625b}
+#xg-panel .xg-traitor-sheet .xg-traitor-cell:focus-visible{outline:2px solid #233e32;outline-offset:1px;z-index:1}
+#xg-panel .xg-traitor-sheet .xg-traitor-help{font-size:11px;line-height:1.6;color:var(--muted);margin:10px 0}
+#xg-panel .xg-traitor-sheet .xg-traitor-tools{display:grid;grid-template-columns:1fr 1fr 1.3fr;gap:6px}
+#xg-panel .xg-traitor-sheet .xg-traitor-tools button{min-width:0;margin:0;padding:10px 3px;font-size:12px}
+#xg-panel .xg-traitor-sheet .xg-traitor-tools [data-action=submit]{background:var(--jade);color:white!important}
+#xg-panel .xg-traitor-sheet .xg-traitor-result{padding:25px 8px;text-align:center}
+#xg-panel .xg-traitor-sheet .xg-traitor-result small{color:var(--muted);letter-spacing:.15em}
+#xg-panel .xg-traitor-sheet .xg-traitor-result p{line-height:1.8;font-size:13px}
+#xg-panel .xg-traitor-sheet .xg-traitor-result strong{display:block;color:var(--jade);margin:20px 0}
+@media(max-width:380px){#xg-panel #xg-feature-sheet.xg-traitor-sheet{padding-inline:12px}}
+
+#xg-panel .xg-traitor-sheet .xg-traitor-cell:not(:disabled):hover{background:var(--group-color);filter:brightness(.96)}
