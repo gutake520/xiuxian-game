@@ -55,11 +55,11 @@ test('all four games use isolated saves, award nothing and allow completing loss
  }
  const s=met(),g=startZhangPlay(s,at,()=>0);assert.throws(()=>finishZhangPlay(s,g.id,'win',at),/先完成/);assert.throws(()=>startDice(g.world,g.world.stallGames.dice.id,'big',1),/不下注/);
 });
-test('gifts consume one item with equal positive and negative rolls, ignore type, protect equipped gear',()=>{
+test('gifts consume one item with 65 percent positive and 35 percent negative rolls, ignore type, protect equipped gear',()=>{
  const s=met();assert.throws(()=>giveZhangGift(s,'stones'),/不肯/);s.zhangHuaijin.giftsUnlocked=true;s.zhangHuaijin.affinity=30;
  for(const id of ['healing-herb','iron-sword']){addItem(s,id);const e=s.inventory.at(-1);if(id==='iron-sword')e.durability=1;
-  giveZhangGift(s,e.uid,()=>.49);assert.equal(s.zhangHuaijin.affinity,id==='iron-sword'?36:33);assert.ok(!s.inventory.includes(e));}
- giveZhangGift(s,'stones',()=>.5);assert.equal(s.zhangHuaijin.affinity,33);assert.equal(s.player.spiritStones,499);
+  giveZhangGift(s,e.uid,()=>.649999);assert.equal(s.zhangHuaijin.affinity,id==='iron-sword'?36:33);assert.ok(!s.inventory.includes(e));}
+ giveZhangGift(s,'stones',()=>.65);assert.equal(s.zhangHuaijin.affinity,33);assert.equal(s.player.spiritStones,499);
  addItem(s,'iron-sword');s.equipment.weapon=s.inventory.at(-1).uid;assert.throws(()=>giveZhangGift(s,s.equipment.weapon),/不能/);
  s.zhangHuaijin.affinity=99;giveZhangGift(s,'stones',()=>0);assert.equal(s.zhangHuaijin.affinity,100);
  s.zhangHuaijin.affinity=1;giveZhangGift(s,'stones',()=>.9);assert.equal(s.zhangHuaijin.affinity,0);

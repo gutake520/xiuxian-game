@@ -1,3 +1,4 @@
+import {collectTeachingMaterial} from './master-teaching.js';
 import {beastPower} from '../data/titles.js';
 import {castElement,hasElementalEffect,elementalEffect,elementalBonus,expireElements} from './five-elements.js';
 import {foundationStoryPending} from './foundation-story.js';
@@ -36,6 +37,7 @@ function awardVictory(save,monster,now){
  for(const [id,chance] of [[gearTier?`foundation-${gearTier}-shoes`:foundation?'foundation-shoes':'wild-shoes',.08],[gearTier?`foundation-${gearTier}-sword`:foundation?'foundation-wild-sword':'wild-sword',.04],[gearTier?`foundation-${gearTier}-robe`:foundation?'foundation-wild-robe':'wild-robe',.04]])if(Math.random()<chance)grant(save,id,1,rewards,now,loot);
  if(Math.random()<.04)grant(save,pick(foundation?['foundation-hp-charm','foundation-mp-charm','foundation-crit-charm','foundation-dodge-charm']:['hp-charm','mp-charm','crit-charm','dodge-charm']),1,rewards,now,loot);
  if(!foundation&&monster.minLevel>=4&&Math.random()<.02)grant(save,'sting-manual',1,rewards,now,loot);
+ const material=collectTeachingMaterial(save,monster.id);if(material)rewards.push(material);
  const xp=addCultivation(save,monster.xp??COMBAT_REWARD_XP);
  return {rewards,xp,loot};
 }
