@@ -39,6 +39,8 @@ function awardVictory(save,monster,now){
  if(Math.random()<.04)grant(save,pick(foundation?['foundation-hp-charm','foundation-mp-charm','foundation-crit-charm','foundation-dodge-charm']:['hp-charm','mp-charm','crit-charm','dodge-charm']),1,rewards,now,loot);
  if(!foundation&&monster.minLevel>=4&&Math.random()<.02)grant(save,'sting-manual',1,rewards,now,loot);
  const material=collectTeachingMaterial(save,monster.id);if(material)rewards.push(material);
+ const bonus=monster.bonusStones;
+ if(bonus){const extra=bonus[0]+Math.floor(Math.random()*(bonus[1]-bonus[0]+1));save.player.spiritStones=round2(save.player.spiritStones+extra);rewards.push(`额外灵石×${extra}`);loot.push({itemId:'stones',quantity:extra})}
  const xp=addCultivation(save,monster.xp??COMBAT_REWARD_XP);
  return {rewards,xp,loot};
 }
