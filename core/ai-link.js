@@ -48,7 +48,17 @@ export function applyChoice(s,id){
 // Session permissions are deliberately off after reload. Nothing edits the character card.
 export function createAILink({getSave,actions,getContext=()=>globalThis.SillyTavern?.getContext?.(),onChanged=()=>{},isBusy=()=>false,storage=globalThis.localStorage}){
  let sync=false,operate=false,epoch=0,turn=null,ticket=null,busy=false,context=null;
- const status=()=>({sync,operate,supported:Boolean(context?.isToolCallingSupported?.())});
+ function status(){
+  const live=getContext();
+  let supported=false,reason='';
+  if(!live?.registerFunctionTool||!live?.setExtensionPrompt||!live?.eventSource)reason='当前酒馆未提供完整的扩展工具接口，请检查客户端版本。';
+  else if(typeof live.isToolCallingSupported!=='function')reason='当前客户端未提供工具调用检测接口；请提供客户端版本以检查兼容性。';
+  else{
+   try{supported=Boolean(live.isToolCallingSupported());reason=supported?'当前连接已启用工具调用。':'酒馆仍报告当前连接不支持工具调用。请检查是否使用聊天补全接口，以及当前模型是否支持工具调用。';}
+   catch{reason='酒馆检测工具调用时发生错误，请重新连接 API 后重试。';}
+  }
+  return {sync,operate,supported,reason};
+ }
  function invalidate(){epoch++;turn=null;ticket=null;context?.setExtensionPrompt?.(PROMPT,'',1,0)}
  function configure(next){sync=Boolean(next.sync);operate=sync&&Boolean(next.operate);invalidate();return status()}
  function chatId(){const live=getContext();return live?.getCurrentChatId?.()??live?.chatId??null}
