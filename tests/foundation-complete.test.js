@@ -16,15 +16,15 @@ function make(realm='筑基一层'){
 }
 test('all ten levels grow, cap only at full tenth level, and losses can be recovered',()=>{
  const s=make(),base=equipmentStats(s);
- for(let i=0;i<9;i++){addCultivation(s,FOUNDATION_REQUIREMENTS[i]);assert.equal(s.player.realm,FOUNDATION_REALMS[i+1]);assert.equal(realmProgress(s.player).complete,false)}
- const end=equipmentStats(s);assert.equal(end.maxHp-base.maxHp,18);assert.equal(end.maxMp-base.maxMp,4);assert.equal(end.speed-base.speed,2.7);assert.equal(Math.round((end.attack-base.attack)*100),270);
+ for(let i=0;i<9;i++){const before=equipmentStats(s);addCultivation(s,FOUNDATION_REQUIREMENTS[i]);assert.equal(s.player.realm,FOUNDATION_REALMS[i+1]);assert.equal(realmProgress(s.player).complete,false);const after=equipmentStats(s),milestone=i===2||i===5;assert.equal(after.maxHp-before.maxHp,milestone?5:2);assert.equal(Math.round((after.attack-before.attack)*100),milestone?50:30)}
+ const end=equipmentStats(s);assert.equal(end.maxHp-base.maxHp,24);assert.equal(end.maxMp-base.maxMp,4);assert.equal(end.speed-base.speed,2.7);assert.equal(Math.round((end.attack-base.attack)*100),310);
  assert.equal(addCultivation(s,9000),4000);assert.equal(s.player.cultivation,4000);assert.equal(addCultivation(s,30),0);
  s.player.cultivation-=70;assert.equal(addCultivation(s,70),70);assert.equal(s.player.cultivation,4000);
 });
 test('old third level loads and continues without repeat healing or lost equipment',()=>{
  const s=make('筑基三层');s.player.cultivationRequired=null;const loaded=migrateSave(structuredClone(s),now);assert.equal(loaded.player.cultivationRequired,1800);
  const hp=loaded.player.hp,mp=loaded.player.mp;for(let i=0;i<3;i++)migrateSave(loaded,now);assert.equal(loaded.player.hp,hp);assert.equal(loaded.player.mp,mp);
- addCultivation(loaded,1800);assert.equal(loaded.player.realm,'筑基四层');assert.equal(loaded.player.hp,hp+2);
+ addCultivation(loaded,1800);assert.equal(loaded.player.realm,'筑基四层');assert.equal(loaded.player.hp,hp+5);
 });
 test('offline settlement matches daily settlement across the fourth-layer rate change',()=>{
  const a=make('筑基三层');a.player.cultivation=1790;const b=structuredClone(a);

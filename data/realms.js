@@ -9,9 +9,10 @@ export function realmProgress(player) {
  return {index,required,next:qi>=0?QI_REALMS[qi+1]??null:FOUNDATION_REALMS[foundation+1]??null,complete:(index===19&&Number(player.cultivation)>=4000)||(index===9&&Number(player.cultivation)>=1000),current:Number(player.cultivation)||0};
 }
 // 炼气一至五层：每升一层增加 1 点生命上限。五层之后暂不继续增加。
-export function realmHpBonus(player){return Math.max(0,Math.min(4,realmProgress(player).index))+Math.max(0,FOUNDATION_REALMS.indexOf(player.realm))*2}
+function foundationMilestones(step){return Number(step>=3)+Number(step>=6)}
+export function realmHpBonus(player){const step=Math.max(0,FOUNDATION_REALMS.indexOf(player.realm));return Math.max(0,Math.min(4,realmProgress(player).index))+step*2+foundationMilestones(step)*3}
 export function realmBattleBonus(player){
- if(String(player.realm).startsWith('筑基')){const step=Math.max(0,FOUNDATION_REALMS.indexOf(player.realm)),base={defense:0,mp:0,attack:0,critRate:0,dodgeRate:0,speed:0,...player.foundationBonus};return {...base,attack:Math.round((base.attack+step*.3)*100)/100,defense:Math.round((base.defense+step*.08)*100)/100,mp:base.mp+Math.floor(step/2),speed:Math.round((base.speed+step*.3)*100)/100}}
+ if(String(player.realm).startsWith('筑基')){const step=Math.max(0,FOUNDATION_REALMS.indexOf(player.realm)),base={defense:0,mp:0,attack:0,critRate:0,dodgeRate:0,speed:0,...player.foundationBonus};return {...base,attack:Math.round((base.attack+step*.3+foundationMilestones(step)*.2)*100)/100,defense:Math.round((base.defense+step*.08)*100)/100,mp:base.mp+Math.floor(step/2),speed:Math.round((base.speed+step*.3)*100)/100}}
  const tier=realmProgress(player).index;
  const root=String(player.spiritRoot||'');
  const count=root.includes('五灵根')?5:root.includes('四灵根')?4:root.includes('三灵根')?3:root.includes('双灵根')?2:1;
