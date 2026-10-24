@@ -1,5 +1,6 @@
 import {ELEMENTAL_TECHNIQUES,TECHNIQUES} from './techniques.js';
 export const ITEMS={
+ 'blue-buff-manual':{id:'blue-buff-manual',name:'你是我的蓝buff',kind:'manual',methodId:'blue-buff',glyph:'诀',description:'灵泉听息所得。解开中级数独后学会，装备后攻击造成伤害恢复 0.5 法力。'},
  'foundation-mid-sword':{id:'foundation-mid-sword',minFoundationLevel:4,price:12,name:'照水剑',stage:'筑基',kind:'equipment',slot:'weapon',attack:2.2,glyph:'剑',description:'照水剑，攻击 +2.20。'},
  'foundation-mid-robe':{id:'foundation-mid-robe',minFoundationLevel:4,price:12,name:'叠云甲',stage:'筑基',kind:'equipment',slot:'armor',defense:1.1,glyph:'甲',description:'叠云甲，防御 +1.10。'},
  'foundation-mid-shoes':{id:'foundation-mid-shoes',minFoundationLevel:4,price:12,name:'逐岚履',stage:'筑基',kind:'equipment',slot:'shoes',speed:3.6,glyph:'履',description:'逐岚履，速度 +3.60。'},

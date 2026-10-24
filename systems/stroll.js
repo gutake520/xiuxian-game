@@ -1,3 +1,4 @@
+import {maybeFindSpring} from './spirit-spring.js';
 import {maybeFindTraitor} from './traitor-puzzle.js';
 import {maybeMeetThief} from './thief.js';
 import {maybeMeetZhang} from './zhang-huaijin.js';
@@ -48,10 +49,11 @@ export function takeStroll(save,id,now=Date.now(),random=Math.random){
  // After the thief misses, treasure takes priority; dice keeps its original conditional chance.
  const stallChance=stallKind==='dice'&&!hadTreasure?STALL_CHANCES.dice/(1-TREASURE_FIND_CHANCE):STALL_CHANCES[stallKind];
  const stall=canEncounter&&!found&&stallKind&&(!save.stallGames?.[stallKind]||save.stallGames[stallKind].phase==='done')&&random()<stallChance&&offerStallGame(save,stallKind);
- const ghost=canEncounter&&id==='foundation'&&maybeMeetZhang(save,random);
- let text=traitor?`${save.traitorPuzzle.sect}的执事请你协助抓叛徒，一份可疑的值守名册已经交到你手中。`:ghost?'望川岭上金铃骤响，一名红衣鬼修拦住去路。':stall?(stallKind==='gomoku'?'坊市树荫下摆着一张棋盘，摊主捻着白子，向你让出对面的座位。':'黑市深处传来骰子的脆响。庄家扣住骰盅，笑道：「来一局？买定离手。」'):puzzle==='sokoban'?'一只小兽拦住去路，将你引到一座错乱的石阵前。它指了指石箱，又指了指地上的阵纹。':puzzle==='maze'?'林间忽起薄雾，一串小小的兽爪印蜿蜒向前，似乎在邀你穿过这片迷林。':place.stories[index];
- if(!traitor&&!ghost&&!found&&!puzzle&&!stall&&random()<RUMOR_CHANCE){const rumors=availableRumors(save);text=rumors[Math.min(rumors.length-1,Math.floor(random()*rumors.length))]}
+ const spring=canEncounter&&id==='foundation'&&maybeFindSpring(save,random);
+ const ghost=!spring&&canEncounter&&id==='foundation'&&maybeMeetZhang(save,random);
+ let text=spring?'望川岭山隙间灵泉浮现，泉光仿佛随你的呼吸明灭。或可静心听息，得一卷机缘。':traitor?`${save.traitorPuzzle.sect}的执事请你协助抓叛徒，一份可疑的值守名册已经交到你手中。`:ghost?'望川岭上金铃骤响，一名红衣鬼修拦住去路。':stall?(stallKind==='gomoku'?'坊市树荫下摆着一张棋盘，摊主捻着白子，向你让出对面的座位。':'黑市深处传来骰子的脆响。庄家扣住骰盅，笑道：「来一局？买定离手。」'):puzzle==='sokoban'?'一只小兽拦住去路，将你引到一座错乱的石阵前。它指了指石箱，又指了指地上的阵纹。':puzzle==='maze'?'林间忽起薄雾，一串小小的兽爪印蜿蜒向前，似乎在邀你穿过这片迷林。':place.stories[index];
+ if(!spring&&!traitor&&!ghost&&!found&&!puzzle&&!stall&&random()<RUMOR_CHANCE){const rumors=availableRumors(save);text=rumors[Math.min(rumors.length-1,Math.floor(random()*rumors.length))]}
  const result={placeId:id,text:found?'你经过一处撤摊的角落，拾到一张泛黄的残图。图上依次圈着三处山地，末尾画着一只小小的木匣。':text};
- save.stroll={day:localDay(now),count:count+1,encounters:encounters+(traitor||ghost||found||puzzle||stall?1:0),last:result};
+ save.stroll={day:localDay(now),count:count+1,encounters:encounters+(spring||traitor||ghost||found||puzzle||stall?1:0),last:result};
  return {...result,message:`${place.name}闲逛：${result.text}`};
 }

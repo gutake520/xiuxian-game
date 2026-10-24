@@ -3,6 +3,7 @@ import {rootCount} from './technique-slots.js';
 import {realmProgress} from './realms.js';
 export const ELEMENTAL_TECHNIQUES=['metal-edge', 'wood-hidden', 'water-mist', 'fire-burn', 'earth-rampart'];
 export const TECHNIQUES={
+ 'blue-buff':{id:'blue-buff',name:'你是我的蓝buff',rank:'中级',type:'combat',passive:true,rootCounts:[4,5],description:'装备后占一个战斗功法栏。自身每次攻击造成伤害恢复 0.5 法力，不超过上限；灵兽、道具及持续伤害不触发。'},
  'metal-edge':{id:'metal-edge',name:'金·锋利',rank:'中级',type:'combat',minRealmIndex:10,mpCost:1.5,cooldown:5,description:'不占行动，当轮起四轮攻击依次 +1.2／1／0.8／0.6。耗蓝 1.5，冷却 5 轮，效果期间不可重施。'},
  'wood-hidden':{id:'wood-hidden',name:'木·藏锋',rank:'中级',type:'combat',minRealmIndex:10,mpCost:1.5,cooldown:4,description:'施放当轮算起，第三轮追加 1.4 倍攻击伤害，不占行动，跳过也触发。耗蓝 1.5，冷却 4 轮，效果期间不可重施。'},
  'water-mist':{id:'water-mist',name:'水·迷雾',rank:'中级',type:'combat',minRealmIndex:10,mpCost:1.5,cooldown:4,description:'下两轮对手命中伤害固定为 2，未行动也计时。耗蓝 1.5，冷却 4 轮，效果期间不可重施。'},

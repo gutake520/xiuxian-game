@@ -219,6 +219,7 @@ export function playRound(save,action='attack',now=Date.now()){
   if(playerFirst&&battle.hp>0&&weapon?.durability>0&&ITEMS[weapon.itemId]?.stunChance&&Math.random()<ITEMS[weapon.itemId].stunChance){battle.stunnedRound=battle.round+1;messages.push('裂风剑震乱对手气息，对手本轮无法行动。')}
   if(action==='silent-strike'&&battle.hp>0){battle.silencedTurns=2;messages.push(`${battle.name}接下来两次行动无法使用技能。`)}
   if(action==='sting'&&battle.hp>0)battle.stingRound=battle.round+2;
+  if(actual>0&&hasActiveTechnique(save,'blue-buff')){const restored=round2(Math.max(0,Math.min(.5,stats.maxMp-save.player.mp)));save.player.mp=round2(save.player.mp+restored);if(restored>0)messages.push(`你是我的蓝buff：恢复 ${restored.toFixed(2)} 法力。`)}
   if(hasActiveTechnique(save,'life-steal')){const heal=round2(Math.min(stats.maxHp-save.player.hp,actual*.1));save.player.hp=round2(save.player.hp+heal);if(heal>0)messages.push(`吸取生命 ${heal.toFixed(2)}。`)}
   if(action==='empty-hands'&&battle.hp>0&&Math.random()<(save.techniques.upgraded?.includes(action)?.3:.2)){const stolen=round2(Math.min(round2((save.techniques.upgraded?.includes(action)?5:2)*(hasActiveTechnique(save,'one-sword')?1.1:1)),battle.hp)),healed=round2(Math.min(stolen,stats.maxHp-save.player.hp));battle.hp=round2(battle.hp-stolen);save.player.hp=round2(save.player.hp+healed);dealt=round2(dealt+stolen);messages.push(`妙手空空抽取 ${stolen.toFixed(2)} 生命，恢复 ${healed.toFixed(2)}。`)}
  };
@@ -266,7 +267,8 @@ export function playRound(save,action='attack',now=Date.now()){
    if(hasActiveTechnique(save,'one-sword'))damage=round2(damage*1.1);
    const actual=Math.min(battle.hp,damage);battle.hp=round2(Math.max(0,battle.hp-damage));dealt=round2(dealt+damage);
    messages.push(`木·藏锋额外造成 ${damage.toFixed(2)} 伤害。`);
-   if(hasActiveTechnique(save,'life-steal')){const heal=round2(Math.min(stats.maxHp-save.player.hp,actual*.1));save.player.hp=round2(save.player.hp+heal);if(heal>0)messages.push(`吸取生命 ${heal.toFixed(2)}。`)}
+   if(actual>0&&hasActiveTechnique(save,'blue-buff')){const restored=round2(Math.max(0,Math.min(.5,stats.maxMp-save.player.mp)));save.player.mp=round2(save.player.mp+restored);if(restored>0)messages.push(`你是我的蓝buff：恢复 ${restored.toFixed(2)} 法力。`)}
+  if(hasActiveTechnique(save,'life-steal')){const heal=round2(Math.min(stats.maxHp-save.player.hp,actual*.1));save.player.hp=round2(save.player.hp+heal);if(heal>0)messages.push(`吸取生命 ${heal.toFixed(2)}。`)}
   }
  }
  };
