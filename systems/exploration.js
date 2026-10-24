@@ -43,6 +43,7 @@ function pickScenes(){const pool=QI_SCENES.map((_,i)=>i),selected=[];for(let i=0
 export function startQiExploration(save,now=Date.now()){return startExploration(save,'qi',now)}
 export function startFoundationExploration(save,now=Date.now()){return startExploration(save,'foundation',now)}
 function startExploration(save,tier,now){
+ if(save.peiExploration?.tier===tier)throw new Error('裴照衡正在探索此处，请先领取他的探索所得。');
  if(save.qiSecret)throw new Error('秘境探索尚未结束。');
  const foundation=tier==='foundation',dayKey=foundation?'foundationSecretDay':'qiSecretDay';
  if(foundation&&!String(save.player.realm).startsWith('筑基'))throw new Error('筑基秘境需达到筑基期。');

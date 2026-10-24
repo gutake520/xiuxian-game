@@ -1,3 +1,4 @@
+import {showPei} from './pei-zhaoheng.js';
 import {effectiveStat,beastPower} from '../data/titles.js';
 import {showTitles} from './titles.js';
 import {foundationStoryPending,searchPursuerBody,canEnterDongxia,enterDongxia} from '../systems/foundation-story.js';
@@ -194,8 +195,9 @@ export function createMapUI({getSave,activate,actions,onSectBattleExit}){
  function renderFoundation(){
   if(!foundationPlayer())return render();
   activate('map');
-  content().innerHTML=`<section class="xg-map-sheet"><button class="xg-map-back" type="button">← 返回地图</button>${heading('望川岭','筑基修士出没的山岭。')}${peaks(realmProgress(getSave().player).index>=19?[...FOUNDATION_PEAKS,{id:'foundation-ending',name:getSave().foundationStory?.phase==='wounded'||getSave().foundationStory?.phase==='dead'?'栖息崖':'归元渡',kind:'boss',x:65,y:72,size:.8}]:FOUNDATION_PEAKS,'foundation')}</section>`;
+  content().innerHTML=`<section class="xg-map-sheet"><button class="xg-map-back" type="button">← 返回地图</button>${heading('望川岭','筑基修士出没的山岭。')}<button type="button" data-pei-home>听隙庐 · 裴照衡</button>${peaks(realmProgress(getSave().player).index>=19?[...FOUNDATION_PEAKS,{id:'foundation-ending',name:getSave().foundationStory?.phase==='wounded'||getSave().foundationStory?.phase==='dead'?'栖息崖':'归元渡',kind:'boss',x:65,y:72,size:.8}]:FOUNDATION_PEAKS,'foundation')}</section>`;
   back(render);
+  content().querySelector('[data-pei-home]')?.addEventListener('click',()=>showPei({getSave,actions},renderFoundation));
   content().querySelectorAll('[data-foundation]').forEach(button=>button.onclick=()=>renderFoundationPeak(button.dataset.foundation));
  }
  function renderFoundationPeak(id){
