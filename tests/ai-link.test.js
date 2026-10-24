@@ -49,3 +49,22 @@ test('switching slots rejects pending actions and backup failure prevents mutati
  const r=JSON.parse(await link.execute({token:JSON.parse(link.read()).token,action:'buy:iron-sword'}));
  assert.equal(r.ok,false);assert.match(r.error,/备份空间不足/);assert.equal((await readSave('slot2')).player.spiritStones,100);
 });
+test('state injection survives generation end and read-only background generation',async()=>{
+ const x=await setup();let prompt='';x.ctx.setExtensionPrompt=(_id,text)=>{prompt=text};
+ x.link.configure({sync:true,operate:false});assert.match(prompt,/测试/);
+ x.handlers.start('normal');assert.match(prompt,/当前仅允许读取/);
+ x.handlers.end();assert.match(prompt,/测试/);
+ x.handlers.start('quiet');assert.match(prompt,/测试/);assert.match(prompt,/"permission":false/);assert.match(prompt,/"token":null/);
+ x.link.configure({sync:false,operate:false});assert.equal(prompt,'');
+});
+test('ordinary generation without explicit type injects; chat change clears it',async()=>{
+ const x=await setup();let prompt='';x.ctx.setExtensionPrompt=(_id,text)=>{prompt=text};
+ x.link.configure({sync:true,operate:true});x.handlers.start();assert.match(prompt,/玩家已开启 AI 代操作权限/);assert.match(prompt,/测试/);
+ x.handlers.chat();assert.equal(prompt,'');assert.equal((await x.act()).ok,false);
+});
+test('read-only injection works without a function-tool registration API',()=>{
+ const handlers={};let prompt='';
+ const ctx={chat:[],setExtensionPrompt:(_id,s)=>{prompt=s},event_types:{GENERATION_AFTER_COMMANDS:'start'},eventSource:{on:(e,f)=>handlers[e]=f}};
+ const link=createAILink({getSave:()=>null,actions:{},getContext:()=>ctx,storage:{}});
+ assert.equal(link.attach(),true);link.configure({sync:true,operate:false});handlers.start('normal');assert.match(prompt,/尚未选择存档/);
+});

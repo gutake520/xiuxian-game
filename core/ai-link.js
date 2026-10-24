@@ -59,14 +59,15 @@ export function createAILink({getSave,actions,getContext=()=>globalThis.SillyTav
   }
   return {sync,operate,supported,reason};
  }
- function invalidate(){epoch++;turn=null;ticket=null;context?.setExtensionPrompt?.(PROMPT,'',1,0)}
- function configure(next){sync=Boolean(next.sync);operate=sync&&Boolean(next.operate);invalidate();return status()}
+ function invalidate(){epoch++;turn=null;ticket=null}
+ function clearPrompt(){context?.setExtensionPrompt?.(PROMPT,'',1,0)}
+ function configure(next){sync=Boolean(next.sync);operate=sync&&Boolean(next.operate);invalidate();if(sync)inject();else clearPrompt();return status()}
  function chatId(){const live=getContext();return live?.getCurrentChatId?.()??live?.chatId??null}
  function userTurn(){const chat=getContext()?.chat||[];for(let i=chat.length-1;i>=0;i--)if(chat[i].is_user)return JSON.stringify([chatId(),i,chat[i].send_date,chat[i].mes]);return null}
- function instructions(){
+ function instructions(canAct=operate){
   return [
    '你正在与玩家共同游玩《问道》，以下游戏状态由插件提供；保持当前角色卡的性格与说话方式。',
-   operate
+   canAct
     ? '玩家已开启 AI 代操作权限。每次正常回复前，结合玩家当前意愿与游戏状态，主动判断是否有值得执行的行动；无需等待玩家逐步命令。若玩家明确要求一项受支持的游戏操作，应调用工具执行。也可以判断无需行动，继续正常聊天。'
     : '当前仅允许读取游戏信息，不允许代操作。可以提供建议，但不能声称已经修改游戏。',
    '决定执行游戏行动时：调用 wandao_state 获取最新状态、actions 与 token；再调用 wandao_action，传入该 token 和 actions 中原样列出的 action ID。每步都等待工具返回，再决定下一步。每条回复最多三个成功操作。',
@@ -81,8 +82,9 @@ export function createAILink({getSave,actions,getContext=()=>globalThis.SillyTav
  function read(){
   if(!sync)return JSON.stringify({error:'信息同步已关闭'});
   const s=getSave();ticket=s&&turn?{token:crypto.randomUUID(),fingerprint:snapshotKey(s),epoch,slot:s.slot,chat:chatId()}:null;
-  return JSON.stringify({state:visibleState(s),actions:choices(s),permission:operate,token:ticket?.token||null,rule:'可自主决定是否操作；玩家的明确意愿优先。每次回复最多3步。只可使用返回的操作ID，操作条件由游戏再次校验。'});
+  return JSON.stringify({state:visibleState(s),actions:choices(s),permission:Boolean(operate&&turn),token:ticket?.token||null,rule:'可自主决定是否操作；玩家的明确意愿优先。每次回复最多3步。只可使用返回的操作ID，操作条件由游戏再次校验。'});
  }
+ function inject(){if(sync)context?.setExtensionPrompt?.(PROMPT,instructions(Boolean(operate&&turn))+'\n当前可见游戏状态：\n'+read(),1,0)}
  async function execute({token,action}){
   const captured=ticket,session=turn;let ownsLock=false;
   try{
@@ -108,17 +110,22 @@ export function createAILink({getSave,actions,getContext=()=>globalThis.SillyTav
   }catch(e){return JSON.stringify({ok:false,error:e.message})}finally{if(ownsLock)busy=false}
  }
  function attach(){
-  context=getContext();if(!context?.registerFunctionTool||!context?.setExtensionPrompt||!context?.eventSource)return false;
+  context=getContext();if(!context?.setExtensionPrompt||!context?.eventSource||!context?.event_types?.GENERATION_AFTER_COMMANDS)return false;
+  if(context.registerFunctionTool){
   context.registerFunctionTool({name:'wandao_state',displayName:'查看问道',description:'读取当前问道存档的可见状态和操作ID。',parameters:{type:'object',properties:{}},action:read,shouldRegister:()=>sync,stealth:false});
   context.registerFunctionTool({name:'wandao_action',displayName:'问道代操作',description:'实际执行并保存一个问道游戏操作。玩家要求受支持的操作，或已授权且你自主决定行动时调用；正文描述不能代替本工具。先用 wandao_state 获取最新 token 和 action ID，等待本工具成功后再描述实际结果。',parameters:{type:'object',properties:{token:{type:'string'},action:{type:'string'}},required:['token','action']},action:execute,shouldRegister:()=>sync&&operate,stealth:false});
+  }
   const events=context.event_types;
   context.eventSource.on(events.GENERATION_AFTER_COMMANDS,(type)=>{
-   if(type!=='normal'){invalidate();return}
    if(!sync)return;
-   const key=userTurn();if(!turn||turn.key!==key)turn=key?{key,id:crypto.randomUUID()}:null;
-   context.setExtensionPrompt(PROMPT,instructions()+'\n当前可见游戏状态：\n'+read(),1,0);
+   const generation=typeof type==='object'?type?.type:type;
+   if(generation==null||generation===''||['normal','regenerate','swipe'].includes(generation)){
+    const key=userTurn();if(!turn||turn.key!==key)turn=key?{key,id:crypto.randomUUID()}:null;
+   }else invalidate();
+   inject();
   });
-  for(const event of [events.CHAT_CHANGED,events.GENERATION_STOPPED,events.GENERATION_ENDED].filter(Boolean))context.eventSource.on(event,invalidate);
+  if(events.CHAT_CHANGED)context.eventSource.on(events.CHAT_CHANGED,()=>{invalidate();clearPrompt()});
+  for(const event of [events.GENERATION_STOPPED,events.GENERATION_ENDED].filter(Boolean))context.eventSource.on(event,invalidate);
   return true;
  }
  function backup(){const s=getSave();return s?storage.getItem(BACKUP+s.slot+'-'+s.createdAt):null}
