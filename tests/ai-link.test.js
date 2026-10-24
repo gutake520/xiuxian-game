@@ -11,7 +11,7 @@ async function setup(){
  let save=migrateSave({slot:'slot1',version:7,createdAt:123,player:{name:'测试',realm:'炼气一层',spiritRoot:'金灵根',cultivation:12,spiritStones:100},inventory:[]});
  await writeSave(save);
  const handlers={},tools={},memory=new Map();
- const ctx={chat:[{is_user:true,send_date:'today',mes:'帮忙'}],getCurrentChatId:()=> 'chat1',isToolCallingSupported:()=>true,setExtensionPrompt(){},event_types:{GENERATION_AFTER_COMMANDS:'start',GENERATION_ENDED:'end',GENERATION_STOPPED:'stop',CHAT_CHANGED:'chat'},eventSource:{on:(e,f)=>handlers[e]=f},registerFunctionTool:t=>tools[t.name]=t};
+ const ctx={chat:[{is_user:true,send_date:'today',mes:'帮忙'}],getCurrentChatId:()=> 'chat1',isToolCallingSupported:()=>true,setExtensionPrompt(){},event_types:{GENERATION_AFTER_COMMANDS:'start',GENERATION_ENDED:'end',GENERATION_STOPPED:'stop',CHAT_CHANGED:'chat',MESSAGE_SENT:'message'},eventSource:{on:(e,f)=>handlers[e]=f},registerFunctionTool:t=>tools[t.name]=t};
  const actions=createActions({getSave:()=>save,setSave:s=>save=s});
  const link=createAILink({getSave:()=>save,actions,getContext:()=>ctx,storage:{getItem:k=>memory.get(k),setItem:(k,v)=>memory.set(k,v)}});link.attach();
  const start=()=>{link.configure({sync:true,operate:true});handlers.start('normal')};
@@ -67,4 +67,38 @@ test('read-only injection works without a function-tool registration API',()=>{
  const ctx={chat:[],setExtensionPrompt:(_id,s)=>{prompt=s},event_types:{GENERATION_AFTER_COMMANDS:'start'},eventSource:{on:(e,f)=>handlers[e]=f}};
  const link=createAILink({getSave:()=>null,actions:{},getContext:()=>ctx,storage:{}});
  assert.equal(link.attach(),true);link.configure({sync:true,operate:false});handlers.start('normal');assert.match(prompt,/尚未选择存档/);
+});
+test('registered tools execute a real purchase and report failure separately from narration',async()=>{
+ const x=await setup();const registered={};x.ctx.registerFunctionTool=t=>registered[t.name]=t;
+ x.link.attach();x.start();assert.equal(x.link.status().lastOperation,null);
+ const state=JSON.parse(registered.wandao_state.action());
+ assert.ok(state.actions.some(a=>a.id==='buy:iron-sword'));
+ const r=JSON.parse(await registered.wandao_action.action({token:state.token,action:'buy:iron-sword'}));
+ assert.equal(r.ok,true);assert.equal((await readSave('slot1')).player.spiritStones,95);assert.equal(x.link.status().lastOperation.state,'success');
+ const latest=JSON.parse(registered.wandao_state.action());
+ const invalid=JSON.parse(await registered.wandao_action.action({token:latest.token,action:'play-gomoku'}));
+ assert.equal(invalid.ok,false);assert.equal(x.link.status().lastOperation.state,'failed');assert.equal((await readSave('slot1')).player.spiritStones,95);
+});
+test('action prompt focuses on current actions without advertising unsupported games',async()=>{
+ const x=await setup();let prompt='';x.ctx.setExtensionPrompt=(_id,s)=>prompt=s;x.start();
+ assert.match(prompt,/本轮可执行范围只取自最新 actions 列表/);assert.match(prompt,/先调用工具完成实际行动/);
+ assert.doesNotMatch(prompt,/五子棋|打砖块|数独|抓叛徒|推箱子/);
+ x.link.configure({sync:true,operate:false});assert.match(prompt,/当前仅允许读取/);assert.match(prompt,/"permission":false/);
+});
+test('first-message event order creates action credentials after user message is appended',async()=>{
+ const x=await setup();x.ctx.chat.length=0;let prompt='';x.ctx.setExtensionPrompt=(_id,s)=>prompt=s;
+ x.link.configure({sync:true,operate:true});x.handlers.start('normal');assert.match(prompt,/"token":null/);
+ x.ctx.chat.push({is_user:true,mes:'买一把铁剑',send_date:'new'});x.handlers.message();
+ assert.match(prompt,/玩家已开启 AI 代操作权限/);assert.doesNotMatch(prompt,/"token":null/);
+ assert.equal((await x.act()).ok,true);assert.equal((await readSave('slot1')).player.spiritStones,95);
+});
+test('state tool repairs early event snapshots even when MESSAGE_SENT is unavailable',async()=>{
+ const x=await setup();x.start();const stale=JSON.parse(x.link.read()).token;
+ x.ctx.chat.push({is_user:true,mes:'这才是本条请求',send_date:'new'});
+ assert.equal((await x.act('buy:iron-sword',stale)).ok,false);
+ assert.equal((await x.act()).ok,true);assert.equal(x.get().aiLinkReceipts[0].turn.includes('这才是本条请求'),true);
+});
+test('prompt preview never grants game operation credentials',async()=>{
+ const x=await setup();x.link.configure({sync:true,operate:true});x.handlers.start('normal',{},true);
+ assert.equal(JSON.parse(x.link.read()).token,null);assert.equal((await x.act()).ok,false);
 });
