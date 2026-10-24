@@ -36,12 +36,12 @@ export const FOUNDATION_MONSTERS=[
  {id:'rock-ape',name:'岩背猿',hp:'35～39',hpMin:35,hpMax:39,attack:5.9,defense:.8,speed:3,drop:'灵石 2～3',resource:'stones',minLevel:1,stage:'筑基',skill:'strengthen-attack',attackBoost:1.1,mp:4,xp:30},
  {id:'claw-wolf',name:'裂爪狼',hp:'22～25',hpMin:22,hpMax:25,attack:7.7,defense:.8,speed:4,drop:'草药 2～3',resource:'herbs',minLevel:1,stage:'筑基',skill:'strengthen-attack',attackBoost:1.1,mp:4,xp:30},
  {id:'cloud-falcon',name:'掠云隼',hp:'25～28',hpMin:25,hpMax:28,attack:6.7,defense:.8,speed:6,drop:'矿石 2～3',resource:'ore',minLevel:1,stage:'筑基',skill:'strengthen-attack',attackBoost:1.1,mp:4,xp:30},
- {id:'rock-ape-mid',name:'玄甲猿',hp:'51～55',hpMin:51,hpMax:55,attack:7.1,defense:.8,speed:4,drop:'灵石 2～3',resource:'stones',minLevel:4,stage:'筑基',skill:'strengthen-attack',attackBoost:1.1,mp:4,xp:45,humanoid:false},
- {id:'claw-wolf-mid',name:'赤牙狼王',hp:'38～42',hpMin:38,hpMax:42,attack:9.3,defense:.8,speed:5,drop:'草药 2～3',resource:'herbs',minLevel:4,stage:'筑基',skill:'strengthen-attack',attackBoost:1.1,mp:4,xp:45,humanoid:false},
- {id:'cloud-falcon-mid',name:'惊雷隼',hp:'41～45',hpMin:41,hpMax:45,attack:8,defense:.8,speed:8,drop:'矿石 2～3',resource:'ore',minLevel:4,stage:'筑基',skill:'strengthen-attack',attackBoost:1.1,mp:4,xp:45,humanoid:false},
- {id:'rock-ape-human',name:'磐石散修',hp:'63～67',hpMin:63,hpMax:67,attack:7.9,defense:.8,speed:5,drop:'灵石 2～3',resource:'stones',minLevel:7,stage:'筑基',skill:'strengthen-attack',attackBoost:1.1,mp:4,xp:65,humanoid:true},
- {id:'claw-wolf-human',name:'断刃刀客',hp:'49～53',hpMin:49,hpMax:53,attack:10.5,defense:.8,speed:7,drop:'草药 2～3',resource:'herbs',minLevel:8,stage:'筑基',skill:'strengthen-attack',attackBoost:1.1,mp:4,xp:75,humanoid:true},
- {id:'cloud-falcon-human',name:'穿云剑客',hp:'53～57',hpMin:53,hpMax:57,attack:9.4,defense:.8,speed:10,drop:'矿石 2～3',resource:'ore',minLevel:9,stage:'筑基',skill:'strengthen-attack',attackBoost:1.1,mp:4,xp:85,humanoid:true},
+ {id:'rock-ape-mid',name:'玄甲猿',hp:'46～50',hpMin:46,hpMax:50,attack:7.1,defense:.8,speed:4,drop:'灵石 2～3',resource:'stones',minLevel:4,stage:'筑基',skill:'strengthen-attack',attackBoost:1.1,mp:4,xp:45,humanoid:false},
+ {id:'claw-wolf-mid',name:'赤牙狼王',hp:'33～37',hpMin:33,hpMax:37,attack:9.3,defense:.8,speed:5,drop:'草药 2～3',resource:'herbs',minLevel:4,stage:'筑基',skill:'strengthen-attack',attackBoost:1.1,mp:4,xp:45,humanoid:false},
+ {id:'cloud-falcon-mid',name:'惊雷隼',hp:'36～40',hpMin:36,hpMax:40,attack:8,defense:.8,speed:8,drop:'矿石 2～3',resource:'ore',minLevel:4,stage:'筑基',skill:'strengthen-attack',attackBoost:1.1,mp:4,xp:45,humanoid:false},
+ {id:'rock-ape-human',name:'磐石散修',hp:'58～62',hpMin:58,hpMax:62,attack:7.9,defense:.8,speed:5,drop:'灵石 2～3',resource:'stones',minLevel:7,stage:'筑基',skill:'strengthen-attack',attackBoost:1.1,mp:4,xp:65,humanoid:true},
+ {id:'claw-wolf-human',name:'断刃刀客',hp:'44～48',hpMin:44,hpMax:48,attack:10.5,defense:.8,speed:7,drop:'草药 2～3',resource:'herbs',minLevel:8,stage:'筑基',skill:'strengthen-attack',attackBoost:1.1,mp:4,xp:75,humanoid:true},
+ {id:'cloud-falcon-human',name:'穿云剑客',hp:'48～52',hpMin:48,hpMax:52,attack:9.4,defense:.8,speed:10,drop:'矿石 2～3',resource:'ore',minLevel:9,stage:'筑基',skill:'strengthen-attack',attackBoost:1.1,mp:4,xp:85,humanoid:true},
  {id:'foundation-warden',name:'封渡客',hp:'75',hpMin:75,hpMax:75,attack:8.5,defense:.8,speed:9,drop:'首次获赠归元佩与结丹线索',resource:'stones',minLevel:10,stage:'筑基',xp:0,attackBoost:1.25,boostCooldown:3,mp:4,boss:true}
 ];
 export const FOUNDATION_PEAKS=[

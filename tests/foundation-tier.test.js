@@ -109,13 +109,14 @@ test('bound and silenced foundation enemies do not spend skill mana',t=>{
  playRound(s,'skip');assert.equal(s.battle.mp,3);
 });
 
-test('foundation enemies gain one attack and 0.8 defense and five HP without changing qi enemies',t=>{
+test('foundation enemy stats preserve early HP buffs and reduce middle and late HP by five',t=>{
  t.mock.method(Math,'random',()=>.99);
  const oldHp=[[30,34],[17,20],[20,23],[46,50],[33,37],[36,40],[58,62],[44,48],[48,52],[70,70]];
  const oldAttacks=[4.9,6.7,5.7,6.1,8.3,7,6.9,9.5,8.4,7.5];
  for(const [i,monster] of FOUNDATION_MONSTERS.entries()){
   assert.equal(monster.attack,Math.round((oldAttacks[i]+1)*100)/100);assert.equal(monster.defense,.8);
-  assert.equal(monster.hpMin,oldHp[i][0]+5);assert.equal(monster.hpMax,oldHp[i][1]+5);
+  const hpBonus=i>=3&&i<=8?0:5;
+  assert.equal(monster.hpMin,oldHp[i][0]+hpBonus);assert.equal(monster.hpMax,oldHp[i][1]+hpBonus);
   if(monster.boss)continue;
   const s=save('筑基九层');beginBattle(s,monster.id);assert.equal(s.battle.maxHp,monster.hpMax);s.battle.mp=0;
   const stats=equipmentStats(s),result=playRound(s,'attack');
