@@ -29,14 +29,14 @@ test('ten matching victories yield exactly ten materials; other fights, fleeing 
  assert.ok(!s.inventory.some(i=>i.itemId==='獠牙'));
  assert.throws(()=>playRound(s,'attack',now));assert.equal(s.masterTeaching.task.collected,10);
 });
-test('three submissions award 60 to 90 cultivation once each, preserve global progress across sects, then gate foundation',()=>{
+test('three submissions award 60 to 90 cultivation once each, then open the foundation story after the qi prerequisite',()=>{
  const s=make('筑基一层');
  for(let i=0;i<3;i++){
   visitTeachingMaster(s,now+i*86400000,()=>0);const id=s.masterTeaching.task.id;assert.throws(()=>submitTeachingTask(s,id,now),/还需/);
   for(let j=0;j<10;j++)collectTeachingMaterial(s,'tough');
   s.player.sect='丹霞谷';const reward=submitTeachingTask(s,id,now,()=>i===0?0:.999);assert.equal(reward.earned,i===0?60:90);assert.match(reward.text,/温照蘅/);assert.throws(()=>submitTeachingTask(s,id,now),/已经交付/);
  }
- assert.equal(s.player.cultivation,240);assert.equal(teachingStatus(s).foundationReady,true);assert.throws(()=>visitTeachingMaster(s,now+10*86400000,()=>0),/筑基授业/);
+ assert.equal(s.player.cultivation,240);assert.equal(teachingStatus(s).foundationReady,true);assert.match(visitTeachingMaster(s,now+10*86400000,()=>0),/故人之子/);assert.equal(s.oldFriend.step,0);
  s.player.realm='炼气四层';assert.throws(()=>visitTeachingMaster(s,now+10*86400000,()=>0),/待筑基/);
 });
 test('simultaneous submissions persist only one reward',async()=>{

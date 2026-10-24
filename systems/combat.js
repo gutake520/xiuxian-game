@@ -1,3 +1,4 @@
+import {finishOldFriendDuel} from './old-friend.js';
 import {collectTeachingMaterial} from './master-teaching.js';
 import {beastPower} from '../data/titles.js';
 import {castElement,hasElementalEffect,elementalEffect,elementalBonus,expireElements} from './five-elements.js';
@@ -63,6 +64,7 @@ function resolveTournamentLoss(save,outcome,messages){
  result.log=[...messages];return result;
 }
 function resolveVictory(save,now,messages){
+ if(save.battle?.kind==='old-friend-duel')return finishOldFriendDuel(save,'victory');
  if(save.battle?.kind==='zhang-intro')return finishZhangEncounter(save);
  const battle=save.battle,monster=monsters.find(entry=>entry.id===battle.monsterId);
  if(battle.kind==='fox-npc'){
@@ -161,7 +163,7 @@ export function beginBattle(save,id,pet=null,retaliation=false){
 }
 export function playRound(save,action='attack',now=Date.now()){
  const battle=save.battle;if(!battle)throw new Error('没有正在进行的战斗。');
- const tournament=['sect-tournament','sect-senior'].includes(battle.kind),foxFight=battle.kind==='fox-npc',armored=tournament||battle.kind==='wounded-pursuer'||battle.kind==='wounded-boss'||foxFight||battle.kind==='zhang-intro';
+ const tournament=['sect-tournament','sect-senior'].includes(battle.kind),foxFight=battle.kind==='fox-npc',armored=battle.kind==='old-friend-duel'||tournament||battle.kind==='wounded-pursuer'||battle.kind==='wounded-boss'||foxFight||battle.kind==='zhang-intro';
  if(foxFight&&battle.foxParalyzeRound===battle.round+1)action='skip';
  const skill=TECHNIQUES[action];
  if(!['attack','skip'].includes(action)&&skill?.type!=='combat')throw new Error('请选择可用的行动。');
@@ -281,7 +283,7 @@ export function playRound(save,action='attack',now=Date.now()){
  battle.bindRounds=(battle.bindRounds||[]).filter(round=>round>battle.round);
  if(battle.kind==='zhang-intro'&&(battle.round>=3||battle.hp<=0||save.player.hp<=0))finishZhangEncounter(save);
  else if(battle.hp<=0)resolveVictory(save,now,messages);
- else if(save.player.hp<=0){if(tournament)resolveTournamentLoss(save,'defeat',messages);else{const foundation=String(save.player.realm).startsWith('筑基'),loss=foundation?70:50,hp=foundation?7:5;save.player.cultivation=round2(save.player.cultivation-loss);save.player.hp=hp;messages.push(`战败：修为 −${loss}，生命恢复至 ${hp}；无战利品。`);finish(save,'defeat',{log:[...battle.log,...messages].slice(-10)})}}
+ else if(save.player.hp<=0){if(battle.kind==='old-friend-duel')finishOldFriendDuel(save,'defeat');else if(tournament)resolveTournamentLoss(save,'defeat',messages);else{const foundation=String(save.player.realm).startsWith('筑基'),loss=foundation?70:50,hp=foundation?7:5;save.player.cultivation=round2(save.player.cultivation-loss);save.player.hp=hp;messages.push(`战败：修为 −${loss}，生命恢复至 ${hp}；无战利品。`);finish(save,'defeat',{log:[...battle.log,...messages].slice(-10)})}}
  else{battle.log=[...battle.log,...messages].slice(-10)}
  return {messages,dealt,taken,result:save.lastBattle?.id===battle.id?save.lastBattle:null};
 }
@@ -326,6 +328,7 @@ export function useBattleTalisman(save,id){
  return message;
 }
 export function fleeBattle(save){
+ if(save.battle?.kind==='old-friend-duel')return finishOldFriendDuel(save,'fled');
  if(!save.battle)throw new Error('没有正在进行的战斗。');
  if(save.battle.kind==='zhang-intro')return finishZhangEncounter(save);
  if(['sect-tournament','sect-senior'].includes(save.battle.kind)){const result=finish(save,'fled',{log:['你结束了这场切磋。']});refillTournament(save);return result}

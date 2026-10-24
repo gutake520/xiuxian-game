@@ -1,3 +1,4 @@
+import {maybeFindOldFriend} from './old-friend.js';
 import {maybeFindSpring} from './spirit-spring.js';
 import {maybeFindTraitor} from './traitor-puzzle.js';
 import {maybeMeetThief} from './thief.js';
@@ -34,6 +35,8 @@ export function takeStroll(save,id,now=Date.now(),random=Math.random){
  if(!place)throw new Error('此处尚不能闲逛。');
  const count=strollCount(save,now);
  const encounters=strollEncounterCount(save,now),canEncounter=encounters<strollEncounterLimit(save,now);
+ const lead=maybeFindOldFriend(save,id,random);
+ if(lead){const result={placeId:id,...lead};save.stroll={day:localDay(now),count:count+1,encounters,last:result};return {...result,message:result.text}}
  const index=Math.min(place.stories.length-1,Math.max(0,Math.floor(random()*place.stories.length)));
  const thief=maybeMeetThief(save,id,random);
  if(thief){

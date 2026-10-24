@@ -1,3 +1,4 @@
+import {startOldFriend} from './old-friend.js';
 import {SECT_MASTERS} from '../data/masters.js';
 import {QI_MONSTERS} from '../data/locations.js';
 import {realmProgress,addCultivation} from '../data/realms.js';
@@ -14,7 +15,7 @@ function requireMaster(save){if(save.battle)throw new Error('请先结束战斗�
 export function visitTeachingMaster(save,now=Date.now(),random=Math.random){
  const master=requireMaster(save),status=teachingStatus(save,now);
  if(status.task)throw new Error('先完成手中的委托，再来请教师父。');
- if(status.completed>=3)throw new Error(status.foundationReady?'炼气授业已经完成，筑基授业尚待开启。':'炼气授业已经完成，待筑基后再来。');
+ if(status.completed>=3){if(status.foundationReady)return startOldFriend(save,now);throw new Error('炼气授业已经完成，待筑基后再来。')}
  if(status.tried)throw new Error('今日已拜访过师父，明日再来。');
  const eligible=QI_MONSTERS.filter(m=>TEACHING_MATERIALS[m.id]&&m.minLevel<=realmProgress(save.player).index+1);
  if(!eligible.length)throw new Error('当前境界暂不能领取委托。');

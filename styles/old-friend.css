@@ -1,0 +1,20 @@
+#xg-panel .xg-old-friend [data-body]{background:linear-gradient(155deg,rgba(215,232,222,.28),transparent 48%);padding-bottom:24px}
+#xg-panel .xg-old-friend-mast{position:relative;padding:22px 18px 18px;border-bottom:1px solid var(--line);margin-bottom:16px;background:linear-gradient(120deg,#edf2e9,#f7f5ee);border-radius:12px;color:var(--ink)}
+#xg-panel .xg-old-friend-mast span,#xg-panel .xg-old-friend-mast small{display:block;color:#6c8175;font-size:.8em;letter-spacing:.12em}
+#xg-panel .xg-old-friend-mast h3{font-family:serif;font-size:1.45em;font-weight:600;margin:12px 0;letter-spacing:.16em}
+#xg-panel .xg-old-friend-goal{padding:10px 14px;border-left:3px solid #9bb7a5;background:#edf3ee;line-height:1.7;font-size:.9em}
+#xg-panel .xg-old-friend-prose{padding:8px 6px 16px;line-height:1.95;overflow-wrap:anywhere}
+#xg-panel .xg-old-friend-prose p{margin:0 0 1.25em}
+#xg-panel .xg-old-friend-choices{display:grid;gap:10px;margin:4px 0 22px}
+#xg-panel .xg-old-friend-choices button{display:block;width:100%;box-sizing:border-box;margin:0;padding:13px 15px;text-align:left;white-space:normal;border:1px solid #bccdc0;border-radius:9px;background:#edf3ea;color:var(--ink);font:inherit;line-height:1.6}
+#xg-panel .xg-old-friend-choices button small{display:block;font-size:.8em;color:#748278;margin-top:3px}
+#xg-panel .xg-old-friend-choices button:disabled{opacity:.55}
+#xg-panel .xg-old-friend-journal{border-top:1px solid var(--line);padding-top:16px;font-size:.9em;line-height:1.8}
+#xg-panel .xg-old-friend-journal summary{cursor:pointer;color:#5b7664;padding:6px 0}
+#xg-panel .xg-old-friend-journal article{padding:12px 0;border-bottom:1px dashed var(--line)}
+#xg-panel .xg-old-friend-journal h4{margin:0 0 8px}
+#xg-panel #xg-feature-sheet.xg-old-friend{display:flex;flex-direction:column;overflow:hidden}
+#xg-panel .xg-old-friend .xg-feature-header{position:static;flex:none;margin-bottom:12px}
+#xg-panel .xg-old-friend [data-body]{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding-right:4px;scrollbar-width:thin}
+#xg-panel .xg-old-friend .xg-feature-message{flex:none;max-height:20%;overflow:auto}
+@media(max-width:380px){#xg-panel .xg-old-friend-mast{padding:16px 12px}#xg-panel .xg-old-friend-choices button{padding:12px}#xg-panel .xg-old-friend-prose{padding-left:2px;padding-right:2px}}

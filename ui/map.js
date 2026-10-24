@@ -1,3 +1,5 @@
+import {showOldFriend} from './old-friend.js';
+import {oldFriendState} from '../systems/old-friend.js';
 import {showPei} from './pei-zhaoheng.js';
 import {effectiveStat,beastPower} from '../data/titles.js';
 import {showTitles} from './titles.js';
@@ -30,7 +32,7 @@ export function createMapUI({getSave,activate,actions,onSectBattleExit}){
  const content=()=>document.getElementById('xg-content');
  const foundationPlayer=()=>String(getSave()?.player?.realm||'').startsWith('筑基');
  const petChoices=(save,name)=>{const foundation=String(save.player.realm).startsWith('筑基'),rented=(foundation?save.foundationPetRentals:save.petRentals)>0,attack=beastCanFight(save,'attack'),guard=beastCanFight(save,'guard');return rented||attack||guard?`<fieldset class="xg-card"><legend>灵兽出战</legend><label><input type="radio" name="${name}" value="" checked> 不出战</label>${['attack','guard'].filter(type=>beastCanFight(save,type)||rented).map(type=>`<label><input type="radio" name="${name}" value="${type}"> ${escapeHTML(beastCanFight(save,type)?beastName(save,type):'租借灵兽')} · ${type==='attack'?`追击 +${beastPower(save,'attack',foundation?'筑基':'炼气').toFixed(2)}`:`守护 −${beastPower(save,'guard',foundation?'筑基':'炼气').toFixed(2)}`}</label>`).join('')}</fieldset>`:''};
- const battle=outcome=>showBattle({getSave,activate,actions,onYanEncounter:renderYanEncounter,onExit:foundationStoryPending(getSave())||(getSave().battle?.kind||getSave().lastBattle?.kind)==='wounded-pursuer'?render:(getSave().battle?.kind||getSave().lastBattle?.kind)==='zhang-intro'?()=>showZhang({getSave,actions},render):getSave().bossLine?.phase==='ambush'||getSave().bossLine?.rescuePending?renderMonsters:['sect-tournament','sect-senior'].includes(getSave().battle?.kind||getSave().lastBattle?.kind)?onSectBattleExit:(getSave().battle?.kind||getSave().lastBattle?.kind)==='fox-npc'?()=>renderNpc(QI_PEAKS.find(p=>p.id===(getSave().battle?.monsterId||getSave().lastBattle?.monsterId))):FOUNDATION_MONSTERS.some(monster=>monster.id===(getSave().battle?.monsterId||getSave().lastBattle?.monsterId))?renderFoundation:renderMonsters},outcome);
+ const battle=outcome=>showBattle({getSave,activate,actions,onYanEncounter:renderYanEncounter,onExit:(getSave().battle?.kind||getSave().lastBattle?.kind)==='old-friend-duel'?()=>showOldFriend({getSave,actions},renderFoundation,'ruins'):foundationStoryPending(getSave())||(getSave().battle?.kind||getSave().lastBattle?.kind)==='wounded-pursuer'?render:(getSave().battle?.kind||getSave().lastBattle?.kind)==='zhang-intro'?()=>showZhang({getSave,actions},render):getSave().bossLine?.phase==='ambush'||getSave().bossLine?.rescuePending?renderMonsters:['sect-tournament','sect-senior'].includes(getSave().battle?.kind||getSave().lastBattle?.kind)?onSectBattleExit:(getSave().battle?.kind||getSave().lastBattle?.kind)==='fox-npc'?()=>renderNpc(QI_PEAKS.find(p=>p.id===(getSave().battle?.monsterId||getSave().lastBattle?.monsterId))):FOUNDATION_MONSTERS.some(monster=>monster.id===(getSave().battle?.monsterId||getSave().lastBattle?.monsterId))?renderFoundation:renderMonsters},outcome);
  function heading(title,subtitle){return `<div class="xg-map-heading"><h2>${title}</h2>${subtitle?`<p>${subtitle}</p>`:''}</div>`}
  const peaks=(locations,kind)=>`<div class="xg-map-landscape xg-map-${kind}">${locations.map((place,i)=>`<button type="button" class="xg-map-hill${place.locked?' xg-map-locked':''}" style="--hill-x:${place.x}%;--hill-y:${place.y}%;--hill-size:${place.size||1}" ${place.locked?'disabled':''} ${place.id?`data-${kind}="${place.id}"`:''}><span class="xg-map-label">${place.name}</span><span class="xg-map-summit" aria-hidden="true"></span></button>`).join('')}</div>`;
  function render(){
@@ -195,12 +197,14 @@ export function createMapUI({getSave,activate,actions,onSectBattleExit}){
  function renderFoundation(){
   if(!foundationPlayer())return render();
   activate('map');
-  content().innerHTML=`<section class="xg-map-sheet"><button class="xg-map-back" type="button">← 返回地图</button>${heading('望川岭','筑基修士出没的山岭。')}${peaks(realmProgress(getSave().player).index>=19?[...FOUNDATION_PEAKS,{id:'foundation-ending',name:getSave().foundationStory?.phase==='wounded'||getSave().foundationStory?.phase==='dead'?'栖息崖':'归元渡',kind:'boss',x:65,y:72,size:.8}]:FOUNDATION_PEAKS,'foundation')}</section>`;
+  const storyPeaks=oldFriendState(getSave())?.step>=6?[...FOUNDATION_PEAKS,{id:'old-friend-ruins',name:'照夜台',kind:'story',x:34,y:22,size:.7}]:FOUNDATION_PEAKS;
+  content().innerHTML=`<section class="xg-map-sheet"><button class="xg-map-back" type="button">← 返回地图</button>${heading('望川岭','筑基修士出没的山岭。')}${peaks(realmProgress(getSave().player).index>=19?[...storyPeaks,{id:'foundation-ending',name:getSave().foundationStory?.phase==='wounded'||getSave().foundationStory?.phase==='dead'?'栖息崖':'归元渡',kind:'boss',x:65,y:72,size:.8}]:storyPeaks,'foundation')}</section>`;
   back(render);
   content().querySelectorAll('[data-foundation]').forEach(button=>button.onclick=()=>renderFoundationPeak(button.dataset.foundation));
  }
  function renderFoundationPeak(id){
   if(!foundationPlayer())return render();
+  if(id==='old-friend-ruins'&&oldFriendState(getSave())?.step>=6)return showOldFriend({getSave,actions},renderFoundation,'ruins');
   if(id==='pei-home')return showPei({getSave,actions},renderFoundation);
   if(id==='foundation-ending')return renderPursuer();
   if(id==='foundation-secret')return renderSecret('foundation');
