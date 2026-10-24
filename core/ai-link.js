@@ -1,8 +1,10 @@
+import {QI_MONSTERS,FOUNDATION_MONSTERS} from '../data/locations.js';
+import {realmProgress} from '../data/realms.js';
 import {ITEMS,SHOP_ITEMS} from '../data/items.js';
 import {TECHNIQUES} from '../data/techniques.js';
 import {equipmentStats,purchase,equipItem,usePill} from '../systems/inventory.js';
 import {setMainTechnique} from '../systems/techniques.js';
-import {playRound,fleeBattle} from '../systems/combat.js';
+import {beginBattle,playRound,fleeBattle} from '../systems/combat.js';
 import {startQiExploration,startFoundationExploration,finishQiExploration} from '../systems/exploration.js';
 import {foundationStoryPending} from '../systems/foundation-story.js';
 import {encodeBackup} from '../storage/backup.js';
@@ -36,7 +38,10 @@ export function choices(s){
  if(blockReason(s))return [];
  if(s.qiSecret)return Date.now()>=s.qiSecret.endsAt?[{id:'finish-exploration',label:'领取已完成的秘境探索'}]:[];
  if(s.battle)return [{id:'battle:attack',label:'普通攻击'},{id:'battle:skip',label:'跳过本轮'},{id:'flee',label:'逃跑（按原规则扣除灵石或修为）'},...(s.techniques.combat||[]).filter(id=>!TECHNIQUES[id]?.passive).map(id=>({id:'battle:'+id,label:TECHNIQUES[id]?.name}))];
+ const tier=realmProgress(s.player).index;
+ const foes=[...QI_MONSTERS,...FOUNDATION_MONSTERS].filter(m=>!m.boss&&m.id!=='foundation-warden'&&tier>=0&&(m.stage==='筑基'?tier-9:tier+1)>=m.minLevel);
  return [
+ ...foes.map(m=>({id:'fight:'+m.id,label:'挑战'+m.name+'（普通怪物）',enemy:pick(m,['hp','attack','defense','speed','stage'])})),
  ...s.inventory.filter(e=>ITEMS[e.itemId]?.kind==='pill').map(e=>({id:'pill:'+e.uid,label:'服用'+ITEMS[e.itemId].name})),
  ...s.inventory.filter(e=>ITEMS[e.itemId]?.kind==='equipment').map(e=>({id:'equip:'+e.uid,label:(Object.values(s.equipment).includes(e.uid)?'卸下':'装备')+ITEMS[e.itemId].name})),
  ...SHOP_ITEMS.filter(id=>['equipment','pill'].includes(ITEMS[id].kind)&&(!ITEMS[id].stage||String(s.player.realm).startsWith('筑基'))).map(id=>({id:'buy:'+id,label:`坊市购买${ITEMS[id].name}，${ITEMS[id].price}灵石`})),
@@ -48,6 +53,7 @@ export function choices(s){
 export function applyChoice(s,id){
  if(!choices(s).some(c=>c.id===id))throw new Error('当前不允许这项操作，请重新读取状态。');
  const [kind,...rest]=id.split(':'),value=rest.join(':');
+ if(kind==='fight'){beginBattle(s,value);return '已开始与'+s.battle.name+'的战斗。'}
  if(kind==='buy')return purchase(s,value);
  if(kind==='pill')return usePill(s,value);
  if(kind==='equip'){equipItem(s,value);return '装备已更新。'}
@@ -60,7 +66,7 @@ export function applyChoice(s,id){
 }
 // Session permissions are deliberately off after reload. Nothing edits the character card.
 export function createAILink({getSave,actions,getContext=()=>globalThis.SillyTavern?.getContext?.(),onChanged=()=>{},isBusy=()=>false,storage=globalThis.localStorage}){
- let sync=false,operate=false,epoch=0,turn=null,ticket=null,busy=false,context=null,lastOperation=null,generationCanAct=false;
+ let sync=false,operate=false,epoch=0,turn=null,ticket=null,busy=false,context=null,lastOperation=null,generationCanAct=false,lastStateRead=null,lastGeneration=null;
  function status(){
   const live=getContext();
   let supported=false,reason='';
@@ -70,7 +76,7 @@ export function createAILink({getSave,actions,getContext=()=>globalThis.SillyTav
    try{supported=Boolean(live.isToolCallingSupported());reason=supported?'当前连接已启用工具调用。':'酒馆仍报告当前连接不支持工具调用。请检查是否使用聊天补全接口，以及当前模型是否支持工具调用。';}
    catch{reason='酒馆检测工具调用时发生错误，请重新连接 API 后重试。';}
   }
-  return {sync,operate,supported,reason,lastOperation,actionCount:choices(getSave()).length,emptyActionsReason:emptyActionsReason(getSave())};
+  return {sync,operate,supported,reason,lastOperation,lastStateRead,lastGeneration,actionCount:choices(getSave()).length,emptyActionsReason:emptyActionsReason(getSave())};
  }
  function invalidate(){epoch++;turn=null;ticket=null;generationCanAct=false}
  function clearPrompt(){context?.setExtensionPrompt?.(PROMPT,'',1,0)}
@@ -88,6 +94,8 @@ export function createAILink({getSave,actions,getContext=()=>globalThis.SillyTav
    '玩家委托代玩、要求你帮忙操作或询问你如何安排本轮游戏时，在符合玩家意愿且存在合适选项的情况下，先调用工具完成实际行动，再继续角色回复；不要只写打算、建议或陪玩的对白。正常闲聊无须强行消费或操作。',
    '决定执行游戏行动时：调用 wandao_state 获取最新状态、actions 与 token；再调用 wandao_action，传入该 token 和 actions 中原样列出的 action ID。每步都等待工具返回，再决定下一步。每条回复最多三个成功操作。',
    '游戏操作必须实际调用上述工具。只在正文里写“替你买了”“已经服药”“开始探索”不会改变存档，不算完成任务。工具未返回 ok:true 前，不得宣称操作成功或编造奖励、物品与数值变化。',
+   'permission 表示玩家的授权开关，executionReady 表示本次回复能否执行；token 为空不代表玩家关闭授权。执行前调用 wandao_state 刷新；若 executionReady 仍为 false，应说明本次回复的执行会话未就绪，不要说玩家未授权。当前工具结果优先于历史对白中的只读或故障说法。',
+   '打普通怪物使用 fight: 开战，再用 battle: 操作当前战斗；秘境探索不是打小怪。开战也计入每条回复最多三步，因此一条回复可能无法打完整场战斗。',
    '你无法看见或点击玩家的手机界面。actions 为空时，仅依据 emptyActionsReason 说明原因，不要编造灰色按钮、每日上限或服务器故障。原因不明时如实说明无法确认。',
    '成功后根据真实结果自然回复玩家，技术参数与 token 不需要展示在正文。失败时说明未完成及原因；状态过期可重新读取，权限关闭、玩家接管或达到步数上限时应停止。',
    '角色性格可以影响行动选择，但必须尊重玩家本轮明确意愿。例如玩家说不想修炼，不应擅自替其修炼。不要为了展示能力而无意义购物、耗药或重复换装。',
@@ -100,9 +108,9 @@ export function createAILink({getSave,actions,getContext=()=>globalThis.SillyTav
   if(!sync)return JSON.stringify({error:'信息同步已关闭'});
   refreshTurn();
   const s=getSave();ticket=s&&turn?{token:crypto.randomUUID(),fingerprint:snapshotKey(s),epoch,slot:s.slot,chat:chatId()}:null;
-  return JSON.stringify({state:visibleState(s),actions:choices(s),emptyActionsReason:emptyActionsReason(s),permission:Boolean(operate&&turn),token:ticket?.token||null,rule:'可自主决定是否操作；玩家的明确意愿优先。每次回复最多3步。只可使用返回的操作ID，操作条件由游戏再次校验。'});
+  return JSON.stringify({state:visibleState(s),actions:choices(s),emptyActionsReason:emptyActionsReason(s),permission:operate,executionReady:Boolean(operate&&turn),token:ticket?.token||null,rule:'可自主决定是否操作；玩家的明确意愿优先。每次回复最多3步。只可使用返回的操作ID，操作条件由游戏再次校验。'});
  }
- function inject(){if(sync){refreshTurn();context?.setExtensionPrompt?.(PROMPT,instructions(Boolean(operate&&turn))+'\n当前可见游戏状态：\n'+read(),1,0)}}
+ function inject(){if(sync){refreshTurn();context?.setExtensionPrompt?.(PROMPT,instructions(operate)+'\n当前可见游戏状态：\n'+read(),1,0)}}
  async function execute({token,action}){
   const captured=ticket,session=turn;let ownsLock=false;
   if(busy)return JSON.stringify({ok:false,error:'已有游戏操作正在执行，请等待结果。'});
@@ -133,13 +141,14 @@ export function createAILink({getSave,actions,getContext=()=>globalThis.SillyTav
  function attach(){
   context=getContext();if(!context?.setExtensionPrompt||!context?.eventSource||!context?.event_types?.GENERATION_AFTER_COMMANDS)return false;
   if(context.registerFunctionTool){
-  context.registerFunctionTool({name:'wandao_state',displayName:'查看问道',description:'读取当前问道存档的可见状态和操作ID。',parameters:{type:'object',properties:{}},action:read,shouldRegister:()=>sync,stealth:false});
+  context.registerFunctionTool({name:'wandao_state',displayName:'查看问道',description:'读取当前问道存档的可见状态和操作ID。',parameters:{type:'object',properties:{}},action:()=>{const result=read();lastStateRead={at:Date.now(),message:'已收到 AI 的状态读取调用。'};return result},shouldRegister:()=>sync,stealth:false});
   context.registerFunctionTool({name:'wandao_action',displayName:'问道代操作',description:'实际执行并保存一个问道游戏操作。玩家要求受支持的操作，或已授权且你自主决定行动时调用；正文描述不能代替本工具。先用 wandao_state 获取最新 token 和 action ID，等待本工具成功后再描述实际结果。',parameters:{type:'object',properties:{token:{type:'string'},action:{type:'string'}},required:['token','action']},action:execute,shouldRegister:()=>sync&&operate,stealth:false});
   }
   const events=context.event_types;
   context.eventSource.on(events.GENERATION_AFTER_COMMANDS,(type,_options,dryRun)=>{
    if(!sync)return;
    const generation=typeof type==='object'?type?.type:type;
+   lastGeneration={type:generation??'normal',dryRun:Boolean(dryRun)};
    if(!dryRun&&(generation==null||generation===''||['normal','regenerate','swipe'].includes(generation))){
     generationCanAct=true;refreshTurn();
    }else invalidate();

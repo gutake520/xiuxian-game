@@ -119,3 +119,23 @@ test('unfinished events still block actions with a visible reason',async()=>{
  x.get().peakPuzzle=null;x.get().qiSecret={endsAt:Date.now()+60000,reward:{secret:'hidden'}};
  const waiting=JSON.parse(x.link.read());assert.deepEqual(waiting.actions,[]);assert.match(waiting.emptyActionsReason,/探索尚未结束/);assert.doesNotMatch(JSON.stringify(waiting),/hidden/);
 });
+
+test('authorization remains on before generation while execution credentials stay gated',async()=>{
+ const x=await setup();let prompt='';x.ctx.setExtensionPrompt=(_id,s)=>prompt=s;
+ x.link.configure({sync:true,operate:true});
+ assert.match(prompt,/玩家已开启 AI 代操作权限/);assert.doesNotMatch(prompt,/当前仅允许读取/);
+ let state=JSON.parse(x.link.read());assert.equal(state.permission,true);assert.equal(state.executionReady,false);assert.equal(state.token,null);
+ assert.equal((await x.act()).ok,false);
+ x.handlers.start('quiet');state=JSON.parse(x.link.read());assert.equal(state.permission,true);assert.equal(state.executionReady,false);assert.equal((await x.act()).ok,false);
+ x.handlers.start('normal');assert.equal(JSON.parse(x.link.read()).executionReady,true);
+});
+test('AI starts an unlocked ordinary fight and plays a persisted round',async()=>{
+ const x=await setup();x.start();const state=JSON.parse(x.link.read());
+ assert.ok(state.actions.some(a=>a.id==='fight:tough'));
+ assert.ok(!state.actions.some(a=>a.id==='fight:tough-mid'||a.id==='fight:wounded-boss'||a.id==='fight:foundation-warden'));
+ assert.equal((await x.act('fight:tough')).ok,true);
+ assert.equal((await readSave('slot1')).battle.monsterId,'tough');
+ assert.equal((await x.act('battle:attack')).ok,true);
+ assert.equal((await readSave('slot1')).battle.round,1);
+ assert.equal((await x.act('fight:fierce')).ok,false);
+});
