@@ -129,3 +129,12 @@ test('旧圆满档迁到炼气十层满 1000；扣修为后可以修炼补回，
  assert.equal(addCultivation(s,50),50);
  assert.equal(s.player.cultivation,0);
 });
+
+test('missed foundation aptitude can be claimed after leveling, survives reload and cannot repeat',()=>{
+ const s=save();migrateSave(s);s.player.realm='筑基一层';s.player.cultivation=0;s.foundationAptitudePending=true;
+ addCultivation(s,1200);assert.equal(s.player.realm,'筑基二层');
+ const loaded=migrateSave(JSON.parse(JSON.stringify(s))),before=loaded.player.stats.悟性;
+ chooseFoundationAptitude(loaded,'悟性');assert.equal(loaded.player.stats.悟性,before+1);assert.equal(loaded.foundationAptitudePending,false);
+ assert.throws(()=>chooseFoundationAptitude(loaded,'悟性'));
+ const missing=save();assert.throws(()=>chooseFoundationAptitude(missing,'悟性'));
+});

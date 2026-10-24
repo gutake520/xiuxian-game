@@ -1,4 +1,4 @@
-import {OLD_FRIEND_CHAPTERS,OLD_FRIEND_REACTIONS} from '../data/old-friend.js';
+import {OLD_FRIEND_CHAPTERS,OLD_FRIEND_REACTIONS,OLD_FRIEND_REPORTS} from '../data/old-friend.js';
 import {SECT_MASTERS} from '../data/masters.js';
 import {realmProgress} from '../data/realms.js';
 import {addItem,equipmentStats} from './inventory.js';
@@ -11,7 +11,7 @@ export function startOldFriend(save,now=Date.now()){
  save.oldFriend={id:crypto.randomUUID(),version:1,sect:save.player.sect,master:SECT_MASTERS[save.player.sect].name,step:0,phase:'ready',choices:[],flags:{},journal:[],startedAt:now};
  return '师父取出一封旧信，与你谈起故人之子。';
 }
-export function oldFriendGoal(save){const q=oldFriendState(save);if(!q)return '';if(q.phase==='done')return '此间旧事已了，重逢留待来日。';if(q.phase==='after')return '阅读方才发生的事，继续查访。';if(q.phase==='duel')return '前往望川岭·照夜台，继续与江既白交手。';const place=OLD_FRIEND_CHAPTERS[q.step].place;return q.phase==='search'?`前往${place==='monsters'?'丰原镇':'望川岭'}「四处走走」，打听消息。`:place==='master'?'回宗门「师尊授业」，与师父交谈。':place==='ruins'?'前往望川岭·照夜台，赴这一场相见。':'消息已有眉目，打开手札继续。'}
+export function oldFriendGoal(save){const q=oldFriendState(save);if(!q)return '';if(q.phase==='done')return q.reportedAt!=null?'此间旧事已了，重逢留待来日。':'回宗门「师尊授业」复命，将江既白的去向告诉师父。';if(q.phase==='after')return '阅读方才发生的事，继续查访。';if(q.phase==='duel')return '前往望川岭·照夜台，继续与江既白交手。';const place=OLD_FRIEND_CHAPTERS[q.step].place;return q.phase==='search'?`前往${place==='monsters'?'丰原镇':'望川岭'}「四处走走」，打听消息。`:place==='master'?'回宗门「师尊授业」，与师父交谈。':place==='ruins'?'前往望川岭·照夜台，赴这一场相见。':'消息已有眉目，打开手札继续。'}
 export function maybeFindOldFriend(save,place,random=Math.random){
  const q=oldFriendState(save);if(!q||q.phase!=='search'||OLD_FRIEND_CHAPTERS[q.step].place!==place||random()>=OLD_FRIEND_CHANCE)return null;
  q.phase='ready';return {kind:'old-friend',text:`故人之子 · ${OLD_FRIEND_CHAPTERS[q.step].title}：你寻得了新的线索。打开手札，听完这一段往事。`};
@@ -74,3 +74,15 @@ export function finishOldFriendDuel(save,outcome){
 }
 // Future chapters consume this reservation; they must not recreate or overwrite it.
 export function oldFriendReunion(save,realm){const q=oldFriendState(save);return q?.phase==='done'&&q.followup?.reunionRealm===realm?structuredClone(q.followup):null}
+
+export function reportOldFriend(save,id,context,now=Date.now()){
+ const q=requireQuest(save,id);
+ if(context!=='master')throw new Error('请回宗门「师尊授业」向师父复命。');
+ if(q.phase!=='done'||!q.followup)throw new Error('请先走完望川岭的旧事。');
+ if(q.reportedAt!=null)throw new Error('已经向师父复命，可在手札重读。');
+ const scene=OLD_FRIEND_REPORTS[q.followup.route];
+ if(!scene)throw new Error('这段旧事尚无可复命的结局。');
+ q.reportedAt=now;q.reportTitle=scene.title;q.lastText=scene.text.replaceAll('{master}',q.master);
+ q.journal.push({title:scene.title,choice:'回宗门，向师父复命',text:q.lastText});
+ return '师父听完了你的复命。这一卷旧事，至此暂告一段落。';
+}

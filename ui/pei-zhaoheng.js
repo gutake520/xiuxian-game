@@ -3,6 +3,7 @@ import {peiAction,peiBonded} from '../systems/pei-zhaoheng.js';
 import {giftableEntries} from '../systems/relationships.js';
 import {companionBreakupFee} from '../systems/foxes.js';
 import {ITEMS} from '../data/items.js';
+import {maxDurability} from '../systems/inventory.js';
 import {createSheet,escapeHTML} from './shared.js';
 const paragraphs=text=>String(text).split('\n\n').map(p=>`<p>${escapeHTML(p)}</p>`).join('');
 export function showPei(api,onClose){
@@ -37,7 +38,13 @@ export function showPei(api,onClose){
   else if(s.affinity>=100&&!next)body.innerHTML+='<button data-proposal>与他谈谈往后</button>';
   body.querySelector('[data-start]')?.addEventListener('click',()=>run('start',g.id));body.querySelector('[data-new]')?.addEventListener('click',()=>run('new-game'));
   body.querySelector('[data-story]')?.addEventListener('click',()=>run('story',null,true));body.querySelector('[data-proposal]')?.addEventListener('click',()=>run('proposal',null,true));
-  body.querySelectorAll('[data-gift]').forEach(b=>b.onclick=()=>run('gift',b.dataset.gift));body.querySelectorAll('[data-dispatch]').forEach(b=>b.onclick=()=>run('dispatch',b.dataset.dispatch));
+  body.querySelectorAll('[data-gift]').forEach(b=>b.onclick=()=>{
+   const uid=b.dataset.gift,entry=giftableEntries(api.getSave()).find(e=>e.uid===uid);
+   if(entry&&ITEMS[entry.itemId]?.kind==='equipment'&&entry.durability<maxDurability(entry)){
+    body.innerHTML='<article class="xg-feature-card"><h3>这件装备尚未修好</h3><p>裴照衡会退回装备，好感减 1，并消耗这次计时赢来的赠礼机会。</p><p>可以先去修理，也可以改送其他礼物。</p></article><button type="button" data-gift-cancel>返回选择礼物</button><button type="button" data-gift-confirm>仍要赠送</button>';
+    body.querySelector('[data-gift-cancel]').onclick=draw;body.querySelector('[data-gift-confirm]').onclick=()=>run('gift',uid);body.scrollTop=0;
+   }else run('gift',uid);
+  });body.querySelectorAll('[data-dispatch]').forEach(b=>b.onclick=()=>run('dispatch',b.dataset.dispatch));
   body.querySelector('[data-breakup]')?.addEventListener('click',()=>{body.innerHTML=`<p>解除道侣需 ${companionBreakupFee(save.player)??'未定'} 灵石，此后三天不能再结缘。</p><button data-confirm>确认解除</button><button data-cancel>返回</button>`;body.querySelector('[data-confirm]').onclick=()=>run('breakup',null,true);body.querySelector('[data-cancel]').onclick=draw});
  }
  draw();

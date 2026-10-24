@@ -35,3 +35,14 @@ test('UI hides target and live time until stop, and exposes story and gift contr
  const {document}=parseHTML('<html><body><div id="xg-panel"></div></body></html>');const old=globalThis.document;globalThis.document=document;
  try{const s=make();meet(s);peiAction(s,'new-game',null,now,()=>.5);const api={getSave:()=>s,actions:{mutate:async f=>({result:f(s)})}};showPei(api,()=>{});assert.match(document.body.textContent,/3.00 秒/);peiAction(s,'start',s.peiZhaoheng.game.id,now);showPei(api,()=>{});assert.doesNotMatch(document.body.textContent,/3.00/);assert.ok(document.querySelector('[data-stop]'));peiAction(s,'stop',s.peiZhaoheng.game.id,now+3000);showPei(api,()=>{});assert.ok(document.querySelector('[data-gift]'));assert.match(document.body.textContent,/实际 3.00/);}finally{globalThis.document=old}
 });
+
+test('damaged gift warning supports cancel without cost and explicit confirmation',async t=>{
+ const old=globalThis.document;globalThis.document=parseHTML('<html><body><div id="xg-panel"></div></body></html>').document;
+ t.after(()=>{document.querySelector('#xg-feature-sheet')?.remove();globalThis.document=old});
+ const s=make();meet(s);win(s);s.peiZhaoheng.affinity=10;addItem(s,'iron-sword');const e=s.inventory.find(x=>x.itemId==='iron-sword');e.durability=0;
+ const api={getSave:()=>s,actions:{mutate:async fn=>({result:fn(s)})}};showPei(api,()=>{});
+ document.querySelector(`[data-gift="${e.uid}"]`).click();assert.match(document.body.textContent,/好感减 1/);assert.match(document.body.textContent,/消耗这次/);
+ document.querySelector('[data-gift-cancel]').click();assert.equal(s.peiZhaoheng.giftReady,true);assert.equal(s.peiZhaoheng.affinity,10);
+ document.querySelector(`[data-gift="${e.uid}"]`).click();document.querySelector('[data-gift-confirm]').click();await new Promise(r=>setImmediate(r));
+ assert.equal(s.peiZhaoheng.giftReady,false);assert.equal(s.peiZhaoheng.affinity,9);assert.ok(s.inventory.some(x=>x.uid===e.uid));
+});

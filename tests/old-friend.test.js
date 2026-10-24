@@ -4,7 +4,7 @@ import {parseHTML} from 'linkedom';
 import {indexedDB} from 'fake-indexeddb';
 import {OLD_FRIEND_CHAPTERS} from '../data/old-friend.js';
 import {SECT_MASTERS} from '../data/masters.js';
-import {startOldFriend,oldFriendState,oldFriendEligible,maybeFindOldFriend,chooseOldFriend,continueOldFriend,startOldFriendDuel,finishOldFriendDuel,oldFriendReunion,oldFriendChoiceReason} from '../systems/old-friend.js';
+import {startOldFriend,oldFriendState,oldFriendEligible,maybeFindOldFriend,chooseOldFriend,continueOldFriend,startOldFriendDuel,finishOldFriendDuel,oldFriendReunion,oldFriendChoiceReason,reportOldFriend,oldFriendGoal} from '../systems/old-friend.js';
 import {takeStroll,strollEncounterCount} from '../systems/stroll.js';
 import {migrateSave} from '../storage/migrations.js';
 import {leaveSect,assertCanJoinSect,SECT_REJOIN_DELAY} from '../systems/sect-membership.js';
@@ -64,4 +64,27 @@ test('UI can start, preserve pending choices, resume stroll clues and hide futur
  maybeFindOldFriend(s,'monsters',()=>0);showStroll(api,()=>{});document.querySelector('[data-old-friend]').click();assert.ok(document.querySelector('[data-old-friend-choice="public"]'));showOldFriend(api,()=>{},'journal');assert.equal(document.querySelector('[data-old-friend-choice]'),null);
  const map=createMapUI({...api,activate:()=>{}});map.render();document.querySelector('[data-map="foundation"]').click();assert.equal(document.querySelector('[data-foundation="old-friend-ruins"]'),null);
  for(const choice of early.slice(1,6))advance(s,choice);map.render();document.querySelector('[data-map="foundation"]').click();assert.ok(document.querySelector('[data-foundation="old-friend-ruins"]'));document.querySelector('[data-foundation="old-friend-ruins"]').click();assert.ok(document.querySelector('[data-old-friend-choice="talk"]'));
+});
+
+test('both endings can report to the master after reload without changing reunion hooks',()=>{
+ const texts=[];
+ for(const choices of [early,[...early.slice(0,7),'destroy']]){
+  const s=migrateSave(JSON.parse(JSON.stringify(route(choices))),now),q=s.oldFriend,hook=structuredClone(q.followup);
+  assert.match(oldFriendGoal(s),/复命/);assert.throws(()=>reportOldFriend(s,q.id,'journal'));
+  reportOldFriend(s,q.id,'master',now);assert.equal(q.reportedAt,now);assert.deepEqual(q.followup,hook);assert.equal(q.journal.length,9);assert.match(q.lastText,new RegExp(q.master));
+  assert.throws(()=>reportOldFriend(s,q.id,'master',now+1));texts.push(q.lastText);
+  const loaded=migrateSave(JSON.parse(JSON.stringify(s)),now);assert.equal(loaded.oldFriend.lastText,q.lastText);assert.doesNotMatch(oldFriendGoal(loaded),/复命/);
+  leaveSect(loaded,now);assert.equal(loaded.oldFriend,undefined);
+ }
+ assert.notEqual(texts[0],texts[1]);assert.match(texts[0],/东夏国/);assert.match(texts[1],/有缘再见/);
+ const unfinished=make();startOldFriend(unfinished);assert.throws(()=>reportOldFriend(unfinished,unfinished.oldFriend.id,'master'));
+});
+test('report CG is available only at master and becomes readable after submission',async t=>{
+ const old=globalThis.document;globalThis.document=parseHTML('<html><body><div id="xg-panel"></div></body></html>').document;
+ t.after(()=>{document.querySelector('#xg-feature-sheet')?.remove();globalThis.document=old});
+ const s=route(early),api={getSave:()=>s,actions:{mutate:async fn=>({result:fn(s)})}};
+ showOldFriend(api,()=>{},'journal');assert.equal(document.querySelector('[data-old-friend-report]'),null);
+ showMasterTeaching(api,()=>{});assert.match(document.querySelector('[data-old-friend]').textContent,/复命/);document.querySelector('[data-old-friend]').click();
+ document.querySelector('[data-old-friend-report]').click();await new Promise(r=>setImmediate(r));assert.match(document.body.textContent,/灯下有人/);assert.equal(document.querySelector('[data-old-friend-report]'),null);
+ showMasterTeaching(api,()=>{});assert.match(document.querySelector('[data-old-friend]').textContent,/重读/);
 });

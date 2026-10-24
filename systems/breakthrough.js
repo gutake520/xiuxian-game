@@ -72,7 +72,7 @@ function completeIfConnected(save){
 }
 
 export function chooseFoundationAptitude(save,key){
- if(save.player.realm!=='筑基一层'||save.foundationAptitudePending!==true)throw new Error('没有待分配的筑基资质。');
+ if(save.foundationAptitudePending!==true)throw new Error('没有待分配的筑基资质。');
  if(!FOUNDATION_APTITUDES.includes(key))throw new Error('请选择一项资质。');
  save.player.stats??={};save.player.stats[key]=(Number(save.player.stats[key])||0)+1;
  save.foundationAptitudePending=false;
