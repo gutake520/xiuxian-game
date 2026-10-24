@@ -45,6 +45,7 @@ export const FOUNDATION_MONSTERS=[
  {id:'foundation-warden',name:'封渡客',hp:'75',hpMin:75,hpMax:75,attack:8.5,defense:.8,speed:9,drop:'首次获赠归元佩与结丹线索',resource:'stones',minLevel:10,stage:'筑基',xp:0,attackBoost:1.25,boostCooldown:3,mp:4,boss:true}
 ];
 export const FOUNDATION_PEAKS=[
+ {id:'pei-home',name:'听隙庐',kind:'npc',x:66,y:40,size:.76},
  {id:'rock-hollow',name:'磐石坳',kind:'monster',monsterId:'rock-ape',x:7,y:12,size:.83},
  {id:'cloud-gorge',name:'穿云涧',kind:'monster',monsterId:'cloud-falcon',x:61,y:8,size:.78},
  {id:'blade-slope',name:'断刃坡',kind:'monster',monsterId:'claw-wolf',x:33,y:55,size:.84},
