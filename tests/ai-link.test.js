@@ -102,3 +102,20 @@ test('prompt preview never grants game operation credentials',async()=>{
  const x=await setup();x.link.configure({sync:true,operate:true});x.handlers.start('normal',{},true);
  assert.equal(JSON.parse(x.link.read()).token,null);assert.equal((await x.act()).ok,false);
 });
+
+test('persistent stroll counters do not block real actions',async()=>{
+ const x=await setup();
+ await x.actions.mutate(s=>{s.stroll={day:'2026-10-24',count:10,encounters:5,last:{text:'已结束的游历'}};s.strollExtra={day:'2026-10-24',purchased:1}});
+ x.start();const state=JSON.parse(x.link.read());
+ assert.ok(state.actions.some(a=>a.id==='buy:iron-sword'));assert.equal(state.emptyActionsReason,null);
+ assert.ok(x.link.status().actionCount>0);
+ assert.equal((await x.act()).ok,true);assert.equal((await readSave('slot1')).player.spiritStones,95);
+});
+test('unfinished events still block actions with a visible reason',async()=>{
+ const x=await setup();await x.actions.mutate(s=>{s.peakPuzzle={id:'pending'}});x.start();
+ const state=JSON.parse(x.link.read());assert.deepEqual(state.actions,[]);assert.match(state.emptyActionsReason,/解谜事件/);
+ assert.equal(x.link.status().emptyActionsReason,state.emptyActionsReason);
+ assert.equal((await x.act()).ok,false);assert.equal((await readSave('slot1')).player.spiritStones,100);
+ x.get().peakPuzzle=null;x.get().qiSecret={endsAt:Date.now()+60000,reward:{secret:'hidden'}};
+ const waiting=JSON.parse(x.link.read());assert.deepEqual(waiting.actions,[]);assert.match(waiting.emptyActionsReason,/探索尚未结束/);assert.doesNotMatch(JSON.stringify(waiting),/hidden/);
+});

@@ -18,9 +18,22 @@ export function visibleState(s){
  exploration:s.qiSecret?{endsAt:s.qiSecret.endsAt}:null,
  note:'本轮仅可执行 actions 列出的操作。操作条件与结算结果以游戏工具返回为准。'};
 }
-function blocked(s){return Boolean(s.practiceSession||s.breakthrough||s.traitorPuzzle||s.peakPuzzle||s.stroll||s.strollExtra||s.encounterPending||s.divinationPending||s.yanEncounterPending||s.yanAftermath||s.seniorRewardPending||s.qiMeditation||s.bossLine?.phase==='ambush'||s.bossLine?.rescuePending||foundationStoryPending(s))}
+function blockReason(s){
+ if(!s)return '尚未选择存档。';
+ if(s.practiceSession)return '主动修炼尚未结束，请玩家完成或退出当前修炼。';
+ if(s.breakthrough)return '突破尚未结束，需要玩家处理。';
+ if(s.traitorPuzzle||s.peakPuzzle)return '有尚未结束的解谜事件，需要玩家完成或放弃。';
+ if(s.encounterPending||s.divinationPending||s.yanEncounterPending||s.yanAftermath||s.seniorRewardPending||s.bossLine?.phase==='ambush'||s.bossLine?.rescuePending||foundationStoryPending(s))return '有待玩家处理的事件或剧情，请先在游戏中处理。';
+ if(s.qiMeditation)return '当前正在静坐，请等待并由玩家结束静坐。';
+ return null;
+}
+export function emptyActionsReason(s){
+ const reason=blockReason(s);if(reason)return reason;
+ if(s.qiSecret&&Date.now()<s.qiSecret.endsAt)return '秘境探索尚未结束，请等待探索完成。';
+ return null;
+}
 export function choices(s){
- if(!s||blocked(s))return [];
+ if(blockReason(s))return [];
  if(s.qiSecret)return Date.now()>=s.qiSecret.endsAt?[{id:'finish-exploration',label:'领取已完成的秘境探索'}]:[];
  if(s.battle)return [{id:'battle:attack',label:'普通攻击'},{id:'battle:skip',label:'跳过本轮'},{id:'flee',label:'逃跑（按原规则扣除灵石或修为）'},...(s.techniques.combat||[]).filter(id=>!TECHNIQUES[id]?.passive).map(id=>({id:'battle:'+id,label:TECHNIQUES[id]?.name}))];
  return [
@@ -57,7 +70,7 @@ export function createAILink({getSave,actions,getContext=()=>globalThis.SillyTav
    try{supported=Boolean(live.isToolCallingSupported());reason=supported?'当前连接已启用工具调用。':'酒馆仍报告当前连接不支持工具调用。请检查是否使用聊天补全接口，以及当前模型是否支持工具调用。';}
    catch{reason='酒馆检测工具调用时发生错误，请重新连接 API 后重试。';}
   }
-  return {sync,operate,supported,reason,lastOperation};
+  return {sync,operate,supported,reason,lastOperation,actionCount:choices(getSave()).length,emptyActionsReason:emptyActionsReason(getSave())};
  }
  function invalidate(){epoch++;turn=null;ticket=null;generationCanAct=false}
  function clearPrompt(){context?.setExtensionPrompt?.(PROMPT,'',1,0)}
@@ -75,6 +88,7 @@ export function createAILink({getSave,actions,getContext=()=>globalThis.SillyTav
    '玩家委托代玩、要求你帮忙操作或询问你如何安排本轮游戏时，在符合玩家意愿且存在合适选项的情况下，先调用工具完成实际行动，再继续角色回复；不要只写打算、建议或陪玩的对白。正常闲聊无须强行消费或操作。',
    '决定执行游戏行动时：调用 wandao_state 获取最新状态、actions 与 token；再调用 wandao_action，传入该 token 和 actions 中原样列出的 action ID。每步都等待工具返回，再决定下一步。每条回复最多三个成功操作。',
    '游戏操作必须实际调用上述工具。只在正文里写“替你买了”“已经服药”“开始探索”不会改变存档，不算完成任务。工具未返回 ok:true 前，不得宣称操作成功或编造奖励、物品与数值变化。',
+   '你无法看见或点击玩家的手机界面。actions 为空时，仅依据 emptyActionsReason 说明原因，不要编造灰色按钮、每日上限或服务器故障。原因不明时如实说明无法确认。',
    '成功后根据真实结果自然回复玩家，技术参数与 token 不需要展示在正文。失败时说明未完成及原因；状态过期可重新读取，权限关闭、玩家接管或达到步数上限时应停止。',
    '角色性格可以影响行动选择，但必须尊重玩家本轮明确意愿。例如玩家说不想修炼，不应擅自替其修炼。不要为了展示能力而无意义购物、耗药或重复换装。',
    'actions 是可申请的操作，实际条件由游戏代码再次检查。只读状态、角色对白、承诺及计划不等于执行结果。没有工具可用时如实说明本次无法实际代操作。',
@@ -86,7 +100,7 @@ export function createAILink({getSave,actions,getContext=()=>globalThis.SillyTav
   if(!sync)return JSON.stringify({error:'信息同步已关闭'});
   refreshTurn();
   const s=getSave();ticket=s&&turn?{token:crypto.randomUUID(),fingerprint:snapshotKey(s),epoch,slot:s.slot,chat:chatId()}:null;
-  return JSON.stringify({state:visibleState(s),actions:choices(s),permission:Boolean(operate&&turn),token:ticket?.token||null,rule:'可自主决定是否操作；玩家的明确意愿优先。每次回复最多3步。只可使用返回的操作ID，操作条件由游戏再次校验。'});
+  return JSON.stringify({state:visibleState(s),actions:choices(s),emptyActionsReason:emptyActionsReason(s),permission:Boolean(operate&&turn),token:ticket?.token||null,rule:'可自主决定是否操作；玩家的明确意愿优先。每次回复最多3步。只可使用返回的操作ID，操作条件由游戏再次校验。'});
  }
  function inject(){if(sync){refreshTurn();context?.setExtensionPrompt?.(PROMPT,instructions(Boolean(operate&&turn))+'\n当前可见游戏状态：\n'+read(),1,0)}}
  async function execute({token,action}){
