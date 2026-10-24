@@ -35,10 +35,10 @@ export function takeStroll(save,id,now=Date.now(),random=Math.random){
  const count=strollCount(save,now);
  const encounters=strollEncounterCount(save,now),canEncounter=encounters<strollEncounterLimit(save,now);
  const index=Math.min(place.stories.length-1,Math.max(0,Math.floor(random()*place.stories.length)));
- const thief=canEncounter&&maybeMeetThief(save,id,random);
+ const thief=maybeMeetThief(save,id,random);
  if(thief){
   const result={placeId:id,kind:'thief',text:thief.text,stolen:thief.stolen,theftSucceeded:thief.success};
-  save.stroll={day:localDay(now),count:count+1,encounters:encounters+1,last:result};
+  save.stroll={day:localDay(now),count:count+1,encounters,last:result};
   return {...result,message:`${place.name}闲逛：${result.text}`};
  }
  const traitor=canEncounter&&id==='sects'&&maybeFindTraitor(save,random);

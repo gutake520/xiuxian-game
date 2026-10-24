@@ -11,7 +11,7 @@ const rolls=(...values)=>()=>values.shift()??.99;
 test('all four locations have a five percent encounter boundary, including ten luck',()=>{
  for(const id of THIEF_PLACES)for(const luck of [1,10]){
   const s=make(luck);assert.equal(takeStroll(s,id,now,rolls(.5,.049999,.99)).kind,'thief');
-  assert.equal(strollEncounterCount(s,now),1);
+  assert.equal(strollEncounterCount(s,now),0);
   const miss=make(luck);assert.notEqual(takeStroll(miss,id,now,rolls(.5,.05)).kind,'thief');
  }
  for(const id of ['sects','spirit-peak'])assert.equal(maybeMeetThief(make(),id,()=>0),null);
@@ -33,17 +33,17 @@ test('steals twenty percent of current balance with normal two-decimal rounding,
  }
  const s=make();takeStroll(s,'monsters',now,()=>0);takeStroll(s,'monsters',now,()=>0);assert.equal(s.player.spiritStones,64);
 });
-test('thief consumes one encounter, suppresses other encounters on that visit, and honors daily cap',()=>{
- for(const id of THIEF_PLACES){const s=make();takeStroll(s,id,now,()=>0);assert.equal(s.stroll.encounters,1);assert.equal(s.treasure,undefined);assert.equal(s.stallGames,undefined);assert.equal(s.battle,undefined)}
+test('thief never consumes encounter quota and can appear after the daily cap',()=>{
+ for(const id of THIEF_PLACES){const s=make();takeStroll(s,id,now,()=>0);assert.equal(s.stroll.encounters,0);assert.equal(s.treasure,undefined);assert.equal(s.stallGames,undefined);assert.equal(s.battle,undefined)}
  const s=make();takeStroll(s,'monsters',now,()=>0);s.stroll.encounters=7;
- takeStroll(s,'monsters',now,()=>0);assert.equal(s.player.spiritStones,80);assert.equal(s.stroll.encounters,7);
- takeStroll(s,'monsters',now+86400000,()=>0);assert.equal(s.player.spiritStones,64);assert.equal(s.stroll.encounters,1);
+ takeStroll(s,'monsters',now,()=>0);assert.equal(s.player.spiritStones,64);assert.equal(s.stroll.encounters,7);
+ takeStroll(s,'monsters',now+86400000,()=>0);assert.equal(s.player.spiritStones,51.2);assert.equal(s.stroll.encounters,0);
  const blocked=make();blocked.battle={};assert.throws(()=>takeStroll(blocked,'monsters',now,()=>0));assert.equal(blocked.player.spiritStones,100);
 });
-test('atomic visits share the last encounter slot and persist a single deduction',async()=>{
+test('atomic thief visits each deduct stones without consuming encounter quota',async()=>{
  globalThis.indexedDB=indexedDB;const s=make();takeStroll(s,'monsters',now,()=>.99);s.stroll.encounters=6;await writeSave(s);
  await Promise.all([1,2].map(()=>updateSave(s.slot,next=>{takeStroll(next,'monsters',now,()=>0);return next})));
- const saved=await readSave(s.slot);assert.equal(saved.player.spiritStones,80);assert.equal(saved.stroll.encounters,7);
+ const saved=await readSave(s.slot);assert.equal(saved.player.spiritStones,64);assert.equal(saved.stroll.encounters,6);
 });
 test('real action pipeline excludes stolen stones but still counts subsequent purchases',async t=>{
  const {createActions}=await import('../core/actions.js');
