@@ -1,3 +1,4 @@
+import {awakenGoldenCoreTechnique} from '../systems/golden-core.js';
 import {syncTitles} from '../systems/titles.js';
 import {syncAchievements} from '../systems/achievements.js';
 import {combatSlots} from '../data/technique-slots.js';
@@ -82,5 +83,6 @@ export function migrateSave(save,now=Date.now()){
  if(String(p.realm).startsWith('筑基')&&save.bossLine?.phase==='ambush')save.bossLine={phase:'defeated',insight:true};
  ensureBossLine(save);
  syncAchievements(save);
+ awakenGoldenCoreTechnique(save);
  save.version=7;return save;
 }

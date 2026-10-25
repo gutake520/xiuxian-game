@@ -1,3 +1,4 @@
+import {convergingDamage} from './golden-core.js';
 import {finishOldFriendDuel} from './old-friend.js';
 import {collectTeachingMaterial} from './master-teaching.js';
 import {beastPower} from '../data/titles.js';
@@ -198,12 +199,13 @@ export function playRound(save,action='attack',now=Date.now()){
   if(action==='cooldown-reset'){battle.cooldownResetUsed=true;for(const id of save.techniques.combat||[])if(id!==action&&battle.skillReady)delete battle.skillReady[id];messages.push('其他已装备功法的冷却已重置。');return}
   if(action==='only-once'){battle.criticalFocus=true;messages.push(`凝聚心神，本场战斗暴击率提高 ${save.techniques.upgraded?.includes(action)?20:15} 个百分点。`);return}
   if(action==='healing-hands'){battle.regenRounds=3;messages.push('妙手回春生效，连续三轮恢复生命。');return}
-  let damageIntro='';
+  let damageIntro='',convergingCrit=false;
   if(action==='spirit-burn'){const count=rootCount(save.player),ratio=count===1?.9:count<=3?.8:.7;dealt=round2(mpCost*ratio);damageIntro=skill.name+'造成'}
   else if(action==='only-one'||action==='empty-hands'||action==='catch-breath'||action==='sting'){dealt=action==='empty-hands'?(save.techniques.upgraded?.includes(action)?3:2):action==='sting'?2:1;damageIntro=skill.name+'造成'}
   else if(guarded){dealt=1;damageIntro='铜墙铁壁护住周身，同时造成'}
   else{
    const crit=Math.random()<Math.min(1,(stats.critRate+(battle.criticalFocus?(save.techniques.upgraded?.includes('only-once')?20:15):0))/100);
+   convergingCrit=crit;
    const upgraded=save.techniques.upgraded?.includes(action);
    const multiplier=prepared?(rootCount(save.player)===1?2.5:rootCount(save.player)<=3?2.4:2.3):action==='self-as-self'?1.7:action==='charged-strike'||action==='silent-strike'?chargedMultiplier(save.player):action==='strengthen-attack'?1.1:action==='gamble-strike'?(Math.random()<.5?(upgraded?1.6:1.5):(upgraded?0.9:0.8)):1;
    dealt=round2(Math.max(1,(stats.attack+elementalBonus(battle,'metal-edge'))*(crit?1.5:1)*multiplier));
@@ -214,7 +216,11 @@ export function playRound(save,action='attack',now=Date.now()){
    if(Math.random()<battle.dodgeRate/100){messages.push(`${battle.name}避开了这一击。`);dealt=0;return}
    if(action==='silent-strike'&&battle.hp>0&&playerFirst)enemyAction='attack';
   }
-  if(armored||battle.defense>0)dealt=round2(Math.max(1,dealt-(battle.defense||0)-(enemyAction==='iron-wall'?1:0)));
+  if(action==='same-destination'){
+   const hits=convergingDamage(stats.attack+elementalBonus(battle,'metal-edge'),(battle.defense||0)+(enemyAction==='iron-wall'?1:0),convergingCrit);
+   dealt=round2(hits[0]+hits[1]);damageIntro=`殊途同归：两道灵力先后命中${convergingCrit?'（暴击）':''}，合计造成`;
+  }
+  else if(armored||battle.defense>0)dealt=round2(Math.max(1,dealt-(battle.defense||0)-(enemyAction==='iron-wall'?1:0)));
   if(hasActiveTechnique(save,'one-sword'))dealt=round2(dealt*1.1);
   messages.push(`${damageIntro} ${dealt.toFixed(2)} 伤害。`);
   const actual=Math.min(battle.hp,dealt);
