@@ -1,3 +1,5 @@
+import {canEnterDongxia} from './foundation-story.js';
+import {maybeFindConcentration} from './concentration.js';
 import {maybeFindStallSitting} from './stall-sitting.js';
 import {maybeFindRiver} from './river-crossing.js';
 import {maybeFindMemory} from './talisman-memory.js';
@@ -16,7 +18,7 @@ import {maybeFindTreasure} from './treasure.js';
 import {STROLL_PLACES,STROLL_ENCOUNTER_LIMIT} from '../data/stroll.js';
 import {localDay} from './cultivation.js';
 // Matches the main map's current foundation-region gate. Encounter residences are excluded.
-export const strollPlaces=save=>STROLL_PLACES.filter(p=>!p.foundation||String(save.player.realm).startsWith('筑基'));
+export const strollPlaces=save=>STROLL_PLACES.filter(p=>p.dongxia?canEnterDongxia(save):!p.foundation||String(save.player.realm).startsWith('筑基'));
 export const strollCount=(save,now=Date.now())=>save.stroll?.day===localDay(now)?save.stroll.count||0:0;
 export const strollEncounterCount=(save,now=Date.now())=>save.stroll?.day===localDay(now)?save.stroll.encounters||0:0;
 export const STROLL_EXTRA_PRICE=20;
@@ -47,6 +49,7 @@ export function takeStroll(save,id,now=Date.now(),random=Math.random){
   save.stroll={day:localDay(now),count:count+1,encounters,last:result};
   return {...result,message:`${place.name}闲逛：${result.text}`};
  }
+ const concentration=canEncounter&&id==='dongxia'&&maybeFindConcentration(save,random);
  const traitor=canEncounter&&id==='sects'&&maybeFindTraitor(save,random);
  const hadTreasure=Boolean(save.treasure);
  const found=canEncounter&&id==='blackmarket'&&maybeFindTreasure(save,random);
@@ -60,9 +63,9 @@ export function takeStroll(save,id,now=Date.now(),random=Math.random){
  const ghost=!spring&&canEncounter&&id==='foundation'&&maybeMeetZhang(save,random);
  const river=canEncounter&&!spring&&!ghost&&id==='foundation'&&maybeFindRiver(save,random);
  const memory=canEncounter&&!traitor&&id==='sects'&&maybeFindMemory(save,random);
- let text=sitting?'陶掌柜从杂货摊后探出头，托你替他照看片刻。桌上留着一张写好的便笺。':river?'望川岭云雾漫过渡口，一叶小舟停在岸边，几位同行者正等人摆渡。':memory?'九宗山门外，符师铺开一叠灵符，邀你限时辨认相同符纹。':spring?'望川岭山隙间灵泉浮现，泉光仿佛随你的呼吸明灭。或可静心听息，得一卷机缘。':traitor?`${save.traitorPuzzle.sect}的执事请你协助抓叛徒，一份可疑的值守名册已经交到你手中。`:ghost?'望川岭上金铃骤响，一名红衣鬼修拦住去路。':stall?(stallKind==='gomoku'?'坊市树荫下摆着一张棋盘，摊主捻着白子，向你让出对面的座位。':'黑市深处传来骰子的脆响。庄家扣住骰盅，笑道：「来一局？买定离手。」'):puzzle==='sokoban'?'一只小兽拦住去路，将你引到一座错乱的石阵前。它指了指石箱，又指了指地上的阵纹。':puzzle==='maze'?'林间忽起薄雾，一串小小的兽爪印蜿蜒向前，似乎在邀你穿过这片迷林。':place.stories[index];
- if(!sitting&&!river&&!memory&&!spring&&!traitor&&!ghost&&!found&&!puzzle&&!stall&&random()<RUMOR_CHANCE){const rumors=availableRumors(save);text=rumors[Math.min(rumors.length-1,Math.floor(random()*rumors.length))]}
+ let text=concentration?'东夏国街边，一位老者摆开三十六枚数字玉牌，邀你凝神辨序。':sitting?'陶掌柜从杂货摊后探出头，托你替他照看片刻。桌上留着一张写好的便笺。':river?'望川岭云雾漫过渡口，一叶小舟停在岸边，几位同行者正等人摆渡。':memory?'九宗山门外，符师铺开一叠灵符，邀你限时辨认相同符纹。':spring?'望川岭山隙间灵泉浮现，泉光仿佛随你的呼吸明灭。或可静心听息，得一卷机缘。':traitor?`${save.traitorPuzzle.sect}的执事请你协助抓叛徒，一份可疑的值守名册已经交到你手中。`:ghost?'望川岭上金铃骤响，一名红衣鬼修拦住去路。':stall?(stallKind==='gomoku'?'坊市树荫下摆着一张棋盘，摊主捻着白子，向你让出对面的座位。':'黑市深处传来骰子的脆响。庄家扣住骰盅，笑道：「来一局？买定离手。」'):puzzle==='sokoban'?'一只小兽拦住去路，将你引到一座错乱的石阵前。它指了指石箱，又指了指地上的阵纹。':puzzle==='maze'?'林间忽起薄雾，一串小小的兽爪印蜿蜒向前，似乎在邀你穿过这片迷林。':place.stories[index];
+ if(!concentration&&!sitting&&!river&&!memory&&!spring&&!traitor&&!ghost&&!found&&!puzzle&&!stall&&random()<RUMOR_CHANCE){const rumors=availableRumors(save);text=rumors[Math.min(rumors.length-1,Math.floor(random()*rumors.length))]}
  const result={placeId:id,text:found?'你经过一处撤摊的角落，拾到一张泛黄的残图。图上依次圈着三处山地，末尾画着一只小小的木匣。':text};
- save.stroll={day:localDay(now),count:count+1,encounters:encounters+(sitting||river||memory||spring||traitor||ghost||found||puzzle||stall?1:0),last:result};
+ save.stroll={day:localDay(now),count:count+1,encounters:encounters+(concentration||sitting||river||memory||spring||traitor||ghost||found||puzzle||stall?1:0),last:result};
  return {...result,message:`${place.name}闲逛：${result.text}`};
 }

@@ -29,3 +29,8 @@
 #xg-panel button.xg-memory-card.is-open{background:var(--surface);border-color:var(--sigil);color:var(--sigil)}
 #xg-panel button.xg-memory-card:disabled{opacity:1}#xg-panel button.xg-memory-card.is-matched{background:var(--jade-light);border-color:var(--line);opacity:.65}
 #xg-panel .xg-memory-note{margin:0;font-size:11px;color:var(--muted);text-align:center}
+
+/* Fixed six-column board: every number stays in place throughout the trial. */
+.xg-concentration-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px;margin:16px 0}
+.xg-concentration-grid button{min-width:0;min-height:40px;aspect-ratio:1;padding:0;font-size:clamp(16px,4.5vw,23px);font-variant-numeric:tabular-nums;border-radius:10px;touch-action:manipulation}
+.xg-concentration-grid button.is-done{opacity:.3}

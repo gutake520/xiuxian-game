@@ -41,8 +41,8 @@ test('treasure, sokoban and maze share seven daily encounters; gossip and pendin
  takeStroll(loaded,'blackmarket',now+86400000,()=>0);assert.ok(loaded.treasure);assert.equal(strollEncounterCount(loaded,now+86400000),1);
  const old=make();old.stroll={day:s.stroll.day,count:10};takeStroll(old,'blackmarket',now,()=>0);assert.equal(strollEncounterCount(old,now),1);
 });
-test('all thirty approved stories can be drawn, battle visits do not consume quota',()=>{
- for(const p of STROLL_PLACES){assert.equal(p.stories.length,5);const s=make();s.player.realm='筑基一层';for(let i=0;i<5;i++){let roll=0;assert.equal(takeStroll(s,p.id,now,()=>roll++===0?i/5+.1:.99).text,p.stories[i])}}
+test('all regional stories can be drawn, battle visits do not consume quota',()=>{
+ for(const p of STROLL_PLACES){assert.ok(p.stories.length>=3);const s=make();s.player.realm=p.dongxia?'金丹一层':'筑基一层';if(p.dongxia)s.dongxiaUnlocked=true;for(let i=0;i<p.stories.length;i++){let roll=0;assert.equal(takeStroll(s,p.id,now,()=>roll++===0?(i+.5)/p.stories.length:.99).text,p.stories[i])}}
  const s=make();s.battle={};const before=structuredClone(s);assert.throws(()=>takeStroll(s,'market',now));assert.deepEqual(s,before);
 });
 test('concurrent visits cannot exceed seven encounters',async()=>{

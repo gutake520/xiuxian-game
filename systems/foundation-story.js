@@ -30,10 +30,18 @@ export function searchPursuerBody(save,now=Date.now()){
  save.foundationEnding={...save.foundationEnding,defeated:true,defeatedAt:now};
  return `你从${line.enemy.name}的尸身衣襟内翻出一封沾血的密信。信中记着灭你满门的那伙人的行踪：「主使仍在东夏国，余众奉命追索幸存者。」信纸背面另绘有东行路线。你收好密信，决定待突破金丹后前往东夏国。${place?'另得归元佩 ×1'+(place==='temporary'?'（临时储物）':'')+'。':''}`;
 }
-export const canEnterDongxia=save=>Boolean(save.foundationStory?.dongxiaClue&&String(save.player.realm).startsWith('金丹'));
+export const isGoldenCore=save=>/^(金丹|元婴|化神|炼虚|合体|大乘|渡劫)/.test(String(save.player.realm));
+export const canEnterDongxia=save=>Boolean(save.dongxiaUnlocked&&isGoldenCore(save));
+export function askGoldenCoreMaster(save){
+ if(save.battle||foundationStoryPending(save))throw new Error('请先结束当前战斗或剧情。');
+ if(!isGoldenCore(save))throw new Error('突破金丹后，再来请教师父。');
+ if(!SECT_MASTERS[save.player.sect])throw new Error('请先拜入宗门，再来请教师父。');
+ save.dongxiaUnlocked=true;
+ return '师父放下手中茶盏，望了你片刻。「金丹既成，往后的修行，便不能只困在这一座山里。去吧，出去闯天下。东夏国山河辽阔，有你未见过的人，也有你尚未走过的路。」他将一卷舆图推到你面前。「记得，走得再远，也可以回来。」';
+}
 export function enterDongxia(save){
  if(save.battle||foundationStoryPending(save))throw new Error('请先结束当前战斗或剧情。');
- if(!canEnterDongxia(save))throw new Error('需先取得东夏国线索，并突破金丹。');
+ if(!canEnterDongxia(save))throw new Error('需先突破金丹，再向师父请教往后的修炼。');
  save.dongxiaVisited=true;
- return '你循着密信中的路线越过边关。东夏国到了，灭门旧怨尚待清算。';
+ return '你循着师父所赠舆图越过边关，东夏国的山河在眼前铺展。';
 }
