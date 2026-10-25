@@ -28,7 +28,7 @@ function bonded(){const s=met();s.zhangHuaijin.giftsUnlocked=true;s.zhangHuaijin
 test('foundation stroll alone triggers once, honors the seven-encounter cap and probability boundary',()=>{
  const low=make();low.player.realm='炼气十层';assert.throws(()=>takeStroll(low,'foundation',at,()=>0));assert.equal(maybeMeetZhang(low,()=>0),false);
  const miss=make();assert.equal(maybeMeetZhang(miss,()=>.1),false);
- const s=make();takeStroll(s,'foundation',at,()=>0);assert.equal(s.battle.kind,'zhang-intro');assert.equal(s.battle.dodgeRate,60);assert.equal(s.stroll.encounters,1);finishZhangEncounter(s);takeStroll(s,'foundation',at,()=>0);assert.equal(s.battle,null);assert.equal(s.stroll.encounters,1);
+ const s=make();takeStroll(s,'foundation',at,()=>0);assert.equal(s.battle.kind,'zhang-intro');assert.equal(s.battle.dodgeRate,60);assert.equal(s.stroll.encounters,1);finishZhangEncounter(s);takeStroll(s,'foundation',at,()=>.99);assert.equal(s.battle,null);assert.equal(s.stroll.encounters,1);
  const cap=make();cap.stroll={day:`2026-10-21`,count:7,encounters:7};takeStroll(cap,'foundation',at,()=>0);assert.equal(cap.zhangHuaijin,undefined);
 });
 test('scripted battle defeats without costs, wear or consuming rescue; escape also unlocks cave',t=>{
