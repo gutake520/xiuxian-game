@@ -81,7 +81,7 @@ export function repairOwnEquipment(save,uid){
  if(item?.kind!=='equipment')throw new Error('找不到这件装备。');
  const limit=maxDurability(entry),cost=Math.ceil(limit/5);
  if(entry.durability>=limit)throw new Error('装备耐久已满。');
- const oreId=item.stage==='筑基'?'foundation-ore':'ore',ore=save.inventory.find(item=>item.itemId===oreId);
+ const oreId=item.stage==='金丹'?'golden-ore':item.stage==='筑基'?'foundation-ore':'ore',ore=save.inventory.find(item=>item.itemId===oreId);
  if((ore?.quantity||0)<cost)throw new Error(`此石灵性不足，修补${item.name}需 ${cost} 个${ITEMS[oreId].name}。`);
  const before=equipmentStats(save);
  ore.quantity-=cost;if(!ore.quantity)save.inventory=save.inventory.filter(item=>item!==ore);
@@ -100,7 +100,7 @@ export function temperEquipment(save,uid){
  if(item?.kind!=='equipment')throw new Error('找不到这件装备。');
  const upgrades=durabilityUpgrades(entry);
  if(upgrades>=DURABILITY_UPGRADE_LIMIT)throw new Error('这件装备已淬炼两次。');
- const oreId=item.stage==='筑基'?'foundation-ore':'ore',ore=save.inventory.find(e=>e.itemId===oreId);
+ const oreId=item.stage==='金丹'?'golden-ore':item.stage==='筑基'?'foundation-ore':'ore',ore=save.inventory.find(e=>e.itemId===oreId);
  if((ore?.quantity||0)<DURABILITY_UPGRADE_COST)throw new Error(`需要 ${DURABILITY_UPGRADE_COST} 个${ITEMS[oreId].name}。`);
  const before=equipmentStats(save),current=entry.durability??maxDurability(entry);
  ore.quantity-=DURABILITY_UPGRADE_COST;if(!ore.quantity)save.inventory=save.inventory.filter(e=>e!==ore);

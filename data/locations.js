@@ -51,3 +51,15 @@ export const FOUNDATION_PEAKS=[
  {id:'blade-slope',name:'断刃坡',kind:'monster',monsterId:'claw-wolf',x:33,y:55,size:.84},
  {id:'foundation-secret',name:'云岫秘境',kind:'secret',x:7,y:72,size:.8}
 ];
+
+// 金丹初期（1—3层）共用妖怪。
+export const GOLDEN_MONSTERS=[
+ {id:'golden-rock-rhino',name:'玄岩犀',hp:'76～80',hpMin:76,hpMax:80,attack:8.5,defense:2,speed:8,minLevel:1,stage:'金丹',skill:'strengthen-attack',attackBoost:1.1,mp:6,xp:0,resource:'stones',drop:'灵石 3～4.5，另有材料或法器'},
+ {id:'golden-flame-mastiff',name:'赤焰獒',hp:'54～58',hpMin:54,hpMax:58,attack:11.5,defense:1.6,speed:9,minLevel:1,stage:'金丹',skill:'strengthen-attack',attackBoost:1.1,mp:6,xp:0,resource:'herbs',drop:'赤髓芝、玉露花，另有灵石或矿材'},
+ {id:'golden-lightning-falcon',name:'逐电隼',hp:'50～54',hpMin:50,hpMax:54,attack:10.5,defense:1.3,speed:13,minLevel:1,stage:'金丹',skill:'strengthen-attack',attackBoost:1.1,mp:6,xp:0,resource:'ore',drop:'赤金矿，另有灵石或药草'}
+];
+export const GOLDEN_PEAKS=[
+ {id:'golden-rhino-ridge',name:'玄岩岭',monsterId:'golden-rock-rhino',x:7,y:18,size:.83},
+ {id:'golden-mastiff-valley',name:'赤焰谷',monsterId:'golden-flame-mastiff',x:62,y:18,size:.8},
+ {id:'golden-falcon-cliff',name:'逐电崖',monsterId:'golden-lightning-falcon',x:36,y:62,size:.88}
+];

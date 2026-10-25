@@ -11,11 +11,11 @@ import {showStroll} from './stroll.js';
 import {showSpiritPeak} from './spirit-peak.js';
 import {showBlackMarket} from './black-market.js';
 import {beastCanFight,beastName} from '../systems/pets.js';
-import {VISITING_SECTS,QI_MONSTERS,QI_PEAKS,FOUNDATION_MONSTERS,FOUNDATION_PEAKS} from '../data/locations.js';
+import {VISITING_SECTS,QI_MONSTERS,QI_PEAKS,FOUNDATION_MONSTERS,FOUNDATION_PEAKS,GOLDEN_MONSTERS,GOLDEN_PEAKS} from '../data/locations.js';
 import {realmProgress} from '../data/realms.js';
 import {showBattle} from './combat.js';
 import {ITEMS,SECT_PILLS,SECT_TALISMANS} from '../data/items.js';
-import {purchase,maxDurability} from '../systems/inventory.js';
+import {itemStageAllowed,purchase,maxDurability} from '../systems/inventory.js';
 import {showShop,showSell} from './inventory.js';
 import {startQiExploration,startFoundationExploration,explorationFee,QI_EXPLORATION_MS,QI_SCENES} from '../systems/exploration.js';
 import {localDay} from '../systems/cultivation.js';
@@ -32,36 +32,48 @@ export function createMapUI({getSave,activate,actions,onSectBattleExit}){
  const content=()=>document.getElementById('xg-content');
  const foundationPlayer=()=>String(getSave()?.player?.realm||'').startsWith('筑基');
  const petChoices=(save,name)=>{const foundation=String(save.player.realm).startsWith('筑基'),rented=(foundation?save.foundationPetRentals:save.petRentals)>0,attack=beastCanFight(save,'attack'),guard=beastCanFight(save,'guard');return rented||attack||guard?`<fieldset class="xg-card"><legend>灵兽出战</legend><label><input type="radio" name="${name}" value="" checked> 不出战</label>${['attack','guard'].filter(type=>beastCanFight(save,type)||rented).map(type=>`<label><input type="radio" name="${name}" value="${type}"> ${escapeHTML(beastCanFight(save,type)?beastName(save,type):'租借灵兽')} · ${type==='attack'?`追击 +${beastPower(save,'attack',foundation?'筑基':'炼气').toFixed(2)}`:`守护 −${beastPower(save,'guard',foundation?'筑基':'炼气').toFixed(2)}`}</label>`).join('')}</fieldset>`:''};
- const battle=outcome=>showBattle({getSave,activate,actions,onYanEncounter:renderYanEncounter,onExit:(getSave().battle?.kind||getSave().lastBattle?.kind)==='old-friend-duel'?()=>showOldFriend({getSave,actions},renderFoundation,'ruins'):foundationStoryPending(getSave())||(getSave().battle?.kind||getSave().lastBattle?.kind)==='wounded-pursuer'?render:(getSave().battle?.kind||getSave().lastBattle?.kind)==='zhang-intro'?()=>showZhang({getSave,actions},render):getSave().bossLine?.phase==='ambush'||getSave().bossLine?.rescuePending?renderMonsters:['sect-tournament','sect-senior'].includes(getSave().battle?.kind||getSave().lastBattle?.kind)?onSectBattleExit:(getSave().battle?.kind||getSave().lastBattle?.kind)==='fox-npc'?()=>renderNpc(QI_PEAKS.find(p=>p.id===(getSave().battle?.monsterId||getSave().lastBattle?.monsterId))):FOUNDATION_MONSTERS.some(monster=>monster.id===(getSave().battle?.monsterId||getSave().lastBattle?.monsterId))?renderFoundation:renderMonsters},outcome);
+ const battle=outcome=>showBattle({getSave,activate,actions,onYanEncounter:renderYanEncounter,onExit:GOLDEN_MONSTERS.some(m=>m.id===(getSave().battle?.monsterId||getSave().lastBattle?.monsterId))?renderDongxia:(getSave().battle?.kind||getSave().lastBattle?.kind)==='old-friend-duel'?()=>showOldFriend({getSave,actions},renderFoundation,'ruins'):foundationStoryPending(getSave())||(getSave().battle?.kind||getSave().lastBattle?.kind)==='wounded-pursuer'?renderYunze:(getSave().battle?.kind||getSave().lastBattle?.kind)==='zhang-intro'?()=>showZhang({getSave,actions},renderYunze):getSave().bossLine?.phase==='ambush'||getSave().bossLine?.rescuePending?renderMonsters:['sect-tournament','sect-senior'].includes(getSave().battle?.kind||getSave().lastBattle?.kind)?onSectBattleExit:(getSave().battle?.kind||getSave().lastBattle?.kind)==='fox-npc'?()=>renderNpc(QI_PEAKS.find(p=>p.id===(getSave().battle?.monsterId||getSave().lastBattle?.monsterId))):FOUNDATION_MONSTERS.some(monster=>monster.id===(getSave().battle?.monsterId||getSave().lastBattle?.monsterId))?renderFoundation:renderMonsters},outcome);
  function heading(title,subtitle){return `<div class="xg-map-heading"><h2>${title}</h2>${subtitle?`<p>${subtitle}</p>`:''}</div>`}
  const peaks=(locations,kind)=>`<div class="xg-map-landscape xg-map-${kind}">${locations.map((place,i)=>`<button type="button" class="xg-map-hill${place.locked?' xg-map-locked':''}" style="--hill-x:${place.x}%;--hill-y:${place.y}%;--hill-size:${place.size||1}" ${place.locked?'disabled':''} ${place.id?`data-${kind}="${place.id}"`:''}><span class="xg-map-label">${place.name}</span><span class="xg-map-summit" aria-hidden="true"></span></button>`).join('')}</div>`;
- function render(){
+ function renderYunze(){return render('yunze')}
+ function render(country=null){
   if(!getSave())return;
   if(getSave().battle||getSave().encounterPending||getSave().divinationPending||getSave().seniorRewardPending)return battle();
   if(getSave().yanEncounterPending||getSave().yanAftermath)return renderYanEncounter();
   if(getSave().qiSecret)return renderSecret();
   if(getSave().qiMeditation)return renderMeditation();
   if(getSave().bossLine?.phase==='ambush'||getSave().bossLine?.rescuePending||foundationStoryPending(getSave()))return battle();
+  if(country==='yunze')return drawYunze();
   activate('map');
-  content().innerHTML=`<section class="xg-map-sheet">${heading('山河图','点一座山，走一段路。')}<div class="xg-feature xg-feature-row"><button type="button" data-stroll>四处走走</button>${getSave().treasure?'<button type="button" data-treasure>藏宝图</button>':''}</div>${peaks([
+  content().innerHTML=`<section class="xg-map-sheet">${heading('山河图','择一国，游山河。')}<div class="xg-feature xg-feature-row"><button type="button" data-stroll>四处走走</button>${getSave().treasure?'<button type="button" data-treasure>藏宝图</button>':''}</div>${peaks([
+   {name:'云泽国',id:'yunze',x:15,y:20,size:1.08},
+   ...(canEnterDongxia(getSave())?[{name:'东夏国',id:'dongxia',x:62,y:57,size:1.08}]:[])
+  ],'map')}</section>`;
+  content().querySelector('[data-map="yunze"]').onclick=renderYunze;
+  content().querySelector('[data-map="dongxia"]')?.addEventListener('click',async()=>{try{await actions.mutate(enterDongxia,{message:r=>r});renderDongxia()}catch(error){content().querySelector('.xg-map-heading p').textContent=error.message}});
+  content().querySelector('[data-stroll]').onclick=()=>showStroll({getSave,actions},render);
+  content().querySelector('[data-treasure]')?.addEventListener('click',()=>showTreasure({getSave,actions},render));
+ }
+ function drawYunze(){
+  activate('map');
+  content().innerHTML=`<section class="xg-map-sheet"><button class="xg-map-back" type="button">← 返回山河图</button>${heading('云泽国','故土山川，仙途初起。')}<div class="xg-feature xg-feature-row"><button type="button" data-stroll>四处走走</button>${getSave().treasure?'<button type="button" data-treasure>藏宝图</button>':''}</div>${peaks([
    {name:'坊市',id:'market',x:12,y:6,size:.8},{name:'黑市',id:'blackmarket',x:68,y:17,size:.76},
    foundationPlayer()?{name:'望川岭',id:'foundation',x:36,y:37,size:.85}:{name:'远山 · 待定',x:36,y:37,locked:true,size:.85},{name:'九宗山门',id:'sects',x:8,y:69,size:1.08},
    {name:'灵兽峰',id:'spirit-peak',x:10,y:34,size:.7},
    {name:'丰原镇',id:'monsters',x:64,y:62,size:1.04},
-   ...(canEnterDongxia(getSave())?[{name:'东夏国',id:'dongxia',x:42,y:84,size:.7}]:[]),
    ...(getSave().zhangHuaijin?.unlocked?[{name:ZHANG_CAVE,id:'zhang-cave',x:39,y:5,size:.72}]:[]),
    ...(yanState(getSave()).unlocked?[{name:YAN_HILL,id:'yan-hill',x:74,y:39,size:.72}]:[])
   ],'map')}</section>`;
-  content().querySelector('[data-map="dongxia"]')?.addEventListener('click',async()=>{try{await actions.mutate(enterDongxia,{message:r=>r});renderDongxia()}catch(error){content().querySelector('.xg-map-heading p').textContent=error.message}});
-  content().querySelector('[data-treasure]')?.addEventListener('click',()=>showTreasure({getSave,actions},render));
-  content().querySelector('[data-stroll]').onclick=()=>showStroll({getSave,actions},render);
-  content().querySelector('[data-map="spirit-peak"]').onclick=()=>showSpiritPeak({getSave,actions},render);
+  back(render);
+  content().querySelector('[data-treasure]')?.addEventListener('click',()=>showTreasure({getSave,actions},renderYunze));
+  content().querySelector('[data-stroll]').onclick=()=>showStroll({getSave,actions},renderYunze);
+  content().querySelector('[data-map="spirit-peak"]').onclick=()=>showSpiritPeak({getSave,actions},renderYunze);
   content().querySelector('[data-map="sects"]').onclick=renderSects;
   content().querySelector('[data-map="monsters"]').onclick=renderMonsters;
   content().querySelector('[data-map="market"]').onclick=renderMarket;
   content().querySelector('[data-map="blackmarket"]').onclick=renderBlackMarket;
   content().querySelector('[data-map="foundation"]')?.addEventListener('click',renderFoundation);
-  content().querySelector('[data-map="zhang-cave"]')?.addEventListener('click',()=>showZhang({getSave,actions},render));
+  content().querySelector('[data-map="zhang-cave"]')?.addEventListener('click',()=>showZhang({getSave,actions},renderYunze));
   content().querySelector('[data-map="yan-hill"]')?.addEventListener('click',renderYanHill);
  }
  function back(fn){content().querySelector('.xg-map-back').onclick=fn}
@@ -72,16 +84,16 @@ export function createMapUI({getSave,activate,actions,onSectBattleExit}){
   content().innerHTML=`<section class="xg-map-sheet xg-battle-sheet">${heading('山路相逢',YAN_NAME)}${yanText(aftermath?.text||yanEncounterText(pending?.step===3?{...pending,highCharm:effectiveStat(save.player,'魅力')>=8}:pending))}<div class="xg-feature-row">${aftermath?'<button type="button" data-yan-finish>继续赶路</button>':pending.step<3?'<button type="button" data-yan-answer="continue">继续赶路</button>':'<button type="button" data-yan-answer="stones">要三十灵石</button><button type="button" data-yan-answer="together">以身相许</button><button type="button" data-yan-titles>佩戴称号</button>'}</div><p role="status" aria-live="polite"></p></section>`;
   const status=content().querySelector('[role=status]');
   content().querySelector('[data-yan-titles]')?.addEventListener('click',()=>showTitles({getSave,actions},renderYanEncounter));
-  content().querySelector('[data-yan-finish]')?.addEventListener('click',async event=>{const button=event.currentTarget;button.disabled=true;try{await actions.acknowledgeYan(aftermath.id);render()}catch(error){status.textContent=error.message;button.disabled=false}});
+  content().querySelector('[data-yan-finish]')?.addEventListener('click',async event=>{const button=event.currentTarget;button.disabled=true;try{await actions.acknowledgeYan(aftermath.id);renderYunze()}catch(error){status.textContent=error.message;button.disabled=false}});
   content().querySelectorAll('[data-yan-answer]').forEach(button=>button.onclick=async()=>{content().querySelectorAll('[data-yan-answer]').forEach(item=>item.disabled=true);try{await actions.respondToYan(pending.id,button.dataset.yanAnswer);if(getSave().yanAftermath)renderYanEncounter();else battle()}catch(error){status.textContent=error.message;content().querySelectorAll('[data-yan-answer]').forEach(item=>item.disabled=false)}});
  }
  function renderYanHill(){
-  if(!yanState(getSave()).unlocked)return render();
-  activate('map');content().innerHTML=`<section class="xg-map-sheet"><button class="xg-map-back" type="button">← 返回地图</button>${heading(YAN_HILL,'云深山静，一条石径通向山间小院。')}<div class="xg-map-place xg-map-scene"><span class="xg-map-peak" aria-hidden="true"></span><strong>${YAN_NAME}的山居</strong><p>院门虚掩着。</p></div><div class="xg-feature-row"><button type="button" data-yan-visit>拜访燕停云</button></div></section>`;
-  back(render);content().querySelector('[data-yan-visit]').onclick=renderYanHome;
+  if(!yanState(getSave()).unlocked)return renderYunze();
+  activate('map');content().innerHTML=`<section class="xg-map-sheet"><button class="xg-map-back" type="button">← 返回云泽国</button>${heading(YAN_HILL,'云深山静，一条石径通向山间小院。')}<div class="xg-map-place xg-map-scene"><span class="xg-map-peak" aria-hidden="true"></span><strong>${YAN_NAME}的山居</strong><p>院门虚掩着。</p></div><div class="xg-feature-row"><button type="button" data-yan-visit>拜访燕停云</button></div></section>`;
+  back(renderYunze);content().querySelector('[data-yan-visit]').onclick=renderYanHome;
  }
  function renderYanHome(){
-  if(!yanState(getSave()).unlocked)return render();
+  if(!yanState(getSave()).unlocked)return renderYunze();
   activate('map');const state=yanState(getSave());
   const show=(value,after)=>{content().innerHTML=`<section class="xg-map-sheet"><button class="xg-map-back" type="button">← 返回${YAN_HILL}</button>${heading(YAN_NAME,'山居旧事')}${yanText(value)}<p role="status" aria-live="polite"></p></section>`;back(after)};
   if(state.rejected){show('院门紧闭，山风吹得门符轻响。燕停云已不在这里。',renderYanHill);return}
@@ -108,23 +120,23 @@ export function createMapUI({getSave,activate,actions,onSectBattleExit}){
  }
  function renderMarket(){
   activate('map');
-  content().innerHTML=`<section class="xg-map-sheet"><button class="xg-map-back" type="button">← 返回地图</button>${heading('坊市','买卖货物，整顿行囊。')}
+  content().innerHTML=`<section class="xg-map-sheet"><button class="xg-map-back" type="button">← 返回云泽国</button>${heading('坊市','买卖货物，整顿行囊。')}
    <div class="xg-map-place xg-map-scene"><span class="xg-map-peak" aria-hidden="true"></span><strong>坊市商贩</strong><p>铁剑、布衣与通用典籍都在这里出售，也收购装备和材料。</p></div>
    <div class="xg-feature-row xg-map-trade-actions"><button type="button" data-market-shop>购买商品</button><button type="button" data-market-gear>只看装备</button><button type="button" data-market-sell>出售物品</button></div></section>`;
-  back(render);
+  back(renderYunze);
   const api={getSave,actions,closeFeature:()=>document.getElementById('xg-feature-sheet')?.remove()};
   const close=()=>{api.closeFeature();renderMarket()};
   content().querySelector('[data-market-shop]').onclick=()=>showShop(api,false,close);
   content().querySelector('[data-market-gear]').onclick=()=>showShop(api,true,close);
   content().querySelector('[data-market-sell]').onclick=()=>showSell(api,close);
  }
- function renderBlackMarket(){showBlackMarket({getSave,actions,activate},render)}
+ function renderBlackMarket(){showBlackMarket({getSave,actions,activate},renderYunze)}
  function renderSects(){
   activate('map');
   const spots=[[3,3],[58,5],[30,18],[70,30],[8,36],[42,49],[2,65],[63,67],[28,78]];
-  content().innerHTML=`<section class="xg-map-sheet"><button class="xg-map-back" type="button">← 返回地图</button>${heading('九宗山门','拜访各宗；本宗内部事务在人物页。')}
+  content().innerHTML=`<section class="xg-map-sheet"><button class="xg-map-back" type="button">← 返回云泽国</button>${heading('九宗山门','拜访各宗；本宗内部事务在人物页。')}
    ${peaks(VISITING_SECTS.map((sect,i)=>({name:sect.name,id:sect.id,x:spots[i][0],y:spots[i][1],size:.79})), 'visit')}</section>`;
-  back(render);
+  back(renderYunze);
   content().querySelectorAll('[data-visit]').forEach(button=>button.onclick=()=>renderVisit(button.dataset.visit));
  }
  function renderVisit(id){
@@ -138,7 +150,7 @@ export function createMapUI({getSave,activate,actions,onSectBattleExit}){
   activate('map');
   content().innerHTML=`<section class="xg-map-sheet"><button class="xg-map-back" type="button">← 返回九宗</button>${heading(sect.name)}
    <div class="xg-map-place xg-map-scene"><span class="xg-map-peak" aria-hidden="true"></span><strong>${sect.npc}</strong><p>${sect.id==='tiangong'&&own?'“你也是天工阁的人？自己的装备，自己去修。”':`“来者是客，欢迎到${sect.name}坐坐。”`}</p></div>
-   <div class="xg-card"><h3>${sect.service}</h3>${detail?`<p>${detail}</p>`:''}${serviceActions}${(id==='danxia'?SECT_PILLS:id==='taixu'?SECT_TALISMANS:id==='xuanji'?['binding-array','foundation-binding-array']:[]).filter(itemId=>!ITEMS[itemId].stage||foundationPlayer()).map(itemId=>`<button type="button" data-sect-buy="${itemId}">购买${ITEMS[itemId].name} · ${ITEMS[itemId].price} 灵石</button>`).join('')}${id==='wanling'?`<button type="button" data-rent>租借灵兽 · ${foundationPlayer()?1.7:1} 灵石（已有 ${foundationPlayer()?getSave().foundationPetRentals||0:getSave().petRentals||0} 份）</button>`:''}${['danxia','taixu','xuanji','wanling','tiangong','qinglan','zhenyue'].includes(id)?'':'<small class="xg-map-pending">具体效果或费用待定，暂不扣除灵石。</small>'}</div><p role="status" aria-live="polite"></p>
+   <div class="xg-card"><h3>${sect.service}</h3>${detail?`<p>${detail}</p>`:''}${serviceActions}${(id==='danxia'?SECT_PILLS:id==='taixu'?SECT_TALISMANS:id==='xuanji'?['binding-array','foundation-binding-array']:[]).filter(itemId=>itemStageAllowed(getSave().player,ITEMS[itemId])).map(itemId=>`<button type="button" data-sect-buy="${itemId}">购买${ITEMS[itemId].name} · ${ITEMS[itemId].price} 灵石</button>`).join('')}${id==='wanling'?`<button type="button" data-rent>租借灵兽 · ${foundationPlayer()?1.7:1} 灵石（已有 ${foundationPlayer()?getSave().foundationPetRentals||0:getSave().petRentals||0} 份）</button>`:''}${['danxia','taixu','xuanji','wanling','tiangong','qinglan','zhenyue'].includes(id)?'':'<small class="xg-map-pending">具体效果或费用待定，暂不扣除灵石。</small>'}</div><p role="status" aria-live="polite"></p>
   </section>`;
   back(renderSects);
   const status=content().querySelector('[role=status]');
@@ -189,21 +201,21 @@ export function createMapUI({getSave,activate,actions,onSectBattleExit}){
  }
  function renderMonsters(){
   activate('map');
-  content().innerHTML=`<section class="xg-map-sheet"><button class="xg-map-back" type="button">← 返回地图</button>${heading('丰原镇','妖影、故人和秘境，都藏在山中。')}
+  content().innerHTML=`<section class="xg-map-sheet"><button class="xg-map-back" type="button">← 返回云泽国</button>${heading('丰原镇','妖影、故人和秘境，都藏在山中。')}
    ${peaks(getSave().bossLine?.phase==='wounded'&&!getSave().bossLine.rescuePending?[...QI_PEAKS,{id:'wounded-ridge',name:'残影峰',kind:'boss',x:37,y:8,size:.78}]:QI_PEAKS, 'encounter')}</section>`;
   content().querySelectorAll('[data-encounter]').forEach(button=>button.onclick=()=>renderEncounter(button.dataset.encounter));
-  back(render);
+  back(renderYunze);
  }
  function renderFoundation(){
-  if(!foundationPlayer())return render();
+  if(!foundationPlayer())return renderYunze();
   activate('map');
   const storyPeaks=oldFriendState(getSave())?.step>=6?[...FOUNDATION_PEAKS,{id:'old-friend-ruins',name:'照夜台',kind:'story',x:34,y:22,size:.7}]:FOUNDATION_PEAKS;
-  content().innerHTML=`<section class="xg-map-sheet"><button class="xg-map-back" type="button">← 返回地图</button>${heading('望川岭','筑基修士出没的山岭。')}${peaks(realmProgress(getSave().player).index>=19?[...storyPeaks,{id:'foundation-ending',name:getSave().foundationStory?.phase==='wounded'||getSave().foundationStory?.phase==='dead'?'栖息崖':'归元渡',kind:'boss',x:65,y:72,size:.8}]:storyPeaks,'foundation')}</section>`;
-  back(render);
+  content().innerHTML=`<section class="xg-map-sheet"><button class="xg-map-back" type="button">← 返回云泽国</button>${heading('望川岭','筑基修士出没的山岭。')}${peaks(realmProgress(getSave().player).index>=19?[...storyPeaks,{id:'foundation-ending',name:getSave().foundationStory?.phase==='wounded'||getSave().foundationStory?.phase==='dead'?'栖息崖':'归元渡',kind:'boss',x:65,y:72,size:.8}]:storyPeaks,'foundation')}</section>`;
+  back(renderYunze);
   content().querySelectorAll('[data-foundation]').forEach(button=>button.onclick=()=>renderFoundationPeak(button.dataset.foundation));
  }
  function renderFoundationPeak(id){
-  if(!foundationPlayer())return render();
+  if(!foundationPlayer())return renderYunze();
   if(id==='old-friend-ruins'&&oldFriendState(getSave())?.step>=6)return showOldFriend({getSave,actions},renderFoundation,'ruins');
   if(id==='pei-home')return showPei({getSave,actions},renderFoundation);
   if(id==='foundation-ending')return renderPursuer();
@@ -223,11 +235,29 @@ export function createMapUI({getSave,activate,actions,onSectBattleExit}){
  function renderDongxia(){
   if(!canEnterDongxia(getSave()))return render();
   activate('map');
-  content().innerHTML=`<section class="xg-map-sheet"><button class="xg-map-back" type="button">← 返回山河图</button>${heading('东夏国','关山万里，自此远游。')}<div class="xg-card"><p>长风越过关楼，远山连着云海。商旅与修士在城门下交错而过，你收起师父所赠的舆图，踏进这片陌生的山河。</p></div><div class="xg-feature-row"><button type="button" data-dongxia-stroll>四处走走</button></div>${peaks([{id:'gate',name:'东夏边关',x:8,y:12,size:.95},{id:'street',name:'长街',x:62,y:35,size:.85},{id:'river',name:'望山桥',x:20,y:65,size:.8}],'dongxia')}<article class="xg-card" data-dongxia-scene><p>点选地标，看看沿途风物。</p></article></section>`;
+  content().innerHTML=`<section class="xg-map-sheet"><button class="xg-map-back" type="button">← 返回山河图</button>${heading('东夏国','关山万里，自此远游。')}<div class="xg-card"><p>长风越过关楼，远山连着云海。商旅与修士在城门下交错而过，你收起师父所赠的舆图，踏进这片陌生的山河。</p></div><div class="xg-feature-row"><button type="button" data-dongxia-stroll>四处走走</button><button type="button" data-golden-wilds>出城历练</button><button type="button" data-golden-shop>东夏商行</button></div>${peaks([{id:'gate',name:'东夏边关',x:8,y:12,size:.95},{id:'street',name:'长街',x:62,y:35,size:.85},{id:'river',name:'望山桥',x:20,y:65,size:.8}],'dongxia')}<article class="xg-card" data-dongxia-scene><p>点选地标，看看沿途风物。</p></article></section>`;
   back(render);
   content().querySelector('[data-dongxia-stroll]').onclick=()=>showStroll({getSave,actions},renderDongxia,0,'dongxia');
+  content().querySelector('[data-golden-wilds]').onclick=renderGoldenWilds;
+  content().querySelector('[data-golden-shop]').onclick=()=>showShop({getSave,actions},false,renderDongxia);
   const scenes={gate:'关楼投下长长的影子。守关修士验过你的路引，侧身让开通往东夏国的道路。',street:'檐下悬着各色幡旗，茶香混着新磨的墨香。你在人群间缓步而行，听着陌生口音谈论远方的山川。',river:'桥下流水映着晚霞，远山一重叠着一重。此刻回望，来时的关楼已隐在薄雾里。'};
   content().querySelectorAll('[data-dongxia]').forEach(b=>b.onclick=()=>{content().querySelector('[data-dongxia-scene]').textContent=scenes[b.dataset.dongxia]});
+ }
+ function renderGoldenWilds(){
+  if(!canEnterDongxia(getSave()))return render();
+  activate('map');
+  content().innerHTML=`<section class="xg-map-sheet"><button class="xg-map-back" type="button">← 返回东夏国</button>${heading('东夏荒野','金丹初期 · 山野历练')}${peaks(GOLDEN_PEAKS,'golden')}<p>选择一处山地，查看当地妖兽。</p></section>`;
+  back(renderDongxia);
+  content().querySelectorAll('[data-golden]').forEach(b=>b.onclick=()=>renderGoldenFoe(b.dataset.golden));
+ }
+ function renderGoldenFoe(id){
+  if(!canEnterDongxia(getSave()))return render();
+  const place=GOLDEN_PEAKS.find(p=>p.id===id),monster=GOLDEN_MONSTERS.find(m=>m.id===place?.monsterId);
+  if(!monster)return renderGoldenWilds();
+  activate('map');
+  content().innerHTML=`<section class="xg-map-sheet"><button class="xg-map-back" type="button">← 返回东夏荒野</button>${heading(place.name,'金丹一至三层 · 初期妖兽')}<div class="xg-card xg-map-monster"><h3>${monster.name}</h3><p>生命 ${monster.hp} · 攻击 ${monster.attack} · 防御 ${monster.defense} · 速度 ${monster.speed}</p><p>法力 ${monster.mp} · 功法：强化普通</p><small>${monster.drop}</small><button type="button" data-golden-fight>迎战</button></div><p role="status" aria-live="polite"></p></section>`;
+  back(renderGoldenWilds);
+  content().querySelector('[data-golden-fight]').onclick=async event=>{const button=event.currentTarget;button.disabled=true;try{await actions.startBattle(monster.id);battle()}catch(error){content().querySelector('[role=status]').textContent=error.message;button.disabled=false}};
  }
  function renderPursuer(){
   if(foundationStoryPending(getSave()))return battle();

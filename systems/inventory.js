@@ -1,7 +1,10 @@
+import {isGoldenRealm} from './golden-core.js';
+import {GOLDEN_RECIPES} from '../data/golden-economy.js';
 import {ITEMS,ELEMENTAL_MANUALS} from '../data/items.js';
 import {DURABILITY_MAX,TEMP_LOOT_MS} from '../data/balance.js';
 import {localDay} from './cultivation.js';
 import {realmHpBonus,realmBattleBonus,realmProgress} from '../data/realms.js';
+export const itemStageAllowed=(player,item)=>!item?.stage||(item.stage==='金丹'?isGoldenRealm(player):item.stage==='筑基'?(String(player.realm).startsWith('筑基')||isGoldenRealm(player)):true);
 export function setItemLocked(save,uid,locked){
  if(save.battle)throw new Error('请先结束战斗。');
  const entry=save.inventory.find(e=>e.uid===uid);
@@ -28,10 +31,10 @@ export function addItem(save,id,quantity=1){
 }
 export function purchase(save,id,sectDiscount=false){
  const item=ITEMS[id];if(!item)throw new Error('商品不存在。');
- if(item.minFoundationLevel&&realmProgress(save.player).index-9<item.minFoundationLevel)throw new Error('境界不足，尚不能购买这件法器。');
+ if(item.minFoundationLevel&&!isGoldenRealm(save.player)&&realmProgress(save.player).index-9<item.minFoundationLevel)throw new Error('境界不足，尚不能购买这件法器。');
  if(item.blackMarketOnly)throw new Error('这部典籍只能从黑市抽取。');
  if(!Number.isFinite(item.price))throw new Error('此物品不供出售。');
- if(item.stage==='筑基'&&!String(save.player.realm).startsWith('筑基'))throw new Error('灵力尚浅，尚不能购买筑基货品。');
+ if(!itemStageAllowed(save.player,item))throw new Error(`灵力尚浅，尚不能购买${item.stage}货品。`);
  const sectOnly=['gamble-manual','steal-manual','only-once-manual'];
  if(sectOnly.includes(id)&&!sectDiscount)throw new Error('这部功法仅在宗门商店出售。');
  if(id==='one-manual'&&sectDiscount)throw new Error('这部功法只在黑市出售。');
@@ -45,8 +48,8 @@ export function purchase(save,id,sectDiscount=false){
 export function equipItem(save,uid){
  const entry=save.inventory.find(entry=>entry.uid===uid),item=ITEMS[entry?.itemId];
  if(!item||item.kind!=='equipment')throw new Error('无法装备这件物品。');
- if(item.stage==='筑基'&&!String(save.player.realm).startsWith('筑基'))throw new Error('灵力尚浅，无法驾驭这件法器。');
- if(item.minFoundationLevel&&realmProgress(save.player).index-9<item.minFoundationLevel)throw new Error('境界不足，尚不能装备这件法器。');
+ if(!itemStageAllowed(save.player,item))throw new Error('灵力尚浅，无法驾驭这件法器。');
+ if(item.minFoundationLevel&&!isGoldenRealm(save.player)&&realmProgress(save.player).index-9<item.minFoundationLevel)throw new Error('境界不足，尚不能装备这件法器。');
  if(save.battle)throw new Error('战斗中不能换装。');
  if(save.equipment[item.slot]!==uid&&entry.durability<=0)throw new Error('装备已损坏，需修补后使用。');
  const before=equipmentStats(save);
@@ -77,9 +80,9 @@ export function claimLoot(save,id,now=Date.now()){
  expireLoot(save,now);const index=save.temporaryLoot.findIndex(entry=>entry.id===id);if(index<0)throw new Error('战利品已过期或已领取。');
  const entry=save.temporaryLoot[index];addItem(save,entry.itemId,entry.quantity);save.temporaryLoot.splice(index,1);
 }
-export function equipmentSalePrice(item){if(item?.stage==='筑基')return ['foundation-sword','foundation-robe'].includes(item.id)?3:['foundation-wild-sword','foundation-wild-robe'].includes(item.id)?3.75:4.5;return ['iron-sword','cloth-robe'].includes(item?.id)?2:['wild-sword','wild-robe'].includes(item?.id)?2.5:3}
+export function equipmentSalePrice(item){if(Number.isFinite(item?.resaleValue))return item.resaleValue;if(item?.stage==='筑基')return ['foundation-sword','foundation-robe'].includes(item.id)?3:['foundation-wild-sword','foundation-wild-robe'].includes(item.id)?3.75:4.5;return ['iron-sword','cloth-robe'].includes(item?.id)?2:['wild-sword','wild-robe'].includes(item?.id)?2.5:3}
 export const MATERIAL_SALE_PRICE=.8;
-export const materialSalePrice=item=>item?.stage==='筑基'?1.2:MATERIAL_SALE_PRICE;
+export const materialSalePrice=item=>item?.stage==='金丹'?1.8:item?.stage==='筑基'?1.2:MATERIAL_SALE_PRICE;
 export function sellExtra(save,uid,quantity=1){
  assertItemUnlocked(save,uid);
  const entry=save.inventory.find(e=>e.uid===uid),item=ITEMS[entry?.itemId];
@@ -178,7 +181,7 @@ export function discardEquipment(save,uid){
 export function usePill(save,uid,now=Date.now()){
  const entry=save.inventory.find(entry=>entry.uid===uid),item=ITEMS[entry?.itemId];
  if(!entry||item?.kind!=='pill')throw new Error('丹药不存在。');
- if(item.stage==='筑基'&&!String(save.player.realm).startsWith('筑基'))throw new Error('此丹药力太盛，暂不能服用。');
+ if(!itemStageAllowed(save.player,item))throw new Error('此丹药力太盛，暂不能服用。');
  save.pillCooldowns??={};
  if((save.pillCooldowns[item.id]||0)>now)throw new Error(`此丹药仍在冷却，还需 ${Math.ceil((save.pillCooldowns[item.id]-now)/1000)} 秒。`);
  const p=save.player,stats=equipmentStats(save);
@@ -195,6 +198,7 @@ export function usePill(save,uid,now=Date.now()){
  return `服用${item.name}。`;
 }
 export const PILL_RECIPES={
+ ...GOLDEN_RECIPES,
  'small-heal-pill':{'healing-herb':5},
  'spirit-pill':{'spirit-herb':5},
  'mixed-pill':{'healing-herb':2,'spirit-herb':1},
@@ -207,7 +211,7 @@ export const PILL_RECIPES={
 export function brewPill(save,id){
  if(save.player.sect!=='丹霞谷'||!save.techniques?.mastered?.includes('divine-pharmacopoeia'))throw new Error('须先学会丹霞谷《神药谱》。');
  const recipe=PILL_RECIPES[id];if(!recipe)throw new Error('丹方不存在。');
- if(ITEMS[id].stage==='筑基'&&!String(save.player.realm).startsWith('筑基'))throw new Error('灵力尚浅，无法炼制筑基丹药。');
+ if(!itemStageAllowed(save.player,ITEMS[id]))throw new Error(`灵力尚浅，无法炼制${ITEMS[id].stage}丹药。`);
  for(const [material,amount] of Object.entries(recipe))if((save.inventory.find(item=>item.itemId===material)?.quantity||0)<amount)throw new Error('药草不足。');
  const stack=save.inventory.some(entry=>entry.itemId===id);
  const freed=Object.entries(recipe).filter(([material,amount])=>save.inventory.find(entry=>entry.itemId===material)?.quantity===amount).length;

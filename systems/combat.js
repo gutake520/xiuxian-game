@@ -3,11 +3,11 @@ import {finishOldFriendDuel} from './old-friend.js';
 import {collectTeachingMaterial} from './master-teaching.js';
 import {beastPower} from '../data/titles.js';
 import {castElement,hasElementalEffect,elementalEffect,elementalBonus,expireElements} from './five-elements.js';
-import {foundationStoryPending} from './foundation-story.js';
+import {canEnterDongxia,foundationStoryPending} from './foundation-story.js';
 import {finishZhangEncounter,tryZhangRescue} from './zhang-huaijin.js';
 import {advanceTreasure} from './treasure.js';
 import {chargedMultiplier,rootCount} from '../data/technique-slots.js';
-import {QI_MONSTERS,FOUNDATION_MONSTERS} from '../data/locations.js';
+import {QI_MONSTERS,FOUNDATION_MONSTERS,GOLDEN_MONSTERS} from '../data/locations.js';
 import {ITEMS} from '../data/items.js';
 import {COMBAT_REWARD_XP} from '../data/balance.js';
 import {equipmentStats,awardItem,maxDurability} from './inventory.js';
@@ -24,21 +24,22 @@ import {queueYanAfterVictory} from './yan-tingyun.js';
 export const round2=value=>Math.round((value+Number.EPSILON)*100)/100;
 const herbs=['healing-herb','spirit-herb','qi-herb'];
 const foundationHerbs=['foundation-healing-herb','foundation-spirit-herb','foundation-qi-herb'];
-const monsters=[...QI_MONSTERS,...FOUNDATION_MONSTERS];
+const monsters=[...QI_MONSTERS,...FOUNDATION_MONSTERS,...GOLDEN_MONSTERS];
 const pick=array=>array[Math.floor(Math.random()*array.length)];
 function grant(save,id,quantity,rewards,now,loot){const place=awardItem(save,id,quantity,now);rewards.push(`${ITEMS[id].name}×${quantity}${place==='temporary'?'（临时储物）':''}`);loot.push({itemId:id,quantity,place,uid:place==='bag'?(ITEMS[id].stackable?save.inventory.find(entry=>entry.itemId===id):save.inventory.at(-1))?.uid:save.temporaryLoot.at(-1)?.id})}
 function awardVictory(save,monster,now){
  const rewards=[],loot=[];const count=Math.random()<(monster.twoDropChance??.6)?2:3;
- const foundation=monster.stage==='筑基',herbPool=foundation?foundationHerbs:herbs,ore=foundation?'foundation-ore':'ore';
- if(monster.resource==='stones'){save.player.spiritStones=round2(save.player.spiritStones+count);rewards.push(`灵石×${count}`);loot.push({itemId:'stones',quantity:count})}
+ const golden=monster.stage==='金丹',value=golden?1.5:1;
+ const foundation=monster.stage==='筑基',herbPool=golden?['golden-healing-herb','golden-spirit-herb']:foundation?foundationHerbs:herbs,ore=golden?'golden-ore':foundation?'foundation-ore':'ore';
+ if(monster.resource==='stones'){save.player.spiritStones=round2(save.player.spiritStones+count*value);rewards.push(`灵石×${count*value}`);loot.push({itemId:'stones',quantity:count*value})}
  else grant(save,monster.resource==='herbs'?pick(herbPool):ore,count,rewards,now,loot);
  const other=pick(monster.resource==='stones'?['herbs','ore']:monster.resource==='herbs'?['stones','ore']:['stones','herbs']);
- if(other==='stones'){save.player.spiritStones=round2(save.player.spiritStones+1);rewards.push('灵石×1');loot.push({itemId:'stones',quantity:1})}
+ if(other==='stones'){save.player.spiritStones=round2(save.player.spiritStones+value);rewards.push(`灵石×${value}`);loot.push({itemId:'stones',quantity:value})}
  else grant(save,other==='herbs'?pick(herbPool):ore,1,rewards,now,loot);
  const gearTier=foundation&&monster.minLevel>=7?'late':foundation&&monster.minLevel>=4?'mid':null;
- for(const [id,chance] of [[gearTier?`foundation-${gearTier}-shoes`:foundation?'foundation-shoes':'wild-shoes',.08],[gearTier?`foundation-${gearTier}-sword`:foundation?'foundation-wild-sword':'wild-sword',.04],[gearTier?`foundation-${gearTier}-robe`:foundation?'foundation-wild-robe':'wild-robe',.04]])if(Math.random()<chance)grant(save,id,1,rewards,now,loot);
- if(Math.random()<.04)grant(save,pick(foundation?['foundation-hp-charm','foundation-mp-charm','foundation-crit-charm','foundation-dodge-charm']:['hp-charm','mp-charm','crit-charm','dodge-charm']),1,rewards,now,loot);
- if(!foundation&&monster.minLevel>=4&&Math.random()<.02)grant(save,'sting-manual',1,rewards,now,loot);
+ for(const [id,chance] of [[golden?'golden-shoes':gearTier?`foundation-${gearTier}-shoes`:foundation?'foundation-shoes':'wild-shoes',.08],[golden?'golden-wild-sword':gearTier?`foundation-${gearTier}-sword`:foundation?'foundation-wild-sword':'wild-sword',.04],[golden?'golden-wild-robe':gearTier?`foundation-${gearTier}-robe`:foundation?'foundation-wild-robe':'wild-robe',.04]])if(Math.random()<chance)grant(save,id,1,rewards,now,loot);
+ if(Math.random()<.04)grant(save,pick(golden?['golden-hp-charm','golden-mp-charm','golden-crit-charm','golden-dodge-charm']:foundation?['foundation-hp-charm','foundation-mp-charm','foundation-crit-charm','foundation-dodge-charm']:['hp-charm','mp-charm','crit-charm','dodge-charm']),1,rewards,now,loot);
+ if(!golden&&!foundation&&monster.minLevel>=4&&Math.random()<.02)grant(save,'sting-manual',1,rewards,now,loot);
  const material=collectTeachingMaterial(save,monster.id);if(material)rewards.push(material);
  const bonus=monster.bonusStones;
  if(bonus){const extra=bonus[0]+Math.floor(Math.random()*(bonus[1]-bonus[0]+1));save.player.spiritStones=round2(save.player.spiritStones+extra);rewards.push(`额外灵石×${extra}`);loot.push({itemId:'stones',quantity:extra})}
@@ -112,6 +113,7 @@ function resolveVictory(save,now,messages){
  ensureBossLine(save);
  finish(save,'victory',result);
  messages.push(`胜利！修为 +${result.xp}，${result.rewards.join('、')}。`);
+ if(monster.stage==='金丹'){save.lastBattle.log=[...messages];return save.lastBattle}
  if(foundationStoryPending(save))messages.push('你刚踏入筑基十层，灭门仇人的同伙已追至归元渡。');
  else if(save.bossLine?.phase==='ambush')messages.push('你刚踏入炼气十层，故人衣纹忽然在山道尽头出现。');
  else if(monster.humanoid&&!battle.retaliation&&save.player.hp>0&&Math.random()<.3){
@@ -135,7 +137,7 @@ export function beginBattle(save,id,pet=null,retaliation=false){
  if(save.seniorRewardPending)throw new Error('请先领取大比奖励。');
  if(save.bossLine?.phase==='ambush'||save.bossLine?.rescuePending||foundationStoryPending(save))throw new Error('请先走完当前剧情。');
  if(save.player.cultivation< -100)throw new Error('请先去修炼。');
- const tier=realmProgress(save.player).index;if(tier<0)throw new Error('当前境界暂未开放此处战斗。');
+ const tier=realmProgress(save.player).index;if(tier<0&&!canEnterDongxia(save))throw new Error('当前境界暂未开放此处战斗。');
  if(save.player.hp<=0)throw new Error('生命不足，无法迎战。');
  if(id==='foundation-warden')throw new Error('归元渡旧事已更替，请返回地图查看师父剧情。');
  if(id==='wounded-pursuer'){
@@ -156,9 +158,13 @@ export function beginBattle(save,id,pet=null,retaliation=false){
   return save.battle;
  }
  const monster=monsters.find(entry=>entry.id===id);if(!monster)throw new Error('对手不存在。');
+ if(monster.stage==='金丹'){
+  if(!canEnterDongxia(save))throw new Error('请先突破金丹并向师父请教，开放东夏国。');
+  if(pet)throw new Error('金丹灵兽出战尚未开放。');
+ }
  if(monster.stage==='筑基'&&tier-9<monster.minLevel)throw new Error(`需筑基${['一','二','三','四','五','六','七','八','九','十'][monster.minLevel-1]}层方可挑战。`);
  if(monster.boss&&save.foundationEnding?.defeated)throw new Error('封渡客已与你罢战。');
- if(monster.stage!=='筑基'&&tier+1<monster.minLevel)throw new Error(`需炼气${['一','二','三','四','五','六','七','八','九','十'][monster.minLevel-1]}层解锁此处。`);
+ if(monster.stage!=='金丹'&&monster.stage!=='筑基'&&tier+1<monster.minLevel)throw new Error(`需炼气${['一','二','三','四','五','六','七','八','九','十'][monster.minLevel-1]}层解锁此处。`);
  selectBattlePet(save,pet);
  const maxHp=monster.hpMin+Math.floor(Math.random()*(monster.hpMax-monster.hpMin+1));
  save.battle={id:crypto.randomUUID(),monsterId:id,name:monster.name,stage:monster.stage||'炼气',maxHp,hp:maxHp,attack:monster.attack,defense:monster.defense||0,...(monster.stage==='筑基'?{foundationBalanceVersion:1}:{}),speed:monster.speed,mp:monster.mp||0,round:0,pet,petName:pet?(beastCanFight(save,pet)?beastName(save,pet):'租借灵兽'):null,petStage:String(save.player.realm).startsWith('筑基')?'筑基':'炼气',retaliation,guard:false,bindRounds:[],arrayRound:0,talismansUsed:0,talismanRound:0,freeArrayUsed:false,criticalFocus:false,skillReady:{},log:['狭路相逢，战斗开始。']};

@@ -10,7 +10,7 @@ function mount(t,overrides={}){
  t.after(()=>{globalThis.document=previous});
  const save={player:{realm:'炼气七层',spiritStones:100,sect:'无门无派'},inventory:[],equipment:{},yanTingyun:{unlocked:true,introSeen:true,affinity:100,seen:[30,60,90]},...overrides};
  const actions={mutate:async change=>({result:change(save)}),acknowledgeYan:async id=>acknowledgeYanAftermath(save,id)};
- const ui=createMapUI({getSave:()=>save,actions,activate:()=>{}});ui.render();
+ const ui=createMapUI({getSave:()=>save,actions,activate:()=>{}});ui.render();document.querySelector('[data-map="yunze"]')?.click();
  const find=selector=>{const node=document.querySelector(selector);assert.ok(node,selector);return node};
  const click=async selector=>{const node=find(selector);node.dispatchEvent(new Event('click'));await new Promise(resolve=>setImmediate(resolve));};
  const visit=async()=>{await click('[data-map="yan-hill"]');await click('[data-yan-visit]')};

@@ -19,8 +19,8 @@
 | 筑基／金丹突破、自由资质 | `systems/breakthrough.js`、`systems/golden-core.js` | `ui/breakthrough.js`、`index.js` |
 | 战斗、技能结算 | `systems/combat.js`、`systems/five-elements.js` | `ui/combat.js` |
 | 功法学习、装备与资格 | `data/techniques.js`、`data/technique-slots.js`、`systems/techniques.js` | `ui/techniques.js` |
-| 装备、储物锁、买卖 | `data/items.js`、`data/equipment.js`、`systems/inventory.js` | `ui/inventory.js` |
-| 地图、怪物与秘境 | `data/locations.js`、`systems/exploration.js` | `ui/map.js` |
+| 装备、储物锁、买卖 | `data/items.js`、`data/golden-economy.js`、`systems/inventory.js` | `ui/inventory.js` |
+| 国家地图、怪物与秘境（云泽／东夏） | `data/locations.js`、`systems/exploration.js` | `ui/map.js`（山河图 → 国家 → 地点） |
 | 主线、仇人、东夏国解锁 | `systems/boss-line.js`、`systems/foundation-story.js`、`data/masters.js` | `ui/boss-line.js`、`ui/foundation-story.js`、`ui/map.js`、`ui/master-teaching.js` |
 | 四处走走、每日奇遇额度 | `data/stroll.js`、`systems/stroll.js` | `ui/stroll.js` |
 | 宗门、服务与资格 | `data/sects.js`、`systems/sects.js`、`systems/sect-services.js`、`systems/sect-eligibility.js` | `index.js` 宗门页、`ui/map.js` 拜访 |
@@ -43,5 +43,5 @@
 ## 验证与维护
 
 - 测试：`tests/*.test.js`，多数与模块同名；全量命令 `npm test`。
-- 金丹突破与成长领取、典籍学习：`tests/golden-core.test.js`；东夏国试炼：`tests/concentration.test.js`。
+- 金丹突破与成长领取、典籍学习：`tests/golden-core.test.js`；东夏国试炼：`tests/concentration.test.js`；金丹物价与补给：`tests/golden-economy.test.js`。
 - 索引只保留位置、职责、关键调用关系；详细规则按需查 `docs/STRUCTURE.md`，数值以代码为准。

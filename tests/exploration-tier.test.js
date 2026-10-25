@@ -47,13 +47,13 @@ test('map offers independent town and foundation entrances, costs and return des
  const previous=globalThis.document;const {document}=parseHTML('<html><body><section id="xg-panel"><main id="xg-content"></main></section></body></html>');globalThis.document=document;t.after(()=>globalThis.document=previous);
  const s=migrateSave({...make('筑基一层'),slot:'secrets',bossLine:{phase:'defeated',insight:true}});
  const map=createMapUI({getSave:()=>s,activate:()=>{},actions:{}});
- map.render();document.querySelector('[data-map="foundation"]').click();document.querySelector('[data-foundation="foundation-secret"]').click();
+ map.render();document.querySelector('[data-map="yunze"]').click();document.querySelector('[data-map="foundation"]').click();document.querySelector('[data-foundation="foundation-secret"]').click();
  assert.match(document.body.textContent,/云岫秘境/);assert.match(document.body.textContent,/2 灵石/);assert.match(document.body.textContent,/返回望川岭/);
  document.querySelector('.xg-map-back').click();assert.ok(document.querySelector('[data-foundation="rock-hollow"]'));
  // Use the town entrance after a completed foundation exploration today.
  startFoundationExploration(s);finishQiExploration(s,Date.now()+QI_EXPLORATION_MS);
- map.render();document.querySelector('[data-map="monsters"]').click();document.querySelector('[data-encounter="star-realm"]').click();
+ map.render();document.querySelector('[data-map="yunze"]').click();document.querySelector('[data-map="monsters"]').click();document.querySelector('[data-encounter="star-realm"]').click();
  assert.match(document.body.textContent,/星落秘境/);assert.match(document.body.textContent,/1 灵石/);assert.equal(document.querySelector('[data-explore]').disabled,false);
  document.querySelector('.xg-map-back').click();assert.ok(document.querySelector('[data-encounter="stone-ridge"]'));
- map.render();document.querySelector('[data-map="foundation"]').click();document.querySelector('[data-foundation="foundation-secret"]').click();assert.equal(document.querySelector('[data-explore]').disabled,true);
+ map.render();document.querySelector('[data-map="yunze"]').click();document.querySelector('[data-map="foundation"]').click();document.querySelector('[data-foundation="foundation-secret"]').click();assert.equal(document.querySelector('[data-explore]').disabled,true);
 });

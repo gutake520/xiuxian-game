@@ -1,3 +1,4 @@
+import {isGoldenRealm} from './golden-core.js';
 import {ITEMS} from '../data/items.js';
 import {equipmentStats,maxDurability} from './inventory.js';
 import {recordDailyRepair} from './sect-progression.js';
@@ -9,8 +10,8 @@ export const HEAL_AMOUNT=12;
 export const MEDITATION_PRICE=2;
 export const MEDITATION_MS=3*60*1000;
 
-export function repairPrice(entry){return round2(Math.max(0,maxDurability(entry)-(entry.durability??maxDurability(entry)))*REPAIR_PER_POINT*(ITEMS[entry?.itemId]?.stage==='筑基'?1.5:1))}
-export function healingService(player){return String(player.realm).startsWith('筑基')?{price:7.5,amount:18,meditationPrice:3}:{price:HEAL_PRICE,amount:HEAL_AMOUNT,meditationPrice:MEDITATION_PRICE}}
+export function repairPrice(entry){return round2(Math.max(0,maxDurability(entry)-(entry.durability??maxDurability(entry)))*REPAIR_PER_POINT*(ITEMS[entry?.itemId]?.stage==='金丹'?2.25:ITEMS[entry?.itemId]?.stage==='筑基'?1.5:1))}
+export function healingService(player){if(isGoldenRealm(player))return {price:11.25,amount:27,meditationPrice:4.5};return String(player.realm).startsWith('筑基')?{price:7.5,amount:18,meditationPrice:3}:{price:HEAL_PRICE,amount:HEAL_AMOUNT,meditationPrice:MEDITATION_PRICE}}
 export function repairEquipment(save,uid){
  if(save.player.sect==='天工阁')throw new Error('炼器师请你自行修补，本处暂不提供自修功能。');
  const entry=save.inventory.find(item=>item.uid===uid),item=ITEMS[entry?.itemId];

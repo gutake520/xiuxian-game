@@ -1,6 +1,7 @@
+import {isGoldenRealm} from '../systems/golden-core.js';
 import {realmProgress} from '../data/realms.js';
 import {ITEMS,SHOP_ITEMS} from '../data/items.js';
-import {setItemLocked,expandStorageBag,saleUnitPrice,sellInventoryBatch,sellExtra,discardJunk,purchase,equipItem,ownsTechnique,claimLoot,sellEquipment,discardEquipment,usePill,equipmentSalePrice,maxDurability,sellMaterial,materialSalePrice,sellPill,pillSalePrice} from '../systems/inventory.js';
+import {itemStageAllowed,setItemLocked,expandStorageBag,saleUnitPrice,sellInventoryBatch,sellExtra,discardJunk,purchase,equipItem,ownsTechnique,claimLoot,sellEquipment,discardEquipment,usePill,equipmentSalePrice,maxDurability,sellMaterial,materialSalePrice,sellPill,pillSalePrice} from '../systems/inventory.js';
 import {createSheet,escapeHTML,format,buttonTask} from './shared.js';
 import {techniqueLibrary} from './techniques.js';
 export function renderInventory(api,selection=null){
@@ -35,7 +36,7 @@ export function renderInventory(api,selection=null){
 }
 export function showShop(api,gearOnly=false,onClose=()=>{api.closeFeature();renderInventory(api)}){
  const sheet=createSheet(gearOnly?'购买装备':'坊市商店',onClose),body=sheet.querySelector('[data-body]');
- const save=api.getSave();body.innerHTML=`<p>随身灵石：<b data-shop-stones>${format(save.player.spiritStones)}</b></p>${SHOP_ITEMS.filter(id=>(!gearOnly||ITEMS[id].kind==='equipment')&&(!ITEMS[id].minFoundationLevel||realmProgress(save.player).index-9>=ITEMS[id].minFoundationLevel)&&(!ITEMS[id].stage||String(save.player.realm).startsWith('筑基'))).map(id=>{const item=ITEMS[id],owned=item.kind==='manual'&&!item.repeatable&&ownsTechnique(save,item.methodId);return `<article class="xg-feature-card"><h3>${item.name}<small>${item.price} 灵石</small></h3><p>${item.description}</p><button type="button" data-buy="${id}" ${owned?'disabled':''}>${owned?'已拥有':'购买'}</button><p class="xg-feature-message" data-purchase-status role="status" aria-live="polite"></p></article>`}).join('')}`;
+ const save=api.getSave();body.innerHTML=`<p>随身灵石：<b data-shop-stones>${format(save.player.spiritStones)}</b></p>${SHOP_ITEMS.filter(id=>(!gearOnly||ITEMS[id].kind==='equipment')&&(!ITEMS[id].minFoundationLevel||isGoldenRealm(save.player)||realmProgress(save.player).index-9>=ITEMS[id].minFoundationLevel)&&itemStageAllowed(save.player,ITEMS[id])).map(id=>{const item=ITEMS[id],owned=item.kind==='manual'&&!item.repeatable&&ownsTechnique(save,item.methodId);return `<article class="xg-feature-card"><h3>${item.name}<small>${item.price} 灵石</small></h3><p>${item.description}</p><button type="button" data-buy="${id}" ${owned?'disabled':''}>${owned?'已拥有':'购买'}</button><p class="xg-feature-message" data-purchase-status role="status" aria-live="polite"></p></article>`}).join('')}`;
  body.querySelectorAll('[data-buy]').forEach(button=>button.onclick=async()=>{
   if(button.disabled)return;
   const id=button.dataset.buy,item=ITEMS[id],status=button.parentElement.querySelector('[data-purchase-status]');

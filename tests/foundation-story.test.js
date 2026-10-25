@@ -57,6 +57,6 @@ test('saved UI completes rescue, fight and body search, then keeps Dongxia hidde
  await document.querySelector('[data-foundation-story]').onclick({currentTarget:document.querySelector('[data-foundation-story]')});assert.equal(s.foundationStory.phase,'wounded');
  document.querySelector('[data-map="foundation"]').click();document.querySelector('[data-foundation="foundation-ending"]').click();assert.ok(document.querySelector('[data-pursuer-fight]'));
  await actions.startBattle('wounded-pursuer');await actions.mutate(next=>{next.battle.hp=1;next.battle.dodgeRate=0},{allowBattle:true});await actions.battleRound('attack');
- s=await readSave(s.slot);assert.equal(s.foundationStory.phase,'dead');map.render();document.querySelector('[data-map="foundation"]').click();document.querySelector('[data-foundation="foundation-ending"]').click();assert.ok(document.querySelector('[data-pursuer-search]'));
+ s=await readSave(s.slot);assert.equal(s.foundationStory.phase,'dead');map.render();document.querySelector('[data-map="yunze"]').click();document.querySelector('[data-map="foundation"]').click();document.querySelector('[data-foundation="foundation-ending"]').click();assert.ok(document.querySelector('[data-pursuer-search]'));
  await Promise.allSettled([actions.mutate(searchPursuerBody),actions.mutate(searchPursuerBody)]);assert.equal(s.inventory.filter(i=>i.itemId==='foundation-completion-charm').length,1);map.render();assert.equal(document.querySelector('[data-map="dongxia"]'),null);
 });

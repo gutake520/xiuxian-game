@@ -89,7 +89,7 @@ test('cave UI has fixed-header sheet, free dice and playable surrender; residenc
  const {document,Event}=parseHTML('<html><body><section id="xg-panel"><main id="xg-content"></main></section></body></html>');const prev=globalThis.document;globalThis.document=document;t.after(()=>globalThis.document=prev);
  let s=met();const api={getSave:()=>s,actions:{mutate:async fn=>({result:fn(s)})}};
  const click=async selector=>{const b=document.querySelector(selector);assert.ok(b,selector);b.dispatchEvent(new Event('click'));await new Promise(r=>setImmediate(r))};
- const map=createMapUI({...api,activate:()=>{}});map.render();assert.ok(document.querySelector('[data-map="zhang-cave"]'));
+ const map=createMapUI({...api,activate:()=>{}});map.render();document.querySelector('[data-map="yunze"]').click();assert.ok(document.querySelector('[data-map="zhang-cave"]'));
  startZhangPlay(s,Date.now(),()=>0);showZhang(api,()=>{});assert.ok(document.querySelector('.xg-stroll-sheet>.xg-feature-header'));await click('[data-play]');assert.equal(document.querySelector('[data-bet]'),null);document.querySelector('[data-guess] option[value=big]').selected=true;await click('[data-start]');await click('[data-reveal]');assert.equal(s.zhangHuaijin.streak,1);
  s=met();startZhangPlay(s,Date.now(),()=>.6);showZhang(api,()=>{});await click('[data-play]');await click('[data-move="surrender"]');assert.equal(s.zhangHuaijin.streak,1);assert.match(document.body.textContent,/投降/);
 });
