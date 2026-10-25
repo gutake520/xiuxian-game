@@ -1,0 +1,16 @@
+#xg-panel .xg-stall-sitting [data-body]{padding-bottom:18px}
+#xg-panel .xg-sitting-heading{display:flex;justify-content:space-between;gap:12px;color:var(--muted);font-size:12px;letter-spacing:.08em}
+#xg-panel .xg-stall-sitting h3{margin:8px 0 16px;font:600 24px/1.5 var(--serif)}
+#xg-panel .xg-sitting-note{padding:13px 15px;border:1px solid var(--line);border-left:3px solid var(--gold);border-radius:3px 12px 12px 3px;background:var(--surface)}
+#xg-panel .xg-sitting-note small{font-size:11px;color:var(--gold);letter-spacing:.1em}
+#xg-panel .xg-sitting-note p{margin:6px 0 0;font-size:13px;line-height:1.8}
+#xg-panel .xg-sitting-story{margin:18px 0;font-family:var(--serif);font-size:15px;line-height:1.95}
+#xg-panel .xg-sitting-story p{margin:0 0 12px;overflow-wrap:anywhere}
+#xg-panel .xg-sitting-clue{margin:12px 0;padding:12px 15px;border-radius:12px;background:var(--wash);color:var(--jade);font-size:13px;line-height:1.8}
+#xg-panel .xg-sitting-clue p{margin:0}
+#xg-panel .xg-sitting-choices{display:grid;gap:9px;margin:16px 0}
+#xg-panel .xg-sitting-choices button{display:flex;align-items:center;gap:12px;width:100%;min-height:48px;padding:12px;text-align:left;white-space:normal;line-height:1.6}
+#xg-panel .xg-sitting-choices span{flex:0 0 26px;display:grid;place-items:center;width:26px;height:26px;border-radius:50%;background:var(--jade-light);color:var(--jade);font:13px var(--serif)}
+#xg-panel .xg-sitting-choices b{font-weight:500;font-size:13px}
+#xg-panel .xg-sitting-hint,#xg-panel .xg-sitting-end{font-size:12px;color:var(--muted);line-height:1.8}
+#xg-panel .xg-sitting-pay{margin:16px 0;padding:12px 15px;border:1px solid var(--line);border-radius:12px;background:var(--jade-light);color:var(--jade);font-size:14px}
