@@ -60,7 +60,7 @@ export function finishZhangPlay(save,id,outcome='win',now=Date.now()){
 export function giveZhangGift(save,uid,random=Math.random){
  const s=requireZhang(save);if(!s.giftsUnlocked||s.rejected)throw new Error('她还不肯收你的礼物。');
  if(uid==='stones'){if(save.player.spiritStones<1)throw new Error('灵石不足。');save.player.spiritStones=round(save.player.spiritStones-1)}
- else{const entry=giftableEntries(save).find(e=>e.uid===uid);if(!entry)throw new Error('此物不能送出，已装备的东西不能赠礼。');if(entry.quantity>1)entry.quantity--;else save.inventory=save.inventory.filter(e=>e!==entry)}
+ else{const entry=giftableEntries(save).find(e=>e.uid===uid);if(!entry)throw new Error('此物不能送出，上锁或已装备的东西不能赠礼。');if(entry.quantity>1)entry.quantity--;else save.inventory=save.inventory.filter(e=>e!==entry)}
  const amount=random()<.65?3:-3;s.affinity=Math.max(0,Math.min(100,(s.affinity||0)+amount));recordDailyGift(save);
  return `${pick(ZHANG_GIFTS[amount>0?'good':'bad'],random)} 好感 ${amount>0?'+':''}${amount} · ${s.affinity}/100。`;
 }

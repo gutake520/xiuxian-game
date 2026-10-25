@@ -1,3 +1,4 @@
+import {showCompanionMemories} from './ui/companion-memories.js';
 import {showMasterTeaching} from './ui/master-teaching.js';
 import {showBackup} from './ui/backup.js';
 import {effectiveStat,titleName} from './data/titles.js';
@@ -154,6 +155,7 @@ function renderCharacter(){
  <button type="button" id="xg-methods" class="xg-methods-button">查看功法典籍</button><h4>战斗功法</h4><p class="xg-empty-note">${(currentSave.techniques?.combat||[]).map(id=>escapeHTML(TECHNIQUES[id]?.name||'')).join(' · ')||'尚未装备战斗功法'} · 最多 ${combatSlots(p)} 门</p></div>
  <div class="xg-character-actions"><button type="button" id="xg-sect">门派</button><button type="button" id="xg-cultivate">修炼</button><button type="button" id="xg-breakthrough" ${breakthroughReady(currentSave)||currentSave.foundationAptitudePending?'':'disabled'}>${currentSave.foundationAptitudePending?'选资质':'突破'}<small>${currentSave.foundationAptitudePending?'筑基奖励待领取':breakthroughReady(currentSave)?currentSave.breakthrough?'继续灵脉':'筑基':'需十层满修为与感悟'}</small></button></div>
  <p id="xg-character-message" role="status" aria-live="polite"></p></section>`;
+ document.getElementById('xg-companion-memories').onclick=()=>showCompanionMemories({getSave:()=>currentSave},renderCharacter);
  document.getElementById('xg-titles').onclick=()=>showTitles({getSave:()=>currentSave,actions:game},renderCharacter);
  document.getElementById('xg-sect').onclick=showSect;document.getElementById('xg-cultivate').onclick=()=>runAction(async()=>{await game.refresh();featureUI.cultivation()});document.getElementById('xg-methods').onclick=featureUI.library;
  document.getElementById('xg-breakthrough').onclick=()=>runAction(async()=>{if(!currentSave.foundationAptitudePending)await game.startBreakthrough();showBreakthrough({getSave:()=>currentSave,actions:game},()=>{document.getElementById('xg-feature-sheet')?.remove();renderCharacter()})});
@@ -174,7 +176,7 @@ function playerSect(player){return SECTS.find(sect=>sect.name===player.sect)||nu
 function companionLimit(player){return player.sect==='合欢宗'?3:1}
 function companionMarkup(player){
  const list=Array.isArray(player.companions)?player.companions:[],limit=companionLimit(player);
- return `<div class="xg-card xg-companions"><h3>道侣 <small>${list.length} / ${limit}</small></h3><div class="xg-companion-list">${Array.from({length:Math.max(limit,list.length)},(_,i)=>`<span>${escapeHTML(typeof list[i]==='string'?list[i]:list[i]?.name||'缘分未至')}</span>`).join('')}</div></div>`;
+ return `<div class="xg-card xg-companions"><h3>道侣 <small>${list.length} / ${limit}</small></h3><div class="xg-companion-list">${Array.from({length:Math.max(limit,list.length)},(_,i)=>`<span>${escapeHTML(typeof list[i]==='string'?list[i]:list[i]?.name||'缘分未至')}</span>`).join('')}</div><button type="button" id="xg-companion-memories">往昔CG · 回看</button></div>`;
 }
 function sectOverlay(){
  let sheet=document.getElementById('xg-sect-sheet');

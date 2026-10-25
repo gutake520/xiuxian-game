@@ -1,0 +1,14 @@
+#xg-panel .xg-memory-caption{font-size:12px;color:var(--muted);line-height:1.8;margin:0 0 16px}
+#xg-panel .xg-memory-person{margin:0 0 15px;padding:15px;border:1px solid var(--line);border-radius:14px;background:var(--surface)}
+#xg-panel .xg-memory-person h3{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 12px;font:600 18px var(--serif)}
+#xg-panel .xg-memory-person h3 small{font:12px var(--sans);color:var(--muted)}
+#xg-panel .xg-memory-person>div{display:grid;gap:7px}
+#xg-panel .xg-memory-person button{display:flex;align-items:center;justify-content:space-between;min-height:42px;padding:10px 12px;text-align:left;font-size:13px}
+#xg-panel .xg-memory-reading{font:15px/1.95 var(--serif);overflow-wrap:anywhere}
+#xg-panel .xg-memory-reading small{font:12px var(--sans);color:var(--muted)}
+#xg-panel .xg-memory-reading h3{font-size:21px;margin:10px 0 18px}
+#xg-panel #xg-companion-memories{margin-top:12px;font-size:12px}
+#xg-panel .xg-item-lock-row{display:grid;gap:7px;padding:12px;margin-bottom:14px;border:1px solid var(--line);border-radius:12px;background:var(--wash)}
+#xg-panel .xg-item-lock-row small{font-size:11px;line-height:1.7;color:var(--muted)}
+#xg-panel .xg-item-lock-row button[aria-pressed=true]{background:var(--jade-light);border-color:var(--jade)}
+#xg-panel .xg-bag-grid em.xg-item-locked{color:var(--jade)!important;border:1px solid var(--line);border-radius:5px;padding:0 4px;background:var(--wash)}

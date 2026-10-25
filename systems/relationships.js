@@ -5,7 +5,7 @@ import {recordDailyGift} from './sect-progression.js';
 
 const round2=n=>Math.round((n+Number.EPSILON)*100)/100;
 export function giftableEntries(save){return save.inventory.filter(entry=>{
- const item=ITEMS[entry.itemId];return item&&['gift','manual','equipment','material','pill','talisman','array','junk'].includes(item.kind)&&!Object.values(save.equipment||{}).includes(entry.uid);
+ const item=ITEMS[entry.itemId];return !entry.locked&&item&&['gift','manual','equipment','material','pill','talisman','array','junk'].includes(item.kind)&&!Object.values(save.equipment||{}).includes(entry.uid);
 })}
 
 export function giveCompanionGift(save,state,uid,preferredIds,reactionFor){
@@ -15,7 +15,7 @@ export function giveCompanionGift(save,state,uid,preferredIds,reactionFor){
   save.player.spiritStones=round2(save.player.spiritStones-1);amount=1;
  }else{
   entry=giftableEntries(save).find(e=>e.uid===uid);item=ITEMS[entry?.itemId];
-  if(!entry||!item)throw new Error('此物不能送出，已装备的东西不能赠礼。');
+  if(!entry||!item)throw new Error('此物不能送出，上锁或已装备的东西不能赠礼。');
   damaged=item.kind==='equipment'&&entry.durability<maxDurability(entry);
   broken=item.kind==='array'&&entry.itemId.includes('crafted')&&entry.usesLeft===0;
   amount=damaged?-1:item.kind==='gift'?(preferredIds.includes(entry.itemId)?4:2):item.kind==='manual'?5:item.kind==='equipment'?3:item.kind==='pill'||item.kind==='talisman'||item.kind==='array'&&!broken?2:item.kind==='junk'||broken?-1:0;

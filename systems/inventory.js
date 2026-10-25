@@ -2,6 +2,16 @@ import {ITEMS,ELEMENTAL_MANUALS} from '../data/items.js';
 import {DURABILITY_MAX,TEMP_LOOT_MS} from '../data/balance.js';
 import {localDay} from './cultivation.js';
 import {realmHpBonus,realmBattleBonus,realmProgress} from '../data/realms.js';
+export function setItemLocked(save,uid,locked){
+ if(save.battle)throw new Error('请先结束战斗。');
+ const entry=save.inventory.find(e=>e.uid===uid);
+ if(!entry||typeof locked!=='boolean')throw new Error('物品不存在或锁定状态无效。');
+ entry.locked=locked;
+ return locked?'物品已上锁，不能出售、丢弃或赠礼。':'物品已解锁。';
+}
+function assertItemUnlocked(save,uid){
+ if(save.inventory.find(e=>e.uid===uid)?.locked)throw new Error('物品已上锁，请先在储物详情中解锁。');
+}
 export function hasManual(save,id='basic-qi-guide'){return save.inventory.some(entry=>ITEMS[entry.itemId]?.methodId===id)}
 export const DURABILITY_UPGRADE_COST=10;
 export const DURABILITY_UPGRADE_LIMIT=2;
@@ -71,6 +81,7 @@ export function equipmentSalePrice(item){if(item?.stage==='筑基')return ['foun
 export const MATERIAL_SALE_PRICE=.8;
 export const materialSalePrice=item=>item?.stage==='筑基'?1.2:MATERIAL_SALE_PRICE;
 export function sellExtra(save,uid,quantity=1){
+ assertItemUnlocked(save,uid);
  const entry=save.inventory.find(e=>e.uid===uid),item=ITEMS[entry?.itemId];
  if(!entry||!['gift','manual'].includes(item?.kind)||!Number.isFinite(item.sellPrice))throw new Error('此物品不能出售。');
  if(save.battle)throw new Error('战斗中不能出售物品。');
@@ -81,6 +92,7 @@ export function sellExtra(save,uid,quantity=1){
  return `出售${item.name}×${quantity}，获得 ${total} 灵石。`;
 }
 export function discardJunk(save,uid){
+ assertItemUnlocked(save,uid);
  const entry=save.inventory.find(e=>e.uid===uid);
  if(ITEMS[entry?.itemId]?.kind!=='junk'&&!(['crafted-binding-array','foundation-crafted-array'].includes(entry?.itemId)&&entry.usesLeft===0))throw new Error('这不是可丢弃的杂物。');
  if(save.battle)throw new Error('请先结束战斗。');
@@ -88,6 +100,7 @@ export function discardJunk(save,uid){
 }
 export function pillSalePrice(item){return Math.round((item?.price||0)*50)/100}
 export function sellPill(save,uid,quantity){
+ assertItemUnlocked(save,uid);
  const entry=save.inventory.find(item=>item.uid===uid),item=ITEMS[entry?.itemId];
  if(!entry||item?.kind!=='pill'||!Number.isFinite(item.price))throw new Error('只能出售丹药。');
  if(!Number.isSafeInteger(quantity)||quantity<1||quantity>(entry.quantity||1))throw new Error('出售数量无效。');
@@ -99,6 +112,7 @@ export function sellPill(save,uid,quantity){
  return `出售${item.name}×${quantity}，获得 ${total} 灵石。`;
 }
 export function sellMaterial(save,uid,quantity){
+ assertItemUnlocked(save,uid);
  const entry=save.inventory.find(item=>item.uid===uid),item=ITEMS[entry?.itemId];
  if(!entry||item?.kind!=='material')throw new Error('只能出售矿石或药草。');
  if(!Number.isSafeInteger(quantity)||quantity<1||quantity>(entry.quantity||1))throw new Error('出售数量无效。');
@@ -110,6 +124,7 @@ export function sellMaterial(save,uid,quantity){
  return `出售${item.name}×${quantity}，获得 ${price} 灵石。`;
 }
 export function sellEquipment(save,uid){
+ assertItemUnlocked(save,uid);
  const entry=save.inventory.find(entry=>entry.uid===uid),item=ITEMS[entry?.itemId];
  if(!entry||item?.kind!=='equipment')throw new Error('只能出售装备。');
  if(entry.durability!==maxDurability(entry))throw new Error('耐久未满，不能出售；可以丢弃或以后修补。');
@@ -122,7 +137,7 @@ export function sellEquipment(save,uid){
 }
 export function saleUnitPrice(save,entry){
  const item=ITEMS[entry?.itemId];
- if(!entry||!item||Object.values(save.equipment||{}).includes(entry.uid))return null;
+ if(!entry||entry.locked||!item||Object.values(save.equipment||{}).includes(entry.uid))return null;
  if(item.kind==='equipment')return entry.durability===maxDurability(entry)?equipmentSalePrice(item):null;
  if(item.kind==='material')return materialSalePrice(item);
  if(item.kind==='pill'&&Number.isFinite(item.price))return pillSalePrice(item);
@@ -138,7 +153,7 @@ export function sellInventoryBatch(save,selections){
   const entry=save.inventory.find(e=>e.uid===uid),price=saleUnitPrice(save,entry);
   if(seen.has(uid))throw new Error('同一物品不能重复选择。');
   seen.add(uid);
-  if(price===null)throw new Error('所选物品已变化，请重新选择；已装备或耐久未满的物品不能出售。');
+  if(price===null)throw new Error('所选物品已变化，请重新选择；上锁、已装备或耐久未满的物品不能出售。');
   const available=ITEMS[entry.itemId].kind==='equipment'?1:entry.quantity||1;
   if(!Number.isSafeInteger(quantity)||quantity<1||quantity>available)throw new Error('所选物品数量已变化，请重新选择。');
   return {entry,quantity,available,total:Math.round(price*quantity*100)/100};
@@ -152,6 +167,7 @@ export function sellInventoryBatch(save,selections){
  return `出售 ${quotes.length} 组物品，获得 ${total} 灵石。`;
 }
 export function discardEquipment(save,uid){
+ assertItemUnlocked(save,uid);
  const entry=save.inventory.find(entry=>entry.uid===uid),item=ITEMS[entry?.itemId];
  if(!entry||item?.kind!=='equipment')throw new Error('只能丢弃装备。');
  if(save.battle)throw new Error('战斗中不能丢弃。');
