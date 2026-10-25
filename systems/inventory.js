@@ -12,7 +12,7 @@ export function setItemLocked(save,uid,locked){
 function assertItemUnlocked(save,uid){
  if(save.inventory.find(e=>e.uid===uid)?.locked)throw new Error('物品已上锁，请先在储物详情中解锁。');
 }
-export function hasManual(save,id='basic-qi-guide'){return save.inventory.some(entry=>ITEMS[entry.itemId]?.methodId===id)}
+export function hasManual(save,id='basic-qi-guide'){return Boolean(save.techniques?.awakenedManuals?.includes(id)||save.inventory.some(entry=>ITEMS[entry.itemId]?.methodId===id))}
 export const DURABILITY_UPGRADE_COST=10;
 export const DURABILITY_UPGRADE_LIMIT=2;
 export const durabilityUpgrades=entry=>Number.isInteger(entry?.durabilityUpgrades)?Math.max(0,Math.min(DURABILITY_UPGRADE_LIMIT,entry.durabilityUpgrades)):0;

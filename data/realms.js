@@ -10,8 +10,9 @@ export function realmProgress(player) {
 }
 // 炼气一至五层：每升一层增加 1 点生命上限。五层之后暂不继续增加。
 function foundationMilestones(step){return Number(step>=3)+Number(step>=6)}
-export function realmHpBonus(player){const step=Math.max(0,FOUNDATION_REALMS.indexOf(player.realm));return Math.max(0,Math.min(4,realmProgress(player).index))+step*2+foundationMilestones(step)*3}
+export function realmHpBonus(player){if(player.goldenCoreBonus)return player.goldenCoreHpBonus||0;const step=Math.max(0,FOUNDATION_REALMS.indexOf(player.realm));return Math.max(0,Math.min(4,realmProgress(player).index))+step*2+foundationMilestones(step)*3}
 export function realmBattleBonus(player){
+ if(player.goldenCoreBonus)return {...player.goldenCoreBonus};
  if(String(player.realm).startsWith('筑基')){const step=Math.max(0,FOUNDATION_REALMS.indexOf(player.realm)),base={defense:0,mp:0,attack:0,critRate:0,dodgeRate:0,speed:0,...player.foundationBonus};return {...base,attack:Math.round((base.attack+step*.3+foundationMilestones(step)*.2)*100)/100,defense:Math.round((base.defense+step*.08)*100)/100,mp:base.mp+Math.floor(step/2),speed:Math.round((base.speed+step*.3)*100)/100}}
  const tier=realmProgress(player).index;
  const root=String(player.spiritRoot||'');
