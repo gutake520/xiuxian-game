@@ -1,3 +1,4 @@
+import {findXigong} from './dongxia-story.js';
 import {isGoldenRealm} from './golden-core.js';
 import {canEnterDongxia} from './foundation-story.js';
 import {maybeFindConcentration} from './concentration.js';
@@ -43,6 +44,7 @@ export function takeStroll(save,id,now=Date.now(),random=Math.random){
  if(!place)throw new Error('此处尚不能闲逛。');
  const count=strollCount(save,now);
  const encounters=strollEncounterCount(save,now),canEncounter=encounters<strollEncounterLimit(save,now);
+ if(place.dongxia&&findXigong(save,now,random)){const result={placeId:id,text:'照川城的西宫家正在招募客卿。那个姓氏，与你收起的密笺一字不差。请打开「照川旧笺」查看。'};save.stroll={day:localDay(now),count:count+1,encounters,last:result};return {...result,message:result.text}}
  const lead=maybeFindOldFriend(save,id,random);
  if(lead){const result={placeId:id,...lead};save.stroll={day:localDay(now),count:count+1,encounters,last:result};return {...result,message:result.text}}
  const index=Math.min(place.stories.length-1,Math.max(0,Math.floor(random()*place.stories.length)));

@@ -28,7 +28,7 @@ export function searchPursuerBody(save,now=Date.now()){
  // 旧版归元渡奖励不重复发放，满袋仍走临时储物。
  const place=save.foundationEnding?.defeated?null:awardItem(save,'foundation-completion-charm',1,now);
  save.foundationEnding={...save.foundationEnding,defeated:true,defeatedAt:now};
- return `你从${line.enemy.name}的尸身衣襟内翻出一封沾血的密信。信中记着灭你满门的那伙人的行踪：「主使仍在东夏国，余众奉命追索幸存者。」信纸背面另绘有东行路线。你收好密信，决定待突破金丹后前往东夏国。${place?'另得归元佩 ×1'+(place==='temporary'?'（临时储物）':'')+'。':''}`;
+ return `你从${line.enemy.name}的尸身衣襟内翻出一封沾血的密信。纸上只有一行地址：「东夏国，照川城，西宫家。」既无落款，也未说明这户人家与持信者是什么关系。这个陌生的姓氏，是你眼下仅有的线索。信纸背面另绘有东行路线。你收好密信，决定待突破金丹后前往东夏国。${place?'另得归元佩 ×1'+(place==='temporary'?'（临时储物）':'')+'。':''}`;
 }
 export const isGoldenCore=save=>/^(金丹|元婴|化神|炼虚|合体|大乘|渡劫)/.test(String(save.player.realm));
 export const canEnterDongxia=save=>Boolean(save.dongxiaUnlocked&&isGoldenCore(save));

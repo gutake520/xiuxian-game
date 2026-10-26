@@ -1,3 +1,4 @@
+import {showXigong} from './dongxia-story.js';
 import {showGoldenSecret} from './golden-secret.js';
 import {isGoldenRealm} from '../systems/golden-core.js';
 import {showOldFriend} from './old-friend.js';
@@ -244,6 +245,7 @@ export function createMapUI({getSave,activate,actions,onSectBattleExit}){
   content().querySelector('[data-golden-shop]').onclick=renderGoldenMarket;
   content().querySelector('[data-golden-secret]').onclick=()=>showGoldenSecret({getSave,actions},renderDongxia);
   content().querySelector('[data-dongxia-market]').onclick=()=>showBlackMarket({getSave,actions,activate},renderDongxia,true);
+  if(getSave().dongxiaStory){const b=document.createElement('button');b.textContent='照川城 · 西宫家';content().querySelector('.xg-feature-row').append(b);b.onclick=()=>showXigong({getSave,actions},renderDongxia)}
   const scenes={gate:'关楼投下长长的影子。守关修士验过你的路引，侧身让开通往东夏国的道路。',street:'檐下悬着各色幡旗，茶香混着新磨的墨香。你在人群间缓步而行，听着陌生口音谈论远方的山川。',river:'桥下流水映着晚霞，远山一重叠着一重。此刻回望，来时的关楼已隐在薄雾里。'};
   content().querySelectorAll('[data-dongxia]').forEach(b=>b.onclick=()=>{content().querySelector('[data-dongxia-scene]').textContent=scenes[b.dataset.dongxia]});
  }
@@ -291,7 +293,7 @@ export function createMapUI({getSave,activate,actions,onSectBattleExit}){
   if(!line)return renderFoundation();
   const wounded=line.phase==='wounded',dead=line.phase==='dead',name=escapeHTML(line.enemy.name),foe=foundationPursuerAttributes(getSave());
   activate('map');
-  content().innerHTML=`<section class="xg-map-sheet"><button class="xg-map-back" type="button">← 返回望川岭</button>${heading(wounded||dead?'栖息崖':'归元渡',name)}<div class="xg-card"><p>${wounded?escapeHTML(line.enemy.wounded):dead?`${name}已经死去，尸身仍在石台旁。`:isGoldenRealm(getSave().player)?'密信已经收好：灭门主使仍在东夏国。你已结丹，可以循信中的路线前往。':'密信已经收好：灭门主使仍在东夏国。待突破金丹，就循信中的路线前往。'}</p>${wounded?`<p>生命 ${foe.maxHp.toFixed(2)} · 攻击 ${foe.attack.toFixed(2)} · 防御 ${foe.defense.toFixed(2)} · 速度 ${foe.speed.toFixed(2)}</p>`:''}${!wounded&&!dead?`<p>${isGoldenRealm(getSave().player)?'你已结成金丹。可向师父请教今后的修炼，前往东夏国。':realmProgress(getSave().player).complete?'你已筑基圆满，密信已收好。前往人物页点击「突破」，尝试结丹。':'修为尚未圆满。筑基十层修为圆满后，可前往人物页尝试结丹。'}</p>`:''}</div>${wounded?`${petChoices(getSave(),'xg-pursuer-pet')}<button type="button" data-pursuer-fight>追杀仇人</button>`:dead?'<button type="button" data-pursuer-search>搜身</button>':''}<p role="status"></p></section>`;
+  content().innerHTML=`<section class="xg-map-sheet"><button class="xg-map-back" type="button">← 返回望川岭</button>${heading(wounded||dead?'栖息崖':'归元渡',name)}<div class="xg-card"><p>${wounded?escapeHTML(line.enemy.wounded):dead?`${name}已经死去，尸身仍在石台旁。`:isGoldenRealm(getSave().player)?'密信已经收好：密笺指向东夏国照川城的西宫家，双方关系尚未查明。你已结丹，可以循信中的路线前往。':'密信已经收好：密笺指向东夏国照川城的西宫家，双方关系尚未查明。待突破金丹，就循信中的路线前往。'}</p>${wounded?`<p>生命 ${foe.maxHp.toFixed(2)} · 攻击 ${foe.attack.toFixed(2)} · 防御 ${foe.defense.toFixed(2)} · 速度 ${foe.speed.toFixed(2)}</p>`:''}${!wounded&&!dead?`<p>${isGoldenRealm(getSave().player)?'你已结成金丹。可向师父请教今后的修炼，前往东夏国。':realmProgress(getSave().player).complete?'你已筑基圆满，密信已收好。前往人物页点击「突破」，尝试结丹。':'修为尚未圆满。筑基十层修为圆满后，可前往人物页尝试结丹。'}</p>`:''}</div>${wounded?`${petChoices(getSave(),'xg-pursuer-pet')}<button type="button" data-pursuer-fight>追杀仇人</button>`:dead?'<button type="button" data-pursuer-search>搜身</button>':''}<p role="status"></p></section>`;
   back(renderFoundation);
   content().querySelector('[data-pursuer-fight]')?.addEventListener('click',async event=>{const button=event.currentTarget;button.disabled=true;try{await actions.startBattle('wounded-pursuer',content().querySelector('[name="xg-pursuer-pet"]:checked')?.value||null);battle()}catch(error){content().querySelector('[role=status]').textContent=error.message;button.disabled=false}});
   content().querySelector('[data-pursuer-search]')?.addEventListener('click',async event=>{const button=event.currentTarget;button.disabled=true;try{const {result}=await actions.mutate(searchPursuerBody,{message:r=>r});renderPursuer();content().querySelector('[role=status]').textContent=result}catch(error){content().querySelector('[role=status]').textContent=error.message;button.disabled=false}});
