@@ -85,5 +85,5 @@ export function moveGoldenSecret(save,id,turn,cell,now=Date.now()){
   const a=awardItem(save,herb,herbCount,now),b=awardItem(save,'golden-ore',oreCount,now);
   message=`围住灵虫！获得 7 灵石、${ITEMS[herb].name} ×${herbCount}、赤金矿 ×${oreCount}。${a==='temporary'||b==='temporary'?'储物袋已满，物品已放入临时储物。':''}`;
  }
- save.lastGoldenSecret={...next,message};save.goldenSecret=null;return message;
+ save.lastGoldenSecret={...next,message,completedAt:cell==='abandon'?null:now};save.goldenSecret=null;return message;
 }
