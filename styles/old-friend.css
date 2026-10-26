@@ -18,3 +18,13 @@
 #xg-panel .xg-old-friend [data-body]{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding-right:4px;scrollbar-width:thin}
 #xg-panel .xg-old-friend .xg-feature-message{flex:none;max-height:20%;overflow:auto}
 @media(max-width:380px){#xg-panel .xg-old-friend-mast{padding:16px 12px}#xg-panel .xg-old-friend-choices button{padding:12px}#xg-panel .xg-old-friend-prose{padding-left:2px;padding-right:2px}}
+
+/* 照川旧笺：长对话独占一行，正文滚动，页头与提示保持可见。 */
+#xg-panel .xg-xigong [data-body]{line-height:1.95;overflow-wrap:anywhere;min-width:0}
+#xg-panel .xg-xigong [data-body] p{margin:0 0 1.2em}
+#xg-panel .xg-xigong [data-body] button{display:block;width:100%;min-width:0;min-height:46px;white-space:normal;overflow-wrap:anywhere;text-align:left;margin:10px 0;padding:12px 14px;line-height:1.75}
+#xg-panel .xg-xigong .xg-feature-card{padding:14px;margin:14px 0}
+#xg-panel .xg-xigong .xg-feature-card button{margin:0 0 10px}
+#xg-panel .xg-xigong .xg-feature-card p:last-child{margin-bottom:0}
+#xg-panel .xg-xigong .xg-feature-message{max-height:22%;white-space:pre-wrap;overflow-wrap:anywhere}
+#xg-panel .xg-xigong .xg-old-friend-journal{margin-top:24px}
