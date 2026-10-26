@@ -8,7 +8,7 @@ import {migrateSave} from '../storage/migrations.js';
 const make=()=>({bagCapacity:20,slot:'gold-monsters',player:{realm:'金丹一层',cultivation:0,spiritStones:20,hp:73,mp:20,spiritRoot:'金木双灵根',combat:{hp:73,mp:20,attack:11.1,defense:3.52,speed:10.7,critRate:10,dodgeRate:10},goldenCoreHpBonus:0,goldenCoreBonus:{attack:0,defense:0,speed:0,mp:0,critRate:0,dodgeRate:0}},inventory:[{uid:'sword',itemId:'foundation-late-sword',durability:20}],equipment:{weapon:'sword'},techniques:{mastered:['strengthen-attack'],combat:['strengthen-attack']},dongxiaUnlocked:true});
 function fight(s,id){beginBattle(s,id);let rounds=0;while(s.battle&&rounds++<25){const ready=(s.battle.skillReady['strengthen-attack']||0)<=s.battle.round+1;playRound(s,ready&&s.player.mp>=1?'strengthen-attack':'attack');if(rounds===1&&s.battle)assert.equal(s.battle.mp,5)}assert.ok(rounds<25);return s.lastBattle}
 test('only unlocked golden characters can challenge; no premature pet support',()=>{
- const s=make();s.dongxiaUnlocked=false;assert.throws(()=>beginBattle(s,GOLDEN_MONSTERS[0].id));s.dongxiaUnlocked=true;s.player.realm='筑基一层';assert.throws(()=>beginBattle(s,GOLDEN_MONSTERS[0].id));s.player.realm='金丹一层';assert.throws(()=>beginBattle(s,GOLDEN_MONSTERS[0].id,'attack'),/尚未开放/);
+ const s=make();s.dongxiaUnlocked=false;assert.throws(()=>beginBattle(s,GOLDEN_MONSTERS[0].id));s.dongxiaUnlocked=true;s.player.realm='筑基一层';assert.throws(()=>beginBattle(s,GOLDEN_MONSTERS[0].id));s.player.realm='金丹一层';assert.throws(()=>beginBattle(s,GOLDEN_MONSTERS[0].id,'attack'),/尚未升级或喂养/);
 });
 test('two consecutive fights match agreed balance, consume MP and durability, grant golden loot',t=>{
  t.mock.method(Math,'random',()=>.99);

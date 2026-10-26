@@ -1,3 +1,4 @@
+import {goldenInheritance} from './golden-inheritance.js';
 import {convergingDamage} from './golden-core.js';
 import {finishOldFriendDuel} from './old-friend.js';
 import {collectTeachingMaterial} from './master-teaching.js';
@@ -30,7 +31,7 @@ function grant(save,id,quantity,rewards,now,loot){const place=awardItem(save,id,
 function awardVictory(save,monster,now){
  const rewards=[],loot=[];const count=Math.random()<(monster.twoDropChance??.6)?2:3;
  const golden=monster.stage==='金丹',value=golden?1.5:1;
- const foundation=monster.stage==='筑基',herbPool=golden?['golden-healing-herb','golden-spirit-herb']:foundation?foundationHerbs:herbs,ore=golden?'golden-ore':foundation?'foundation-ore':'ore';
+ const foundation=monster.stage==='筑基',herbPool=golden?['golden-healing-herb','golden-spirit-herb','golden-qi-herb']:foundation?foundationHerbs:herbs,ore=golden?'golden-ore':foundation?'foundation-ore':'ore';
  if(monster.resource==='stones'){save.player.spiritStones=round2(save.player.spiritStones+count*value);rewards.push(`灵石×${count*value}`);loot.push({itemId:'stones',quantity:count*value})}
  else grant(save,monster.resource==='herbs'?pick(herbPool):ore,count,rewards,now,loot);
  const other=pick(monster.resource==='stones'?['herbs','ore']:monster.resource==='herbs'?['stones','ore']:['stones','herbs']);
@@ -154,20 +155,20 @@ export function beginBattle(save,id,pet=null,retaliation=false){
  }
  if(FOXES[id]){
   const fox=FOXES[id],chosen=selectBattlePet(save,pet);
-  save.battle={id:crypto.randomUUID(),kind:'fox-npc',monsterId:id,name:fox.name,stage:'炼气',maxHp:fox.hp,hp:fox.hp,attack:fox.attack,defense:.3,speed:5,maxMp:5,mp:5,round:0,pet:chosen,petName:chosen?(beastCanFight(save,chosen)?beastName(save,chosen):'租借灵兽'):null,petStage:String(save.player.realm).startsWith('筑基')?'筑基':'炼气',guard:false,bindRounds:[],arrayRound:0,talismansUsed:0,talismanRound:0,freeArrayUsed:false,criticalFocus:false,skillReady:{},log:[`${fox.name}向你出手。`]};
+  save.battle={id:crypto.randomUUID(),kind:'fox-npc',monsterId:id,name:fox.name,stage:'炼气',maxHp:fox.hp,hp:fox.hp,attack:fox.attack,defense:.3,speed:5,maxMp:5,mp:5,round:0,pet:chosen,petName:chosen?(beastCanFight(save,chosen)?beastName(save,chosen):'租借灵兽'):null,petStage:canEnterDongxia(save)?'金丹':String(save.player.realm).startsWith('筑基')?'筑基':'炼气',guard:false,bindRounds:[],arrayRound:0,talismansUsed:0,talismanRound:0,freeArrayUsed:false,criticalFocus:false,skillReady:{},log:[`${fox.name}向你出手。`]};
   return save.battle;
  }
  const monster=monsters.find(entry=>entry.id===id);if(!monster)throw new Error('对手不存在。');
  if(monster.stage==='金丹'){
   if(!canEnterDongxia(save))throw new Error('请先突破金丹并向师父请教，开放东夏国。');
-  if(pet)throw new Error('金丹灵兽出战尚未开放。');
+  if(pet&&!beastCanFight(save,pet))throw new Error('金丹灵兽尚未升级或喂养。');
  }
  if(monster.stage==='筑基'&&tier-9<monster.minLevel)throw new Error(`需筑基${['一','二','三','四','五','六','七','八','九','十'][monster.minLevel-1]}层方可挑战。`);
  if(monster.boss&&save.foundationEnding?.defeated)throw new Error('封渡客已与你罢战。');
  if(monster.stage!=='金丹'&&monster.stage!=='筑基'&&tier+1<monster.minLevel)throw new Error(`需炼气${['一','二','三','四','五','六','七','八','九','十'][monster.minLevel-1]}层解锁此处。`);
  selectBattlePet(save,pet);
  const maxHp=monster.hpMin+Math.floor(Math.random()*(monster.hpMax-monster.hpMin+1));
- save.battle={id:crypto.randomUUID(),monsterId:id,name:monster.name,stage:monster.stage||'炼气',maxHp,hp:maxHp,attack:monster.attack,defense:monster.defense||0,...(monster.stage==='筑基'?{foundationBalanceVersion:1}:{}),speed:monster.speed,mp:monster.mp||0,round:0,pet,petName:pet?(beastCanFight(save,pet)?beastName(save,pet):'租借灵兽'):null,petStage:String(save.player.realm).startsWith('筑基')?'筑基':'炼气',retaliation,guard:false,bindRounds:[],arrayRound:0,talismansUsed:0,talismanRound:0,freeArrayUsed:false,criticalFocus:false,skillReady:{},log:['狭路相逢，战斗开始。']};
+ save.battle={id:crypto.randomUUID(),monsterId:id,name:monster.name,stage:monster.stage||'炼气',maxHp,hp:maxHp,attack:monster.attack,defense:monster.defense||0,...(monster.stage==='筑基'?{foundationBalanceVersion:1}:{}),speed:monster.speed,mp:monster.mp||0,round:0,pet,petName:pet?(beastCanFight(save,pet)?beastName(save,pet):'租借灵兽'):null,petStage:canEnterDongxia(save)?'金丹':String(save.player.realm).startsWith('筑基')?'筑基':'炼气',retaliation,guard:false,bindRounds:[],arrayRound:0,talismansUsed:0,talismanRound:0,freeArrayUsed:false,criticalFocus:false,skillReady:{},log:['狭路相逢，战斗开始。']};
  return save.battle;
 }
 export function playRound(save,action='attack',now=Date.now()){
@@ -183,12 +184,12 @@ export function playRound(save,action='attack',now=Date.now()){
  // 金、土是回合内施法：只扣法力并记录效果，不推进任何回合结算。
  if(action==='metal-edge'||action==='earth-rampart'){
   save.player.mp=round2(save.player.mp-mpCost);
-  battle.skillReady??={};battle.skillReady[action]=battle.round+skill.cooldown+2;
+  battle.skillReady??={};battle.skillReady[action]=battle.round+(action==='healing-hands'&&goldenInheritance(save,action)?4:skill.cooldown)+2;
   castElement(battle,action,messages);
   battle.log=[...battle.log,...messages].slice(-10);
   return {messages,dealt,taken,result:null};
  }
- if(battle.stingRound===battle.round+1){battle.stingRound=0;const dot=round2(2*(hasActiveTechnique(save,'one-sword')?1.1:1));battle.hp=round2(Math.max(0,battle.hp-dot));messages.push(`蛰一下继续生效，对手失去 ${dot.toFixed(2)} 生命。`);if(battle.hp<=0){battle.round++;const result=resolveVictory(save,now,messages);return {messages,dealt,taken,result}}}
+ if(battle.stingRound===battle.round+1){battle.stingRound=0;const dot=round2(2*(hasActiveTechnique(save,'one-sword')?(goldenInheritance(save,'one-sword')?1.13:1.1):1));battle.hp=round2(Math.max(0,battle.hp-dot));messages.push(`蛰一下继续生效，对手失去 ${dot.toFixed(2)} 生命。`);if(battle.hp<=0){battle.round++;const result=resolveVictory(save,now,messages);return {messages,dealt,taken,result}}}
  const stats=equipmentStats(save),playerFirst=stats.speed>=battle.speed;
  const guarded=action==='iron-wall';
  let enemyAction='attack';
@@ -199,7 +200,7 @@ export function playRound(save,action='attack',now=Date.now()){
  const playerTurn=()=>{
   const prepared=!!battle.pendingStrike;if(prepared&&action!=='skip')battle.pendingStrike=false;
   if(action==='skip'){messages.push(foxFight&&battle.foxParalyzeRound===battle.round+1?'落英缤纷困住了你，本轮无法行动。':'你选择跳过本轮。');return}
-  if(skill&&!prepared){save.player.mp=round2(save.player.mp-mpCost);if(skill.cooldown){battle.skillReady??={};battle.skillReady[action]=battle.round+skill.cooldown+2}if(['only-once','empty-hands','gamble-strike'].includes(action)){save.techniques.usage??={};save.techniques.usage[action]=(save.techniques.usage[action]||0)+1}}
+  if(skill&&!prepared){save.player.mp=round2(save.player.mp-mpCost);if(skill.cooldown){battle.skillReady??={};battle.skillReady[action]=battle.round+(action==='healing-hands'&&goldenInheritance(save,action)?4:skill.cooldown)+2}if(['only-once','empty-hands','gamble-strike'].includes(action)){save.techniques.usage??={};save.techniques.usage[action]=(save.techniques.usage[action]||0)+1}}
   if(castElement(battle,action,messages))return;
   if(action==='wait-then-strike'){battle.pendingStrike=true;messages.push('凝聚攻势，下轮自动出手。');return}
   if(action==='cooldown-reset'){battle.cooldownResetUsed=true;for(const id of save.techniques.combat||[])if(id!==action&&battle.skillReady)delete battle.skillReady[id];messages.push('其他已装备功法的冷却已重置。');return}
@@ -227,7 +228,7 @@ export function playRound(save,action='attack',now=Date.now()){
    dealt=round2(hits[0]+hits[1]);damageIntro=`殊途同归：两道灵力先后命中${convergingCrit?'（暴击）':''}，合计造成`;
   }
   else if(armored||battle.defense>0)dealt=round2(Math.max(1,dealt-(battle.defense||0)-(enemyAction==='iron-wall'?1:0)));
-  if(hasActiveTechnique(save,'one-sword'))dealt=round2(dealt*1.1);
+  if(hasActiveTechnique(save,'one-sword'))dealt=round2(dealt*(goldenInheritance(save,'one-sword')?1.13:1.1));
   messages.push(`${damageIntro} ${dealt.toFixed(2)} 伤害。`);
   const actual=Math.min(battle.hp,dealt);
   battle.hp=round2(Math.max(0,battle.hp-dealt));
@@ -236,8 +237,8 @@ export function playRound(save,action='attack',now=Date.now()){
   if(action==='silent-strike'&&battle.hp>0){battle.silencedTurns=2;messages.push(`${battle.name}接下来两次行动无法使用技能。`)}
   if(action==='sting'&&battle.hp>0)battle.stingRound=battle.round+2;
   if(actual>0&&hasActiveTechnique(save,'blue-buff')){const restored=round2(Math.max(0,Math.min(.5,stats.maxMp-save.player.mp)));save.player.mp=round2(save.player.mp+restored);if(restored>0)messages.push(`你是我的蓝buff：恢复 ${restored.toFixed(2)} 法力。`)}
-  if(hasActiveTechnique(save,'life-steal')){const heal=round2(Math.min(stats.maxHp-save.player.hp,actual*.1));save.player.hp=round2(save.player.hp+heal);if(heal>0)messages.push(`吸取生命 ${heal.toFixed(2)}。`)}
-  if(action==='empty-hands'&&battle.hp>0&&Math.random()<(save.techniques.upgraded?.includes(action)?.3:.2)){const stolen=round2(Math.min(round2((save.techniques.upgraded?.includes(action)?5:2)*(hasActiveTechnique(save,'one-sword')?1.1:1)),battle.hp)),healed=round2(Math.min(stolen,stats.maxHp-save.player.hp));battle.hp=round2(battle.hp-stolen);save.player.hp=round2(save.player.hp+healed);dealt=round2(dealt+stolen);messages.push(`妙手空空抽取 ${stolen.toFixed(2)} 生命，恢复 ${healed.toFixed(2)}。`)}
+  if(hasActiveTechnique(save,'life-steal')){const heal=round2(Math.min(stats.maxHp-save.player.hp,actual*(goldenInheritance(save,'life-steal')?.13:.1)));save.player.hp=round2(save.player.hp+heal);if(heal>0)messages.push(`吸取生命 ${heal.toFixed(2)}。`)}
+  if(action==='empty-hands'&&battle.hp>0&&Math.random()<(save.techniques.upgraded?.includes(action)?.3:.2)){const stolen=round2(Math.min(round2((save.techniques.upgraded?.includes(action)?5:2)*(hasActiveTechnique(save,'one-sword')?(goldenInheritance(save,'one-sword')?1.13:1.1):1)),battle.hp)),healed=round2(Math.min(stolen,stats.maxHp-save.player.hp));battle.hp=round2(battle.hp-stolen);save.player.hp=round2(save.player.hp+healed);dealt=round2(dealt+stolen);messages.push(`妙手空空抽取 ${stolen.toFixed(2)} 生命，恢复 ${healed.toFixed(2)}。`)}
  };
  const enemyTurn=()=>{
   if(battle.skipRounds?.includes(battle.round+1)){messages.push('对手选择跳过本轮。');return}
@@ -270,7 +271,7 @@ export function playRound(save,action='attack',now=Date.now()){
   if(guardAmount)messages.push(`${battle.petName||'灵兽'}抵挡 ${guardAmount.toFixed(2)} 伤害。`);
   messages.push(`你受到 ${taken.toFixed(2)} 伤害。`);
   const rescued=tryZhangRescue(save,now);if(rescued)messages.push(rescued);
-  if(taken>0&&save.player.hp>0&&hasActiveTechnique(save,'resentment')){const reflected=round2(rawDamage*.1);battle.hp=round2(Math.max(0,battle.hp-reflected));messages.push(`以怨报怨，反弹 ${reflected.toFixed(2)} 伤害。`)}
+  if(taken>0&&save.player.hp>0&&hasActiveTechnique(save,'resentment')){const reflected=round2(rawDamage*(goldenInheritance(save,'resentment')?.15:.1));battle.hp=round2(Math.max(0,battle.hp-reflected));messages.push(`以怨报怨，反弹 ${reflected.toFixed(2)} 伤害。`)}
  };
  // 藏锋是独立的延迟攻击，跳过或被麻痹也不占用当轮行动。
  const releaseHidden=()=>{
@@ -280,18 +281,18 @@ export function playRound(save,action='attack',now=Date.now()){
   if(armored&&Math.random()<(battle.dodgeRate||0)/100)messages.push(`${battle.name}避开了木·藏锋。`);
   else{
    let damage=round2(Math.max(1,(stats.attack+elementalBonus(battle,'metal-edge'))*1.4-((battle.defense||0)+(enemyAction==='iron-wall'?1:0))));
-   if(hasActiveTechnique(save,'one-sword'))damage=round2(damage*1.1);
+   if(hasActiveTechnique(save,'one-sword'))damage=round2(damage*(goldenInheritance(save,'one-sword')?1.13:1.1));
    const actual=Math.min(battle.hp,damage);battle.hp=round2(Math.max(0,battle.hp-damage));dealt=round2(dealt+damage);
    messages.push(`木·藏锋额外造成 ${damage.toFixed(2)} 伤害。`);
    if(actual>0&&hasActiveTechnique(save,'blue-buff')){const restored=round2(Math.max(0,Math.min(.5,stats.maxMp-save.player.mp)));save.player.mp=round2(save.player.mp+restored);if(restored>0)messages.push(`你是我的蓝buff：恢复 ${restored.toFixed(2)} 法力。`)}
-  if(hasActiveTechnique(save,'life-steal')){const heal=round2(Math.min(stats.maxHp-save.player.hp,actual*.1));save.player.hp=round2(save.player.hp+heal);if(heal>0)messages.push(`吸取生命 ${heal.toFixed(2)}。`)}
+  if(hasActiveTechnique(save,'life-steal')){const heal=round2(Math.min(stats.maxHp-save.player.hp,actual*(goldenInheritance(save,'life-steal')?.13:.1)));save.player.hp=round2(save.player.hp+heal);if(heal>0)messages.push(`吸取生命 ${heal.toFixed(2)}。`)}
   }
  }
  };
  const playerAction=()=>{playerTurn();releaseHidden();if(battle.pet==='attack'&&battle.hp>0){const bonus=beastPower(save,'attack',battle.petStage);battle.hp=round2(Math.max(0,battle.hp-bonus));messages.push(`${battle.petName||'灵兽'}追加 ${bonus.toFixed(2)} 伤害。`)}};
  if(playerFirst){playerAction();if(battle.hp>0)enemyTurn()}
  else{enemyTurn();if(save.player.hp>0&&battle.hp>0)playerAction()}
- if(battle.regenRounds>0&&save.player.hp>0&&battle.hp>0){const heal=round2(Math.min(2,stats.maxHp-save.player.hp));save.player.hp=round2(save.player.hp+heal);battle.regenRounds--;messages.push(`妙手回春恢复 ${heal.toFixed(2)} 生命。`)}
+ if(battle.regenRounds>0&&save.player.hp>0&&battle.hp>0){const heal=round2(Math.min(goldenInheritance(save,'healing-hands')?3.5:2,stats.maxHp-save.player.hp));save.player.hp=round2(save.player.hp+heal);battle.regenRounds--;messages.push(`妙手回春恢复 ${heal.toFixed(2)} 生命。`)}
  battle.round++;
  expireElements(battle);
  battle.bindRounds=(battle.bindRounds||[]).filter(round=>round>battle.round);
@@ -330,13 +331,15 @@ export function useBattleArray(save,uid){
 export function useBattleTalisman(save,id){
  if(save.battle?.kind==='zhang-intro')throw new Error('阴风太急，来不及取出符箓。');
  const battle=save.battle;if(!battle)throw new Error('没有正在进行的战斗。');
- if(!['attack-talisman','guard-talisman','foundation-attack-talisman','foundation-guard-talisman'].includes(id))throw new Error('符箓不存在。');
+ if(ITEMS[id]?.stage==='金丹'&&!/^(金丹|元婴|化神|炼虚|合体|大乘|渡劫)/.test(save.player.realm))throw new Error('尚不能使用金丹符箓。');
+ if(!['attack-talisman','guard-talisman','foundation-attack-talisman','foundation-guard-talisman','golden-attack-talisman','golden-dual-talisman'].includes(id))throw new Error('符箓不存在。');
  if(ITEMS[id].stage==='筑基'&&!String(save.player.realm).startsWith('筑基'))throw new Error('灵力尚浅，无法催动这张符箓。');
  if(battle.talismansUsed>=2)throw new Error('每场最多使用两张符箓。');
  if(battle.talismanRound===battle.round+1)throw new Error('本轮已经使用过符箓。');
  consumeItem(save,id);battle.talismansUsed++;battle.talismanRound=battle.round+1;
  const damage=ITEMS[id].damage||(id==='attack-talisman'?2:0),message=damage?`${ITEMS[id].name}额外造成 ${damage.toFixed(2)} 伤害。`:`${ITEMS[id].name}准备抵挡下一次伤害。`;
  if(damage)battle.hp=round2(Math.max(0,battle.hp-damage));else battle.guard=true;
+ if(ITEMS[id].guard)battle.guard=true;
  battle.log=[...battle.log,message].slice(-10);
  if(battle.hp<=0)resolveVictory(save,Date.now(),[message]);
  return message;

@@ -1,3 +1,4 @@
+import {goldenInheritance} from './golden-inheritance.js';
 import {localDay} from './cultivation.js';
 import {TECHNIQUES,techniqueEligible,hasActiveTechnique} from '../data/techniques.js';
 import {ITEMS} from '../data/items.js';
@@ -59,6 +60,18 @@ export function redeemInheritance(save,id){
  return `兑换《${method.name}》，宗门积分 −9。`;
 }
 export function craftSectItem(save,id,herb='healing-herb'){
+ if(['golden-attack-talisman','golden-dual-talisman'].includes(id)){
+  if(!goldenInheritance(save,'fairy-painting'))throw new Error('请先升级金丹画中仙。');
+  const day=localDay(Date.now()),dual=id==='golden-dual-talisman';
+  if(dual&&save.goldenTalismanDay===day)throw new Error('今天已经制作过金罡符。');
+  const recipe=dual?{'golden-healing-herb':1,'golden-spirit-herb':1,'golden-qi-herb':1,'golden-ore':2}:{[herb]:1,'golden-ore':1};
+  if(!dual&&!['golden-healing-herb','golden-spirit-herb','golden-qi-herb'].includes(herb))throw new Error('需要金丹药草。');
+  for(const [key,n] of Object.entries(recipe))if((save.inventory.find(e=>e.itemId===key)?.quantity||0)<n)throw new Error('材料不足。');
+  const freed=Object.entries(recipe).filter(([key,n])=>save.inventory.find(e=>e.itemId===key)?.quantity===n).length;
+  if(!save.inventory.some(e=>e.itemId===id)&&save.inventory.length-freed>=save.bagCapacity)throw new Error('储物格已满。');
+  for(const [key,n] of Object.entries(recipe)){const e=save.inventory.find(e=>e.itemId===key);e.quantity-=n;if(!e.quantity)save.inventory=save.inventory.filter(x=>x!==e)}
+  addItem(save,id);if(dual)save.goldenTalismanDay=day;return '金丹符箓制作完成。';
+ }
  const talisman=['attack-talisman','guard-talisman','foundation-attack-talisman','foundation-guard-talisman'].includes(id);
  if(!talisman&&!['crafted-binding-array','foundation-crafted-array'].includes(id))throw new Error('制作配方尚未开放。');
  if(!hasActiveTechnique(save,talisman?'fairy-painting':'planting-flags'))throw new Error('请先学会本宗制作传承。');

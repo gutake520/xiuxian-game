@@ -35,7 +35,7 @@ export function showBattle({getSave,actions,activate,onExit,onYanEncounter},endR
  }
  const stats=equipmentStats(save),paralyzed=battle.kind==='fox-npc'&&battle.foxParalyzeRound===battle.round+1;
  const arrays=battle.kind==='zhang-intro'?[]:save.inventory.filter(item=>['binding-array','foundation-binding-array'].includes(item.itemId)||['crafted-binding-array','foundation-crafted-array'].includes(item.itemId)&&item.usesLeft>0);
- const talismans=battle.kind==='zhang-intro'?[]:['attack-talisman','guard-talisman','foundation-attack-talisman','foundation-guard-talisman'].filter(id=>save.inventory.some(item=>item.itemId===id));
+ const talismans=battle.kind==='zhang-intro'?[]:['attack-talisman','guard-talisman','foundation-attack-talisman','foundation-guard-talisman','golden-attack-talisman','golden-dual-talisman'].filter(id=>save.inventory.some(item=>item.itemId===id));
  content.innerHTML=`<section class="xg-map-sheet xg-battle-sheet"><h2>${escapeHTML(battle.name)}</h2><p>第 ${battle.round+1} 轮 · ${stats.speed>=battle.speed?'你先手':'对手先手'}</p>
   <div class="xg-battle-bars"><div>你的生命 <strong>${save.player.hp.toFixed(2)} / ${stats.maxHp.toFixed(2)}</strong></div><div>对手生命 <strong>${battle.hp.toFixed(2)} / ${battle.maxHp.toFixed(2)}</strong></div></div>${battle.pet?`<p>出战灵兽：${escapeHTML(battle.petName||'灵兽')} · ${battle.pet==='attack'?'追击':'守护'}</p>`:''}
   ${['sect-tournament','sect-senior','wounded-boss','fox-npc','zhang-intro'].includes(battle.kind)?`<p>对手法力 ${battle.mp.toFixed(2)} / ${battle.maxMp.toFixed(2)} · 防御 ${battle.defense.toFixed(2)}${battle.silencedTurns?' · 沉默 '+battle.silencedTurns+' 次行动':''}</p>`:''}

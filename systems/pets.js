@@ -1,9 +1,11 @@
+import {goldenInheritance} from './golden-inheritance.js';
+import {isGoldenRealm} from './golden-core.js';
 import {hasActiveTechnique} from '../data/techniques.js';
 import {localDay} from './cultivation.js';
 
 export const BEAST_TYPES=['attack','guard'];
 const DEFAULT_NAMES={attack:'追击灵兽',guard:'守护灵兽'};
-const stageFor=player=>String(player.realm||'').startsWith('炼气')?'炼气':String(player.realm||'').startsWith('筑基')?'筑基':null;
+const stageFor=player=>isGoldenRealm(player)?'金丹':String(player.realm||'').startsWith('炼气')?'炼气':String(player.realm||'').startsWith('筑基')?'筑基':null;
 
 export function ensureSpiritBeasts(save){
  if(save.player.sect!=='万灵山'&&!save.spiritBeasts&&!save.spiritBeast)return null;
@@ -17,6 +19,7 @@ export function ensureSpiritBeasts(save){
 }
 
 export function beastCanFight(save,type,now=Date.now()){
+ if(isGoldenRealm(save.player)&&!goldenInheritance(save,'beast-keeper'))return false;
  if(!BEAST_TYPES.includes(type)||!hasActiveTechnique(save,'beast-keeper'))return false;
  const beast=ensureSpiritBeasts(save)?.[type];
  return Boolean(beast&&beast.stage===stageFor(save.player)&&beast.fedDay===localDay(now));
@@ -37,7 +40,8 @@ export function feedBeast(save,type,herbId,now=Date.now()){
  const beast=ensureSpiritBeasts(save)[type],stage=stageFor(save.player);
  if(!stage)throw new Error('这个境界的灵兽喂养尚未开放。');
  if(beast.fedDay===localDay(now))throw new Error('这只灵兽今天已经喂过。');
- const permitted=stage==='筑基'?['foundation-healing-herb','foundation-spirit-herb','foundation-qi-herb']:['healing-herb','spirit-herb','qi-herb'];
+ if(stage==='金丹'&&!goldenInheritance(save,'beast-keeper'))throw new Error('请先升级金丹灵兽传承。');
+ const permitted=stage==='金丹'?['golden-healing-herb','golden-spirit-herb','golden-qi-herb']:stage==='筑基'?['foundation-healing-herb','foundation-spirit-herb','foundation-qi-herb']:['healing-herb','spirit-herb','qi-herb'];
  if(!permitted.includes(herbId))throw new Error(`此草灵气不合，需用${stage}期灵草。`);
  const entry=save.inventory.find(item=>item.itemId===herbId);
  if((entry?.quantity||0)<3)throw new Error('每只灵兽需要三株药草。');
@@ -50,6 +54,7 @@ export function selectBattlePet(save,pet,now=Date.now()){
  if(pet===null)return null;
  if(!BEAST_TYPES.includes(pet))throw new Error('灵兽类型无效。');
  if(!beastCanFight(save,pet,now)){
+  if(isGoldenRealm(save.player))throw new Error('金丹灵兽尚未升级或喂养。');
   const key=stageFor(save.player)==='筑基'?'foundationPetRentals':'petRentals';
   if((save[key]||0)<1)throw new Error('灵兽今天尚未喂养，也没有对应境界的租借灵兽。');
   save[key]--;

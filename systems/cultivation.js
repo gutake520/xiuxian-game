@@ -41,7 +41,7 @@ export function settleIdle(save,now=Date.now()){
   const day=localDay(start);if(idle.day!==day){idle.day=day;idle.usedMs=0}
   const end=Math.min(now,nextMidnight(start));
   if(rate>0&&realmProgress(save.player).index>=0&&!realmProgress(save.player).complete){
-   const dailyLimit=idleLimitMs(save)+(save.qiPillDay===day?(save.foundationPillDay===day?45:30)*60*1000:save.foundationPillDay===day?45*60*1000:0);
+   const dailyLimit=idleLimitMs(save)+(save.goldenPillDay===day?67.5*60000:save.qiPillDay===day?(save.foundationPillDay===day?45:30)*60*1000:save.foundationPillDay===day?45*60*1000:0);
    const counted=Math.min(end-start,Math.max(0,dailyLimit-idle.usedMs));
    idle.usedMs+=counted;
    // Settle each day before its mishap, including multi-day offline sessions.

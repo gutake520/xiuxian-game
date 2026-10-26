@@ -23,7 +23,7 @@
 | 国家地图、怪物与秘境（云泽／东夏） | `data/locations.js`、`systems/exploration.js` | `ui/map.js`（山河图 → 国家 → 地点） |
 | 主线、仇人、东夏国解锁 | `systems/boss-line.js`、`systems/foundation-story.js`、`data/masters.js` | `ui/boss-line.js`、`ui/foundation-story.js`、`ui/map.js`、`ui/master-teaching.js` |
 | 四处走走、每日奇遇额度 | `data/stroll.js`、`systems/stroll.js` | `ui/stroll.js` |
-| 宗门、服务与资格 | `data/sects.js`、`systems/sects.js`、`systems/sect-services.js`、`systems/sect-eligibility.js` | `index.js` 宗门页、`ui/map.js` 拜访 |
+| 宗门、服务与资格 | `data/sects.js`、`systems/sects.js`、`systems/sect-services.js`、`systems/sect-eligibility.js`、`systems/golden-inheritance.js` | `index.js` 宗门页、`ui/map.js` 拜访 |
 | 师父授业、故人支线 | `systems/master-teaching.js`、`systems/old-friend.js`、`data/old-friend.js` | `ui/master-teaching.js`、`ui/old-friend.js` |
 | 道侣与CG回顾 | `systems/foxes.js`、各人物同名模块、`systems/companion-memories.js` | `ui/map.js`、各人物UI、`ui/companion-memories.js` |
 | 称号与有效资质 | `data/titles.js`、`systems/titles.js` | `ui/titles.js` |

@@ -3,6 +3,7 @@ import {realmProgress} from '../data/realms.js';
 
 // Only the Qi stage has a settled recovery rate so far.
 export function settleRecovery(save,now=Date.now()){
+ if(save.vitalBuff&&save.vitalBuff.until<=now){delete save.vitalBuff;const cap=equipmentStats(save,now);save.player.hp=Math.min(save.player.hp,cap.maxHp);save.player.mp=Math.min(save.player.mp,cap.maxMp)}
  const p=save.player;save.recovery??={hpAt:now,mpAt:now};
  const r=save.recovery;
  if(save.battle||realmProgress(p).index<0){r.hpAt=now;r.mpAt=now;return}

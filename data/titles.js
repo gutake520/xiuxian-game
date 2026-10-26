@@ -8,6 +8,6 @@ export function effectiveStat(player,key){
  return base+(key==='魅力'&&player?.equippedTitle==='sea-king'?2:0);
 }
 export function beastPower(save,type,stage){
- const base=type==='attack'?(stage==='筑基'?.8:.5):(stage==='筑基'?.5:.3);
+ const base=type==='attack'?(stage==='金丹'?1.8:stage==='筑基'?.8:.5):(stage==='金丹'?1.5:stage==='筑基'?.5:.3);
  return Math.round(base*(save.player?.equippedTitle==='animal-friend'?1.2:1)*100)/100;
 }

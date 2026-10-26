@@ -1,3 +1,4 @@
+import {goldenInheritance} from './golden-inheritance.js';
 import {isGoldenRealm} from './golden-core.js';
 import {GOLDEN_RECIPES} from '../data/golden-economy.js';
 import {ITEMS,ELEMENTAL_MANUALS} from '../data/items.js';
@@ -59,14 +60,16 @@ export function equipItem(save,uid){
  save.player.mp=Math.round(Math.max(0,Math.min(maxMp,save.player.mp+maxMp-before.maxMp))*100)/100;
 }
 export function equipmentName(save,slot){const entry=save.inventory.find(e=>e.uid===save.equipment?.[slot]),item=ITEMS[entry?.itemId];return item?`${item.name} ${entry.durability??maxDurability(entry)}/${maxDurability(entry)}${entry.durability<=0?'（损坏）':''}`:'未装备'}
-export function equipmentStats(save){
+export function equipmentStats(save,now=Date.now()){
  const bonus=realmBattleBonus(save.player);
  const stats={attack:(save.player.combat?.attack||0)+bonus.attack,defense:(save.player.combat?.defense||0)+bonus.defense,speed:(save.player.combat?.speed||0)+(bonus.speed||0),critRate:(save.player.combat?.critRate||0)+bonus.critRate,dodgeRate:(save.player.combat?.dodgeRate||0)+bonus.dodgeRate,maxHp:(save.player.combat?.hp||save.player.hp||20)+realmHpBonus(save.player),maxMp:(save.player.combat?.mp||save.player.mp||10)+bonus.mp};
  for(const uid of Object.values(save.equipment||{})){
   const entry=save.inventory.find(entry=>entry.uid===uid),item=ITEMS[entry?.itemId];if(!item||item.kind!=='equipment'||(entry.durability??DURABILITY_MAX)<=0)continue;
+  stats.attack+=entry.enchantAttack||0;
   for(const key of ['attack','defense','speed','critRate','dodgeRate'])stats[key]+=key==='attack'&&entry.itemId==='library-duster'?(String(save.player.realm).startsWith('筑基')?3:1.5):item[key]||0;
   stats.maxHp+=item.hp||0;stats.maxMp+=item.mp||0;
  }
+ if(save.vitalBuff?.until>now){stats.maxHp+=13;stats.maxMp+=4}
  return stats;
 }
 export function expireLoot(save,now=Date.now()){save.temporaryLoot=(save.temporaryLoot||[]).filter(entry=>entry.expiresAt>now)}
@@ -184,17 +187,20 @@ export function usePill(save,uid,now=Date.now()){
  if(!itemStageAllowed(save.player,item))throw new Error('此丹药力太盛，暂不能服用。');
  save.pillCooldowns??={};
  if((save.pillCooldowns[item.id]||0)>now)throw new Error(`此丹药仍在冷却，还需 ${Math.ceil((save.pillCooldowns[item.id]-now)/1000)} 秒。`);
- const p=save.player,stats=equipmentStats(save);
- if(['qi-pill','foundation-qi-pill'].includes(item.id)){
-  if(save.qiPillDay===localDay(now)||save.foundationPillDay===localDay(now))throw new Error('今天已经服用过增益打坐的丹药。');
-  save[item.id==='qi-pill'?'qiPillDay':'foundationPillDay']=localDay(now);
+ const p=save.player,stats=equipmentStats(save,now);
+ if(['qi-pill','foundation-qi-pill','golden-qi-pill'].includes(item.id)){
+  if(save.goldenPillDay===localDay(now)||save.qiPillDay===localDay(now)||save.foundationPillDay===localDay(now))throw new Error('今天已经服用过增益打坐的丹药。');
+  save[item.id==='golden-qi-pill'?'goldenPillDay':item.id==='qi-pill'?'qiPillDay':'foundationPillDay']=localDay(now);
+ }else if(item.id==='golden-vital-pill'){
+  if(!goldenInheritance(save,'divine-pharmacopoeia'))throw new Error('须升级本宗金丹传承后自用。');
+  save.vitalBuff={until:now+3600000};p.hp=Math.min(p.hp,stats.maxHp)+13;p.mp=Math.min(p.mp,stats.maxMp)+4;
  }else{
   const hp=Math.min(stats.maxHp,Math.round((p.hp+(item.hp||0))*100)/100),mp=Math.min(stats.maxMp,Math.round((p.mp+(item.mp||0))*100)/100);
   if(hp===p.hp&&mp===p.mp)throw new Error('生命与法力已满，无需服药。');
   p.hp=hp;p.mp=mp;
  }
  if(entry.quantity>1)entry.quantity--;else save.inventory=save.inventory.filter(e=>e.uid!==uid);
- save.pillCooldowns[item.id]=now+3*60*1000;
+ save.pillCooldowns[item.id]=now+(item.id==='golden-vital-pill'?120:3)*60*1000;
  return `服用${item.name}。`;
 }
 export const PILL_RECIPES={
@@ -210,6 +216,7 @@ export const PILL_RECIPES={
 };
 export function brewPill(save,id){
  if(save.player.sect!=='丹霞谷'||!save.techniques?.mastered?.includes('divine-pharmacopoeia'))throw new Error('须先学会丹霞谷《神药谱》。');
+ if(id==='golden-vital-pill'&&!goldenInheritance(save,'divine-pharmacopoeia'))throw new Error('请先升级金丹神药谱。');
  const recipe=PILL_RECIPES[id];if(!recipe)throw new Error('丹方不存在。');
  if(!itemStageAllowed(save.player,ITEMS[id]))throw new Error(`灵力尚浅，无法炼制${ITEMS[id].stage}丹药。`);
  for(const [material,amount] of Object.entries(recipe))if((save.inventory.find(item=>item.itemId===material)?.quantity||0)<amount)throw new Error('药草不足。');
