@@ -163,6 +163,7 @@ export function beginBattle(save,id,pet=null,retaliation=false){
  if(monster.stage==='金丹'){
   if(!canEnterDongxia(save))throw new Error('请先突破金丹并向师父请教，开放东夏国。');
   if(pet&&!beastCanFight(save,pet))throw new Error('金丹灵兽尚未升级或喂养。');
+  if(realmProgress(save.player).index-19<monster.minLevel)throw new Error(`需金丹${monster.minLevel}层方可挑战。`);
  }
  if(monster.stage==='筑基'&&tier-9<monster.minLevel)throw new Error(`需筑基${['一','二','三','四','五','六','七','八','九','十'][monster.minLevel-1]}层方可挑战。`);
  if(monster.boss&&save.foundationEnding?.defeated)throw new Error('封渡客已与你罢战。');

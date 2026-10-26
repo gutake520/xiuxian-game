@@ -23,9 +23,9 @@ test('golden alchemy consumes only matching herbs and has correct recoveries',()
  const s=make();addItem(s,'golden-healing-herb',2);addItem(s,'golden-spirit-herb',1);brewPill(s,'golden-mixed-pill');assert.equal(s.inventory.length,1);usePill(s,s.inventory[0].uid);assert.equal(s.player.hp,16.75);assert.equal(s.player.mp,7.75);
  addItem(s,'foundation-healing-herb',5);assert.throws(()=>brewPill(s,'golden-heal-pill'),/药草/);
 });
-test('all three beasts roll only golden drops, including gear and overflow; no duplicate reward',t=>{
+test('all golden beasts roll only golden drops, including gear and overflow; no duplicate reward',t=>{
  t.mock.method(Math,'random',()=>0);
- for(const monster of GOLDEN_MONSTERS){const s=make();s.player.hp=73;beginBattle(s,monster.id);s.battle.hp=1;playRound(s);assert.ok(s.inventory.length>=5);assert.ok(s.inventory.every(e=>ITEMS[e.itemId].stage==='金丹'));const before=structuredClone(s);assert.throws(()=>playRound(s));assert.deepEqual(s,before)}
+ for(const monster of GOLDEN_MONSTERS){const s=make();s.player.realm=monster.minLevel===7?'金丹七层':monster.minLevel===4?'金丹四层':'金丹一层';s.player.hp=73;beginBattle(s,monster.id);s.battle.hp=1;playRound(s);assert.ok(s.inventory.length>=5);assert.ok(s.inventory.every(e=>ITEMS[e.itemId].stage==='金丹'));const before=structuredClone(s);assert.throws(()=>playRound(s));assert.deepEqual(s,before)}
  const s=make();s.bagCapacity=0;beginBattle(s,GOLDEN_MONSTERS[1].id);s.battle.hp=1;playRound(s);assert.ok(s.temporaryLoot.length>0);assert.ok(s.temporaryLoot.every(e=>ITEMS[e.itemId].stage==='金丹'));
 });
 test('golden shop items are hidden from foundation, buyable in golden realm',async t=>{

@@ -58,6 +58,11 @@ export const GOLDEN_MONSTERS=[
  {id:'golden-flame-mastiff',name:'赤焰獒',hp:'54～58',hpMin:54,hpMax:58,attack:11.5,defense:1.6,speed:9,minLevel:1,stage:'金丹',skill:'strengthen-attack',attackBoost:1.1,mp:6,xp:100,resource:'herbs',drop:'赤髓芝、玉露花、凝元叶，另有灵石或矿材'},
  {id:'golden-lightning-falcon',name:'逐电隼',hp:'50～54',hpMin:50,hpMax:54,attack:10.5,defense:1.3,speed:13,minLevel:1,stage:'金丹',skill:'strengthen-attack',attackBoost:1.1,mp:6,xp:100,resource:'ore',drop:'赤金矿，另有灵石或药草'}
 ];
+// Each region keeps its early foes and unlocks stronger local species at four/seven.
+for(const [suffix,level,xp,names,values] of [
+ ['mid',4,150,['苍角犀','焚风獒','雷羽隼'],[[90,94,9.8,2.5,9],[64,68,13,2,10],[60,64,12,1.7,14]]],
+ ['late',7,220,['镇岳犀','熔金獒','惊霆隼'],[[104,108,12,3,10],[74,78,15.5,2.5,11],[70,74,14.5,2.1,15]]]
+])GOLDEN_MONSTERS.slice(0,3).forEach((base,i)=>{const [hpMin,hpMax,attack,defense,speed]=values[i];GOLDEN_MONSTERS.push({...base,id:base.id+'-'+suffix,name:names[i],minLevel:level,xp,hpMin,hpMax,hp:`${hpMin}～${hpMax}`,attack,defense,speed,mp:level===4?8:10})});
 export const GOLDEN_PEAKS=[
  {id:'golden-rhino-ridge',name:'玄岩岭',monsterId:'golden-rock-rhino',x:7,y:18,size:.83},
  {id:'golden-mastiff-valley',name:'赤焰谷',monsterId:'golden-flame-mastiff',x:62,y:18,size:.8},

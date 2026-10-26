@@ -250,19 +250,19 @@ export function createMapUI({getSave,activate,actions,onSectBattleExit}){
  function renderGoldenWilds(){
   if(!canEnterDongxia(getSave()))return render();
   activate('map');
-  content().innerHTML=`<section class="xg-map-sheet"><button class="xg-map-back" type="button">← 返回东夏国</button>${heading('东夏山野','金丹初期 · 山野历练')}<div class="xg-feature-row"><button type="button" data-dongxia-stroll>四处走走</button></div>${peaks(GOLDEN_PEAKS,'golden')}<p>选择一处山地，查看当地妖兽。</p></section>`;
+  content().innerHTML=`<section class="xg-map-sheet"><button class="xg-map-back" type="button">← 返回东夏国</button>${heading('东夏山野','山野历练')}<div class="xg-feature-row"><button type="button" data-dongxia-stroll>四处走走</button></div>${peaks(GOLDEN_PEAKS,'golden')}<p>选择一处山地，查看当地妖兽。</p></section>`;
   back(renderDongxia);
   content().querySelector('[data-dongxia-stroll]').onclick=()=>showStroll({getSave,actions},renderGoldenWilds,0,'dongxia');
   content().querySelectorAll('[data-golden]').forEach(b=>b.onclick=()=>renderGoldenFoe(b.dataset.golden));
  }
  function renderGoldenFoe(id){
   if(!canEnterDongxia(getSave()))return render();
-  const place=GOLDEN_PEAKS.find(p=>p.id===id),monster=GOLDEN_MONSTERS.find(m=>m.id===place?.monsterId);
+  const place=GOLDEN_PEAKS.find(p=>p.id===id),foes=GOLDEN_MONSTERS.filter(m=>m.id===place?.monsterId||m.id.startsWith(place?.monsterId+'-')),monster=foes[0];
   if(!monster)return renderGoldenWilds();
   activate('map');
-  content().innerHTML=`<section class="xg-map-sheet"><button class="xg-map-back" type="button">← 返回东夏山野</button>${heading(place.name,'金丹一至三层 · 初期妖兽')}<div class="xg-card xg-map-monster"><h3>${monster.name}</h3><p>生命 ${monster.hp} · 攻击 ${monster.attack} · 防御 ${monster.defense} · 速度 ${monster.speed}</p><p>法力 ${monster.mp} · 功法：强化普通</p><small>${monster.drop}</small>${petChoices(getSave(),'xg-golden-pet')}<button type="button" data-golden-fight>迎战</button></div><p role="status" aria-live="polite"></p></section>`;
+  content().innerHTML=`<section class="xg-map-sheet"><button class="xg-map-back" type="button">← 返回东夏山野</button>${heading(place.name,'金丹妖兽')}${petChoices(getSave(),'xg-golden-pet')}${foes.map(monster=>`<div class="xg-card xg-map-monster"><h3>${monster.name}</h3><p>生命 ${monster.hp} · 攻击 ${monster.attack} · 防御 ${monster.defense} · 速度 ${monster.speed}</p><p>法力 ${monster.mp} · 强化普通 · 修为 ${monster.xp}</p><small>${monster.drop}</small><button type="button" data-golden-fight="${monster.id}" ${realmProgress(getSave().player).index-19<monster.minLevel?'disabled':''}>金丹${monster.minLevel}层 · 迎战</button></div>`).join('')}<p role="status" aria-live="polite"></p></section>`;
   back(renderGoldenWilds);
-  content().querySelector('[data-golden-fight]').onclick=async event=>{const button=event.currentTarget;button.disabled=true;try{await actions.startBattle(monster.id,content().querySelector('[name="xg-golden-pet"]:checked')?.value||null);battle()}catch(error){content().querySelector('[role=status]').textContent=error.message;button.disabled=false}};
+  content().querySelectorAll('[data-golden-fight]').forEach(b=>b.onclick=async event=>{const button=event.currentTarget;button.disabled=true;try{await actions.startBattle(button.dataset.goldenFight,content().querySelector('[name="xg-golden-pet"]:checked')?.value||null);battle()}catch(error){content().querySelector('[role=status]').textContent=error.message;button.disabled=false}});
  }
  function renderPursuer(){
   if(foundationStoryPending(getSave()))return battle();

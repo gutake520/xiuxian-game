@@ -17,9 +17,9 @@ import {createMapUI} from '../ui/map.js';
 const now=new Date(2026,9,26,12).getTime();
 const make=()=>migrateSave({slot:'golden',dongxiaUnlocked:true,player:{name:'试验',realm:'金丹一层',sect:'青岚谷',spiritRoot:'金水双灵根',cultivation:0,spiritStones:1000,hp:50,mp:20,combat:{hp:50,mp:20,attack:5,defense:0,speed:8,critRate:0,dodgeRate:0},goldenCoreHpBonus:0,goldenCoreBonus:{attack:0,defense:0,speed:0,mp:0,critRate:0,dodgeRate:0}},inventory:[],techniques:{mastered:[],combat:[],puzzles:{}},bagCapacity:20},now);
 const seeded=seed=>()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296};
-test('golden thresholds carry surplus and old accumulated saves; per-layer stats stay fixed',()=>{
- const s=make(),stats=equipmentStats(s);s.player.cultivation=4999;assert.equal(addCultivation(s,2),2);assert.equal(s.player.realm,'金丹二层');assert.equal(s.player.cultivation,1);assert.deepEqual(equipmentStats(s),stats);
- s.player.realm='金丹一层';s.player.cultivation=12000;migrateSave(s,now);assert.equal(s.player.realm,'金丹三层');assert.equal(s.player.cultivation,1000);assert.deepEqual(equipmentStats(s),stats);
+test('golden thresholds carry surplus and old accumulated saves; per-layer growth follows realm',()=>{
+ const s=make(),stats=equipmentStats(s);s.player.cultivation=4999;assert.equal(addCultivation(s,2),2);assert.equal(s.player.realm,'金丹二层');assert.equal(s.player.cultivation,1);assert.equal(equipmentStats(s).maxHp,stats.maxHp+3.5);
+ s.player.realm='金丹一层';s.player.cultivation=12000;migrateSave(s,now);assert.equal(s.player.realm,'金丹三层');assert.equal(s.player.cultivation,1000);assert.equal(equipmentStats(s).maxHp,stats.maxHp+7);
  const t=make();assert.equal(addCultivation(t,1e6),GOLDEN_REQUIREMENTS.reduce((a,b)=>a+b));assert.equal(t.player.realm,'金丹十层');assert.equal(t.player.cultivation,15000);assert.ok(realmProgress(t.player).complete);assert.equal(addCultivation(t,100),0);migrateSave(t,now);assert.equal(t.player.cultivation,15000);
 });
 test('golden buys a third daily chance for thirty; leaving costs six hundred with same delay',()=>{

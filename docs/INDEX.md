@@ -46,5 +46,5 @@
 - 测试：`tests/*.test.js`，多数与模块同名；全量命令 `npm test`。
 - 金丹突破与成长领取、典籍学习：`tests/golden-core.test.js`；东夏国试炼：`tests/concentration.test.js`；金丹物价与补给：`tests/golden-economy.test.js`。
 - 金丹传承付费资格、学习完成与困杀阵盘：`systems/golden-inheritance.js`、`systems/techniques.js`；验证：`tests/golden-inheritance.test.js`。
-- 筑基→金丹兼容回归：`tests/golden-transition.test.js`；金丹修为可升层，层间属性成长暂未开放。
+- 筑基→金丹兼容回归：`tests/golden-transition.test.js`；金丹层间成长：`data/realms.js` 的 `goldenGrowth`；四／七层解锁中／后期妖兽。
 - 索引只保留位置、职责、关键调用关系；详细规则按需查 `docs/STRUCTURE.md`，数值以代码为准。

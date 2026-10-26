@@ -1,3 +1,4 @@
+import {rootCount} from './technique-slots.js';
 import {isGoldenRealm} from '../systems/golden-core.js';
 export const QI_REALMS = ['炼气一层','炼气二层','炼气三层','炼气四层','炼气五层','炼气六层','炼气七层','炼气八层','炼气九层','炼气十层'];
 export const QI_REQUIREMENTS = [150,200,250,300,350,400,500,600,750,1000];
@@ -5,6 +6,10 @@ export const FOUNDATION_REALMS=['筑基一层','筑基二层','筑基三层','�
 export const FOUNDATION_REQUIREMENTS=[1200,1500,1800,2100,2400,2700,3000,3300,3600,4000];
 export const GOLDEN_REALMS=QI_REALMS.map(r=>r.replace('炼气','金丹'));
 export const GOLDEN_REQUIREMENTS=[5000,6000,7000,8000,9000,10000,11000,12000,13000,15000];
+export function goldenGrowth(player){
+ const step=Math.max(0,GOLDEN_REALMS.indexOf(player.realm)),n=rootCount(player),r=v=>Math.round(v*100)/100;
+ return {hp:step*(n===1?4:n<=3?3.5:3),attack:r(step*(n===1?.6:n<=3?.5:.4)),defense:r(step*(n===1?.2:n<=3?.16:.12)),speed:r(step*.3),mp:Math.floor(step/2),critRate:Math.floor(step/3),dodgeRate:Math.floor(step/3)};
+}
 export function realmProgress(player) {
  const gold=GOLDEN_REALMS.indexOf(player.realm);if(gold>=0)return {index:20+gold,required:GOLDEN_REQUIREMENTS[gold],next:GOLDEN_REALMS[gold+1]??null,complete:gold===9&&Number(player.cultivation)>=15000,current:Number(player.cultivation)||0};
  const qi=QI_REALMS.indexOf(player.realm),foundation=FOUNDATION_REALMS.indexOf(player.realm);
@@ -14,9 +19,9 @@ export function realmProgress(player) {
 }
 // 炼气一至五层：每升一层增加 1 点生命上限。五层之后暂不继续增加。
 function foundationMilestones(step){return Number(step>=3)+Number(step>=6)}
-export function realmHpBonus(player){if(isGoldenRealm(player))return player.goldenCoreHpBonus||0;const step=Math.max(0,FOUNDATION_REALMS.indexOf(player.realm));return Math.max(0,Math.min(4,realmProgress(player).index))+step*2+foundationMilestones(step)*3}
+export function realmHpBonus(player){if(isGoldenRealm(player))return (player.goldenCoreHpBonus||0)+goldenGrowth(player).hp;const step=Math.max(0,FOUNDATION_REALMS.indexOf(player.realm));return Math.max(0,Math.min(4,realmProgress(player).index))+step*2+foundationMilestones(step)*3}
 export function realmBattleBonus(player){
- if(player.goldenCoreBonus)return {...player.goldenCoreBonus};
+ if(isGoldenRealm(player)){const {hp,...growth}=goldenGrowth(player),base=player.goldenCoreBonus||{};return Object.fromEntries(Object.entries(growth).map(([k,v])=>[k,(base[k]||0)+v]))}
  if(String(player.realm).startsWith('筑基')){const step=Math.max(0,FOUNDATION_REALMS.indexOf(player.realm)),base={defense:0,mp:0,attack:0,critRate:0,dodgeRate:0,speed:0,...player.foundationBonus};return {...base,attack:Math.round((base.attack+step*.3+foundationMilestones(step)*.2)*100)/100,defense:Math.round((base.defense+step*.08)*100)/100,mp:base.mp+Math.floor(step/2),speed:Math.round((base.speed+step*.3)*100)/100}}
  const tier=isGoldenRealm(player)?-1:realmProgress(player).index;
  const root=String(player.spiritRoot||'');
@@ -26,7 +31,7 @@ export function realmBattleBonus(player){
  return {defense:tier>=5?defense:0,mp:tier>=6?1:0,attack:(tier>=7?attack:0)+(tier>=9?attack:0),critRate:tier>=8?1:0,dodgeRate:tier>=8?1:0};
 }
 export function applyRealmHp(save){
- const bonus=realmHpBonus(save.player),applied=Number.isSafeInteger(save.realmHpBonusApplied)?save.realmHpBonusApplied:0;
+ const bonus=realmHpBonus(save.player),applied=Number.isFinite(save.realmHpBonusApplied)?save.realmHpBonusApplied:0;
  if(bonus>applied&&Number.isFinite(save.player.hp))save.player.hp=Math.round((save.player.hp+bonus-applied)*100)/100;
  save.realmHpBonusApplied=bonus;
  const mpBonus=realmBattleBonus(save.player).mp,mpApplied=Number.isFinite(save.realmMpBonusApplied)?save.realmMpBonusApplied:0;
@@ -42,7 +47,7 @@ export function addCultivation(save,amount) {
   if(value>15000){used-=value-15000;value=15000}
   save.player.realm=GOLDEN_REALMS[step];save.player.cultivation=Math.round(value*100)/100;
   save.player.cultivationRequired=GOLDEN_REQUIREMENTS[step];
-  // Golden breakthrough bonuses are frozen; per-layer attribute growth is deferred.
+  applyRealmHp(save);
   return Math.max(0,Math.round(used*100)/100);
  }
  let {index}=realmProgress(save.player);if(index<0||realmProgress(save.player).complete||!Number.isFinite(amount)||amount<=0)return 0;
