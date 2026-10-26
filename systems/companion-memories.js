@@ -1,3 +1,4 @@
+import {XIGONG_SCENES} from '../data/xigong-defense.js';
 import {FOXES} from '../data/foxes.js';
 import {YAN_NAME,YAN_SCENES} from '../data/yan-tingyun.js';
 import {PEI_NAME,PEI_SCENES} from '../data/pei-zhaoheng.js';
@@ -7,6 +8,7 @@ export function companionMemories(save){
  const nameOf=c=>typeof c==='string'?c:c?.name;
  const bonds=new Set([...(save.player?.companions||[]),...(save.titles?.companionHistory||[])].map(nameOf));
  const people=[
+  {id:'xigong-xuan',name:'西宫玄',state:save.xigongXuan,data:XIGONG_SCENES,intro:!!save.xigongXuan?.unlocked},
   ...Object.entries(FOXES).map(([id,data])=>({id,name:data.name,state:save.foxes?.[id],data,intro:!!save.foxes?.[id]?.met})),
   {id:'yan-tingyun',name:YAN_NAME,state:save.yanTingyun,data:YAN_SCENES,intro:!!save.yanTingyun?.introSeen},
   {id:'pei-zhaoheng',name:PEI_NAME,state:save.peiZhaoheng,data:PEI_SCENES,intro:!!save.peiZhaoheng?.met},

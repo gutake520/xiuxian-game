@@ -1,3 +1,4 @@
+import {actXigongDefense} from './xigong-defense.js';
 import {canEnterDongxia} from './foundation-story.js';
 import {localDay} from './cultivation.js';
 import {XIGONG_CHAPTERS} from '../data/dongxia-story.js';
@@ -9,6 +10,7 @@ export function findXigong(save,now=Date.now(),random=Math.random){
 }
 export function actXigong(save,id,step,action,value,now=Date.now()){
  const q=save.dongxiaStory;if(!q||q.id!==id||q.step!==step||!canEnterDongxia(save))throw Error('手札已更新，请重新打开。');
+ if(!['invited','investigating'].includes(q.phase))return actXigongDefense(save,action,value,now);
  if(action==='join'&&q.phase==='invited'){q.phase='investigating';return '你接下木牌，成为西宫家的新客卿。'}
  if(q.phase!=='investigating')throw Error('这段调查已结束。');
  if(q.lastDay===localDay(now))throw Error('今日所得已经整理，明日再来调查。');

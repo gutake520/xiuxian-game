@@ -69,6 +69,7 @@ export function equipmentStats(save,now=Date.now()){
   for(const key of ['attack','defense','speed','critRate','dodgeRate'])stats[key]+=key==='attack'&&entry.itemId==='library-duster'?((isGoldenRealm(save.player)||String(save.player.realm).startsWith('筑基'))?3:1.5):item[key]||0;
   stats.maxHp+=item.hp||0;stats.maxMp+=item.mp||0;
  }
+ if(isGoldenRealm(save.player)&&(save.player.companions||[]).some(c=>(typeof c==='string'?c:c?.name)==='西宫玄'))stats.maxHp+=10;
  if(save.vitalBuff?.until>now){stats.maxHp+=13;stats.maxMp+=4}
  return stats;
 }

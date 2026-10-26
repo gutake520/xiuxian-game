@@ -34,7 +34,7 @@
 通常规则在 `systems/<模块>.js`，界面在 `ui/<模块>.js`；有独立配置时再查 `data/`。
 
 - 东夏山野内「四处走走」触发凝神试炼；东夏秘境回星古阵：`golden-secret`；无灯集与旧黑市共用 `black-market`，保底独立。
-- 东夏主线「照川旧笺」：`data/systems/ui` 下的 `dongxia-story.js`；每日调查，结尾 `attack-pending` 接迎敌篇。
+- 东夏主线「照川旧笺」：`data/systems/ui` 下的 `dongxia-story.js`；每日调查；`xigong-defense` 数据／规则接迎敌、废墟与西宫玄交药结缘，界面复用主线页。
 - 凝神试炼：`concentration`；辨认灵符：`talisman-memory`；雾中渡舟：`river-crossing`。
 - 替人看摊：`stall-sitting`；棋摊／骰局：`stall-games`；抓叛徒：`traitor-puzzle`。
 - 藏宝图：`treasure`；迷宫／推箱子：`peak-puzzles`；灵泉：`spirit-spring`。

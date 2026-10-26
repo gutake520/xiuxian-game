@@ -1,3 +1,4 @@
+import {finishXigongFight} from './xigong-defense.js';
 import {isGoldenRealm} from './golden-core.js';
 import {goldenInheritance} from './golden-inheritance.js';
 import {convergingDamage} from './golden-core.js';
@@ -70,6 +71,7 @@ function resolveTournamentLoss(save,outcome,messages){
  result.log=[...messages];return result;
 }
 function resolveVictory(save,now,messages){
+ if(save.battle?.kind==='xigong-defense')return finishXigongFight(save);
  if(save.battle?.kind==='old-friend-duel')return finishOldFriendDuel(save,'victory');
  if(save.battle?.kind==='zhang-intro')return finishZhangEncounter(save);
  const battle=save.battle,monster=monsters.find(entry=>entry.id===battle.monsterId);
@@ -301,7 +303,8 @@ export function playRound(save,action='attack',now=Date.now()){
  battle.round++;
  expireElements(battle);
  battle.bindRounds=(battle.bindRounds||[]).filter(round=>round>battle.round);
- if(battle.kind==='zhang-intro'&&(battle.round>=3||battle.hp<=0||save.player.hp<=0))finishZhangEncounter(save);
+ if(battle.kind==='xigong-defense'&&(battle.hp<=0||save.player.hp<=0))finishXigongFight(save);
+ else if(battle.kind==='zhang-intro'&&(battle.round>=3||battle.hp<=0||save.player.hp<=0))finishZhangEncounter(save);
  else if(battle.hp<=0)resolveVictory(save,now,messages);
  else if(save.player.hp<=0){if(battle.kind==='old-friend-duel')finishOldFriendDuel(save,'defeat');else if(tournament)resolveTournamentLoss(save,'defeat',messages);else{const foundation=(isGoldenRealm(save.player)||String(save.player.realm).startsWith('筑基')),loss=foundation?70:50,hp=foundation?7:5;save.player.cultivation=round2(save.player.cultivation-loss);save.player.hp=hp;messages.push(`战败：修为 −${loss}，生命恢复至 ${hp}；无战利品。`);finish(save,'defeat',{log:[...battle.log,...messages].slice(-10)})}}
  else{battle.log=[...battle.log,...messages].slice(-10)}
@@ -354,6 +357,7 @@ export function useBattleTalisman(save,id){
  return message;
 }
 export function fleeBattle(save){
+ if(save.battle?.kind==='xigong-defense')throw Error('你已选择留下掩护伤员，请继续迎战。');
  if(save.battle?.kind==='old-friend-duel')return finishOldFriendDuel(save,'fled');
  if(!save.battle)throw new Error('没有正在进行的战斗。');
  if(save.battle.kind==='zhang-intro')return finishZhangEncounter(save);

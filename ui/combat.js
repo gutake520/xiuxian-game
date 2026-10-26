@@ -1,3 +1,4 @@
+import {showXigong} from './dongxia-story.js';
 import {elementalStatus,hasElementalEffect} from '../systems/five-elements.js';
 import {foundationStoryPending} from '../systems/foundation-story.js';
 import {showFoundationStory} from './foundation-story.js';
@@ -16,6 +17,7 @@ import {FOXES} from '../data/foxes.js';
 export function showBattle({getSave,actions,activate,onExit,onYanEncounter},endResult=null){
  const save=getSave(),battle=save?.battle;activate('map');
  const content=document.getElementById('xg-content');
+ if(!battle&&save.dongxiaStory?.phase==='unconscious')return showXigong({getSave,actions},onExit);
  if(!battle&&save.yanAftermath)return onYanEncounter();
  if(!battle&&!save.divinationPending&&!save.encounterPending&&foundationStoryPending(save))return showFoundationStory({getSave,actions,activate,onDone:onExit});
  if(!battle&&!save.divinationPending&&!save.encounterPending&&(save.bossLine?.phase==='ambush'||save.bossLine?.rescuePending))return showBossStory({getSave,actions,activate,onDone:onExit});
@@ -44,7 +46,7 @@ export function showBattle({getSave,actions,activate,onExit,onYanEncounter},endR
   ${(save.techniques?.combat||[]).length?`<div class="xg-battle-talisman"><strong>战斗功法</strong>${battle.criticalFocus?`<small>凝神中 · 本场暴击率 +${save.techniques.upgraded?.includes('only-once')?20:15}%</small>`:''}<div class="xg-battle-talisman-actions">${save.techniques.combat.filter(id=>!TECHNIQUES[id]?.passive).map(id=>{const skill=TECHNIQUES[id],ongoing=hasElementalEffect(battle,id),wait=Math.max(0,(battle.skillReady?.[id]||0)-battle.round-1),used=id==='only-once'&&battle.criticalFocus||id==='cooldown-reset'&&battle.cooldownResetUsed,cost=id==='spirit-burn'?save.player.mp:save.techniques.upgraded?.includes(id)?id==='only-once'?3:2:skill?.mpCost??1;return skill?`<button type="button" data-fight="${id}" ${paralyzed||battle.pendingStrike||used||ongoing||wait||save.player.mp<cost||id==='spirit-burn'&&save.player.mp<=0?'disabled':''}>${skill.name}${used?' · 本场已用':wait?' · 冷却 '+wait+' 轮':ongoing?' · 效果持续中':''}</button>`:''}).join('')}</div></div>`:''}
   ${arrays.length?`<div class="xg-battle-talisman"><div class="xg-battle-subheading"><strong>阵盘</strong><small>使用后仍可行动</small></div>${arrays.map(entry=>`<button type="button" data-array="${escapeHTML(entry.uid)}" ${battle.arrayRound===battle.round+1?'disabled':''}>${entry.itemId.includes('crafted')?ITEMS[entry.itemId].name+' · 剩余 '+entry.usesLeft+' 次':ITEMS[entry.itemId].name+' · '+entry.quantity+' 枚'}</button>`).join('')}</div>`:''}
   ${talismans.length?`<div class="xg-battle-talisman"><div class="xg-battle-subheading"><strong>符箓</strong><small>${battle.talismansUsed||0} / 2 · 不占行动</small></div><div class="xg-battle-talisman-actions">${talismans.map(id=>`<button type="button" data-talisman="${id}" ${battle.talismansUsed>=2||battle.talismanRound===battle.round+1?'disabled':''}>${ITEMS[id].name} · ${ITEMS[id].damage?'+'+ITEMS[id].damage:'免伤'}</button>`).join('')}</div></div>`:''}
-  <button class="xg-battle-flee" type="button" data-fight="flee">脱离战斗</button></div><p role="status" aria-live="polite"></p></section>`;
+  ${battle.kind==='xigong-defense'?'<p>留下抗敌 · 连续迎战，无战败惩罚。</p>':'<button class="xg-battle-flee" type="button" data-fight="flee">脱离战斗</button>'}</div><p role="status" aria-live="polite"></p></section>`;
  const log=content.querySelector('.xg-battle-log');
  log.scrollTop=log.scrollHeight;
  const status=content.querySelector('[role=status]');
