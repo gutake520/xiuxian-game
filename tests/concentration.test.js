@@ -8,6 +8,7 @@ import {canEnterDongxia,askGoldenCoreMaster} from '../systems/foundation-story.j
 import {maybeFindConcentration,playConcentration,concentrationReward} from '../systems/concentration.js';
 import {takeStroll,strollPlaces,strollEncounterCount} from '../systems/stroll.js';
 import {showConcentration} from '../ui/concentration.js';
+import {showStroll} from '../ui/stroll.js';
 import {showMasterTeaching} from '../ui/master-teaching.js';
 import {createMapUI} from '../ui/map.js';
 const make=()=>migrateSave({slot:'concentration-test',player:{realm:'金丹一层',sect:'青岚谷',spiritRoot:'木灵根',spiritStones:20},inventory:[]});
@@ -40,4 +41,13 @@ test('UI hides before master dialogue, unlocks map, conceals ready board, resume
  maybeFindConcentration(s,()=>0);showConcentration(api,()=>{});assert.equal(document.querySelectorAll('[data-number]').length,0);await document.querySelector('[data-action="start"]').onclick();assert.equal(document.querySelectorAll('[data-number]').length,36);
  fail=true;await document.querySelector('[data-number="1"]').onclick();assert.equal(s.concentration.next,1);assert.equal(document.querySelector('[data-number="1"]').disabled,false);fail=false;await document.querySelector('[data-number="1"]').onclick();assert.equal(s.concentration.next,2);const started=s.concentration.startedAt;
  showConcentration(api,()=>{});assert.equal(s.concentration.startedAt,started);assert.equal(document.querySelector('[data-number="1"]').disabled,true);await document.querySelector('[data-number="3"]').onclick();assert.match(document.body.textContent,/未扣除/);document.querySelector('#xg-feature-sheet')?.remove();
+});
+
+test('Dongxia stroll lives inside Dongxia wilds and returns there; general stroll omits it',async t=>{
+ const old=globalThis.document;globalThis.document=parseHTML('<html><body><div id="xg-panel"><main id="xg-content"></main></div></body></html>').document;t.after(()=>{document.querySelector('#xg-feature-sheet')?.remove();globalThis.document=old});
+ const s=make();askGoldenCoreMaster(s);const api={getSave:()=>s,activate:()=>{},actions:{mutate:async fn=>({result:fn(s)})}};
+ showStroll(api,()=>{});assert.equal(document.querySelector('[data-stroll-place="dongxia"]'),null);document.querySelector('[data-close]').click();
+ const map=createMapUI(api);map.render();document.querySelector('[data-map="dongxia"]').click();await new Promise(r=>setImmediate(r));assert.equal(document.querySelector('[data-dongxia-stroll]'),null);
+ assert.equal(document.querySelector('[data-golden-wilds]').textContent,'东夏山野');document.querySelector('[data-golden-wilds]').click();assert.equal(document.querySelectorAll('[data-golden]').length,3);document.querySelector('[data-dongxia-stroll]').click();
+ assert.ok(document.querySelector('[data-stroll-place="dongxia"]'));assert.equal(document.querySelectorAll('[data-stroll-place]').length,1);document.querySelector('[data-close]').click();assert.ok(document.querySelector('[data-dongxia-stroll]'));assert.match(document.querySelector('h2').textContent,/东夏山野/);
 });

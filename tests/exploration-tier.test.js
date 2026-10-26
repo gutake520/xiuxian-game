@@ -22,7 +22,7 @@ test('both secrets can be explored once per day in either order, with fixed regi
    assert.throws(()=>start(s,now+QI_EXPLORATION_MS),/今天已经/);
    assert.throws(()=>finishQiExploration(s,now+QI_EXPLORATION_MS));
   }
-  assert.equal(s.player.spiritStones,19);
+  assert.equal(s.player.spiritStones,21);
   for(const start of starts){start(s,now+86400000);finishQiExploration(s,now+86400000+QI_EXPLORATION_MS)}
  }
 });
@@ -56,4 +56,11 @@ test('map offers independent town and foundation entrances, costs and return des
  assert.match(document.body.textContent,/星落秘境/);assert.match(document.body.textContent,/1 灵石/);assert.equal(document.querySelector('[data-explore]').disabled,false);
  document.querySelector('.xg-map-back').click();assert.ok(document.querySelector('[data-encounter="stone-ridge"]'));
  map.render();document.querySelector('[data-map="yunze"]').click();document.querySelector('[data-map="foundation"]').click();document.querySelector('[data-foundation="foundation-secret"]').click();assert.equal(document.querySelector('[data-explore]').disabled,true);
+});
+
+test('foundation secret always returns three stones, including previously started explorations',t=>{
+ for(const roll of [0,.95,.995]){
+  const mock=t.mock.method(Math,'random',()=>roll),s=make('筑基一层');startFoundationExploration(s,now);assert.equal(s.qiSecret.reward.stones,3);
+  s.qiSecret.reward.stones=1;const result=finishQiExploration(s,now+QI_EXPLORATION_MS);assert.equal(s.player.spiritStones,21);assert.match(result,/灵石×3/);mock.mock.restore();
+ }
 });

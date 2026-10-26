@@ -52,6 +52,7 @@ function startExploration(save,tier,now){
  const fee=explorationFee(tier);
  if(save.player.spiritStones<fee)throw new Error('灵石不足，无法探索秘境。');
  const chance=Math.random(),reward=chance<.9?{stones:1,ore:1,herb:herb(foundation),herbCount:1}:chance<.99?(Math.random()<.5?{stones:1,ore:1}:{stones:1,herb:herb(foundation),herbCount:1}):{stones:2,ore:2,herb:herb(foundation),herbCount:2};
+ if(foundation)reward.stones=3;
  save.player.spiritStones=Math.round((save.player.spiritStones-fee)*100)/100;
  save[dayKey]=localDay(now);
  save.qiSecret={tier,startedAt:now,endsAt:now+QI_EXPLORATION_MS,scenes:pickScenes(),reward:{...reward,oreId:foundation?'foundation-ore':'ore'}};
@@ -60,7 +61,7 @@ function startExploration(save,tier,now){
 export function finishQiExploration(save,now=Date.now()){
  const pending=save.qiSecret;if(!pending)throw new Error('没有正在进行的秘境探索。');
  if(now<pending.endsAt)throw new Error('探索尚未结束。');
- const {reward}=pending,rewards=[`灵石×${reward.stones}`];
+ const reward={...pending.reward,stones:pending.tier==='foundation'?3:pending.reward.stones},rewards=[`灵石×${reward.stones}`];
  save.player.spiritStones=Math.round((save.player.spiritStones+reward.stones)*100)/100;
  for(const [id,quantity] of [[reward.oreId||'ore',reward.ore],[reward.herb,reward.herbCount]]){
   if(!id||!quantity)continue;

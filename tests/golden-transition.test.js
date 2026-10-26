@@ -20,7 +20,7 @@ test('golden recovery works offline but not in battle and obeys caps',()=>{
  const s=make(),now=Date.now();s.recovery={hpAt:now-300000,mpAt:now-300000};settleRecovery(s,now);assert.equal(s.player.hp,50);assert.equal(s.player.mp,15);s.battle={};settleRecovery(s,now+300000);assert.equal(s.player.hp,50);delete s.battle;settleRecovery(s,now+330000);assert.equal(s.player.hp,51);
 });
 test('golden idle and active practice repay debt without changing realm or stats',()=>{
- const s=make(),now=new Date(2026,9,26,12).getTime(),before={...s.player.combat};s.idle={lastAt:now-3600000,day:localDay(now),usedMs:0};assert.equal(settleIdle(s,now),150);assert.equal(s.player.cultivation,0);beginPracticeSession(s,now);assert.equal(s.player.spiritStones,95);assert.equal(addCultivation(s,practiceReward(30,s.player)),100);assert.equal(s.player.realm,'金丹一层');assert.deepEqual(s.player.combat,before);
+ const s=make(),now=new Date(2026,9,26,12).getTime(),before={...s.player.combat};s.idle={lastAt:now-3600000,day:localDay(now),usedMs:0};assert.equal(settleIdle(s,now),150);assert.equal(s.player.cultivation,0);beginPracticeSession(s,now);assert.equal(s.player.spiritStones,85);assert.equal(addCultivation(s,practiceReward(30,s.player)),100);assert.equal(s.player.realm,'金丹一层');assert.deepEqual(s.player.combat,before);
 });
 test('golden map retains foundation locations, foes, stroll and secret',t=>{
  const s=make(),old=globalThis.document;globalThis.document=parseHTML('<main id="xg-content"></main>').document;t.after(()=>globalThis.document=old);

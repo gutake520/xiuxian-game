@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {beginPracticeSession,practiceEntryFee} from '../systems/cultivation.js';
+import {beginPracticeSession,practiceEntryFee,practiceReward} from '../systems/cultivation.js';
 
 function save(stones){return {player:{realm:'炼气一层',spiritStones:stones},techniques:{mastered:[],main:null}}}
 
@@ -14,4 +14,9 @@ test('insufficient stones or unopened realms cannot start or charge practice',()
  const s=save(2);assert.throws(()=>beginPracticeSession(s),/3 灵石/);assert.equal(s.player.spiritStones,2);assert.equal(s.practiceSession,undefined);
  s.player.spiritStones=10;s.player.realm='炼气十层';s.player.cultivation=1000;assert.throws(()=>beginPracticeSession(s),/暂不开放/);assert.equal(s.player.spiritStones,10);
  s.player.realm='筑基一层';s.player.cultivation=0;assert.equal(practiceEntryFee(s.player),5);beginPracticeSession(s);assert.equal(s.player.spiritStones,5);
+});
+
+test('golden practice charges fifteen with unchanged hundred cultivation for clearing',()=>{
+ const s=save(14);s.player.realm='金丹一层';assert.equal(practiceEntryFee(s.player),15);assert.throws(()=>beginPracticeSession(s),/15 灵石/);assert.equal(s.player.spiritStones,14);
+ s.player.spiritStones=15;beginPracticeSession(s);assert.equal(s.player.spiritStones,0);assert.equal(practiceReward(30,s.player),100);
 });

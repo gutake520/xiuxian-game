@@ -65,7 +65,7 @@ export function settleIdle(save,now=Date.now()){
 }
 export function paddleWidth(root){return Math.min(PRACTICE.maxPaddle,Math.max(PRACTICE.minPaddle,(Number(root)||0)*PRACTICE.paddlePerRoot))}
 export function practiceReward(bricks,player){return Math.round(Math.max(0,Math.min(PRACTICE.rows*PRACTICE.columns,Math.floor(bricks)))*((isGoldenRealm(player||{})||String(player?.realm||'').startsWith('筑基'))?100/30:PRACTICE.rewardPerBrick)*100)/100}
-export function practiceEntryFee(player){return isGoldenRealm(player)?5:PRACTICE_ENTRY_FEES[String(player.realm||'').slice(0,2)]??null}
+export function practiceEntryFee(player){return isGoldenRealm(player)?15:PRACTICE_ENTRY_FEES[String(player.realm||'').slice(0,2)]??null}
 export function beginPracticeSession(save,now=Date.now()){
  const progress=realmProgress(save.player),fee=practiceEntryFee(save.player);
  if((progress.index<0&&!isGoldenRealm(save.player))||progress.complete||fee===null)throw new Error('当前境界暂不开放灵境修炼。');
