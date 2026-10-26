@@ -1,3 +1,4 @@
+import {markNewcomer} from './newcomer.js';
 import {isGoldenRealm} from './golden-core.js';
 import {ITEMS} from '../data/items.js';
 import {equipmentStats,maxDurability} from './inventory.js';
@@ -20,7 +21,7 @@ export function repairEquipment(save,uid){
  if(save.player.spiritStones<price)throw new Error('灵石不足。');
  const before=equipmentStats(save);
  entry.durability=maxDurability(entry);
- recordDailyRepair(save);
+ recordDailyRepair(save);if(item.slot==='weapon')markNewcomer(save,'repair');
  const after=equipmentStats(save);
  save.player.hp=round2(Math.min(after.maxHp,save.player.hp+after.maxHp-before.maxHp));
  save.player.mp=round2(Math.min(after.maxMp,save.player.mp+after.maxMp-before.maxMp));

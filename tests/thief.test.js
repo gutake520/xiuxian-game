@@ -1,3 +1,4 @@
+import {syncNewcomer} from '../systems/newcomer.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {indexedDB} from 'fake-indexeddb';
@@ -50,7 +51,8 @@ test('real action pipeline excludes stolen stones but still counts subsequent pu
  const {buyStrollEncounter}=await import('../systems/stroll.js');
  const {localDay}=await import('../systems/cultivation.js');
  globalThis.indexedDB=indexedDB;t.mock.method(Date,'now',()=>now);
- let current=make();current.player.sect='青岚谷';current.player.cultivation=0;
+ // Settle the one-time newcomer allowance before isolating this feature's money flow.
+ let current=make();syncNewcomer(current);current.player.spiritStones=100;current.player.sect='青岚谷';current.player.cultivation=0;
  current.sectDaily={day:localDay(now),kills:0,spent:1,explored:0,practice:0,gift:0,repair:0,claimed:[],selected:['kills','spent','explored']};
  await writeSave(current);
  const api=createActions({getSave:()=>current,setSave:s=>{current=s}});

@@ -1,3 +1,4 @@
+import {syncNewcomer} from '../systems/newcomer.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {parseHTML} from 'linkedom';
@@ -79,7 +80,8 @@ test('rescue continues combat at 15 percent, persists cooldown and excludes sect
  s.battle.kind='rock';s.player.companions=[];assert.equal(tryZhangRescue(s,at+2*ZHANG_RESCUE_MS),null);
 });
 test('saved adapter completes a game exactly once and never touches public games or money',async()=>{
- let s=met();s.slot='zhang-atomic';s.stallGames={dice:{id:'public',phase:'offer'}};const g=startZhangPlay(s,Date.now(),()=>0);await writeSave(s);
+ // Settle the one-time newcomer allowance before isolating this feature's money flow.
+ let s=met();syncNewcomer(s);s.player.spiritStones=500;s.slot='zhang-atomic';s.stallGames={dice:{id:'public',phase:'offer'}};const g=startZhangPlay(s,Date.now(),()=>0);await writeSave(s);
  const api={getSave:()=>s};api.actions=createActions({getSave:api.getSave,setSave:value=>s=value});const adapter=zhangGameAPI(api,s.slot,g.id),inner=g.world.stallGames.dice.id;
  await adapter.actions.mutate(world=>startDice(world,inner,'big',0,()=>0));
  const settled=await Promise.allSettled([adapter.actions.mutate(w=>revealDice(w,inner)),adapter.actions.mutate(w=>revealDice(w,inner))]);assert.equal(settled.filter(r=>r.status==='fulfilled').length,1);

@@ -27,6 +27,7 @@
 | 师父授业、故人支线 | `systems/master-teaching.js`、`systems/old-friend.js`、`data/old-friend.js` | `ui/master-teaching.js`、`ui/old-friend.js` |
 | 道侣与CG回顾 | `systems/foxes.js`、各人物同名模块、`systems/companion-memories.js` | `ui/map.js`、各人物UI、`ui/companion-memories.js` |
 | 称号与有效资质 | `data/titles.js`、`systems/titles.js` | `ui/titles.js` |
+| 新手灵动岛、奖励与玩法指南 | `data/newcomer.js`、`data/game-guide.js`、`systems/newcomer.js`；奖励走原子事务 | `ui/newcomer.js`、`styles/newcomer.css`、`index.js` 设置入口 |
 | 存档导入导出 | `storage/backup.js` | `ui/backup.js` |
 
 ## 奇遇与独立模块名

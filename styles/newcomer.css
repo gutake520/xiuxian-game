@@ -1,0 +1,35 @@
+/* A compact island in the header; expansion takes space instead of covering controls. */
+#xg-panel .xg-head:has(#xg-newcomer:not([hidden])){flex-wrap:wrap;row-gap:12px}
+#xg-panel #xg-newcomer{flex:0 0 100%;min-width:0;border-radius:23px;background:var(--surface);border:1px solid #bfd3c6;box-shadow:0 3px 12px #264f3710;overflow:hidden}
+#xg-panel .xg-newcomer-toggle{display:flex;align-items:center;gap:10px;width:100%;min-height:46px;border:0;border-radius:23px;padding:8px 13px;background:#e9f1e9;text-align:left}
+#xg-panel .xg-newcomer-spark{color:var(--jade);font-size:19px}
+#xg-panel .xg-newcomer-caption{display:flex;align-items:center;gap:10px;min-width:0;flex:1}
+#xg-panel .xg-newcomer-caption strong{font-size:12px;white-space:nowrap}
+#xg-panel .xg-newcomer-caption>span{font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted)}
+#xg-panel .xg-newcomer-count{font-size:11px;white-space:nowrap;font-variant-numeric:tabular-nums;color:var(--jade)}
+#xg-panel .is-expanded .xg-newcomer-toggle{border-radius:22px 22px 0 0}
+#xg-panel .xg-newcomer-body{max-height:min(38dvh,330px);overflow-y:auto;overscroll-behavior:contain;padding:15px;scrollbar-width:thin}
+#xg-panel .xg-newcomer-kicker{font-size:10px;letter-spacing:.05em;color:var(--muted)}
+#xg-panel .xg-newcomer-current h3{font-size:18px;margin:5px 0}
+#xg-panel .xg-newcomer-current p{font-size:12px;margin:5px 0 12px;line-height:1.8}
+#xg-panel .xg-newcomer-actions{display:flex;flex-wrap:wrap;gap:7px}
+#xg-panel .xg-newcomer-actions button{font-size:12px;min-height:38px;padding:8px 13px}
+#xg-panel .xg-newcomer-actions button:first-child{background:var(--jade);border-color:var(--jade);color:var(--surface)}
+#xg-panel .xg-newcomer-list{margin-top:16px;border-top:1px solid var(--line)}
+#xg-panel .xg-newcomer-list button{display:flex;align-items:center;gap:9px;text-align:left;width:100%;padding:10px 2px;border:0;border-bottom:1px solid var(--line);border-radius:0;background:transparent;font-size:12px}
+#xg-panel .xg-newcomer-list button[aria-pressed=true]{background:var(--wash)}
+#xg-panel .xg-newcomer-list button:disabled{opacity:.65}
+#xg-panel .xg-newcomer-index{width:23px;flex-shrink:0;text-align:center;color:var(--jade);font-size:11px}
+#xg-panel .xg-newcomer-list button>span:nth-child(2){flex:1;min-width:0}
+#xg-panel .xg-newcomer-list small{font-size:10px;letter-spacing:0;line-height:1.6;margin:2px 0 0;display:block}
+#xg-panel .xg-newcomer-reward{color:var(--jade);font-size:10px;white-space:nowrap}
+#xg-panel .xg-newcomer-note{font-size:10px;margin:12px 0 0;color:var(--muted)}
+#xg-panel .xg-guide-intro{font-size:12px;margin-bottom:20px}
+#xg-panel .xg-guide-chapter{border-bottom:1px solid var(--line)}
+#xg-panel .xg-guide-chapter summary{cursor:pointer;padding:17px 4px;font-size:14px;color:var(--ink)}
+#xg-panel .xg-guide-chapter summary span{display:inline-block;margin-right:13px;font-size:10px;color:var(--jade)}
+#xg-panel .xg-guide-chapter p{font-size:13px;margin:0 4px 14px;line-height:1.9}
+@media(max-width:380px){#xg-panel .xg-newcomer-caption{gap:7px}#xg-panel .xg-newcomer-toggle{gap:7px;padding:8px 10px}#xg-panel .xg-newcomer-body{padding:12px}}
+@media(orientation:landscape) and (max-height:600px){#xg-panel .xg-newcomer-body{max-height:30dvh}#xg-panel .xg-newcomer-list small{display:block}}
+
+#xg-panel .xg-newcomer-actions button:first-child:not(:disabled):hover{background:#295441;color:var(--surface)}

@@ -1,3 +1,4 @@
+import {markNewcomer} from '../systems/newcomer.js';
 import {showXigong} from './dongxia-story.js';
 import {showGoldenSecret} from './golden-secret.js';
 import {isGoldenRealm} from '../systems/golden-core.js';
@@ -175,7 +176,7 @@ export function createMapUI({getSave,activate,actions,onSectBattleExit}){
   };
   content().querySelectorAll('[data-sect-buy]').forEach(button=>button.onclick=async()=>{
    button.disabled=true;
-   try{await actions.mutate(s=>purchase(s,button.dataset.sectBuy),{message:result=>result});status.textContent='物品已收入储物。'}
+   try{await actions.mutate(s=>{const result=purchase(s,button.dataset.sectBuy);if(id==='danxia'&&ITEMS[button.dataset.sectBuy]?.kind==='pill')markNewcomer(s,'pill');return result},{message:result=>result});status.textContent='物品已收入储物。'}
    catch(error){status.textContent=error.message}finally{if(button.isConnected)button.disabled=false}
   });
   const rent=content().querySelector('[data-rent]');if(rent)rent.onclick=async()=>{
@@ -318,6 +319,10 @@ export function createMapUI({getSave,activate,actions,onSectBattleExit}){
    try{const pet=content().querySelector('[name="xg-pet"]:checked')?.value||null;await actions.startBattle(button.dataset.foe,pet);battle()}
    catch(error){status.textContent=error.message;content().querySelectorAll('[data-foe]').forEach(item=>item.disabled=false)}
  });
+  if(!getSave().newcomer?.done?.includes('travel')){
+   const slot=getSave().slot;
+   return actions.mutate(s=>markNewcomer(s,'travel'),{slot}).catch(error=>{if(status.isConnected&&getSave()?.slot===slot)status.textContent=error.message});
+  }
  }
  function renderWoundedBoss(){
   const foe=bossAttributes(getSave(),1.1);
@@ -383,5 +388,15 @@ export function createMapUI({getSave,activate,actions,onSectBattleExit}){
   };
   const timer=setInterval(tick,1000);tick();
  }
- return {render};
+ function openGuide(target){
+  activate('map');
+  if(target==='market')return renderMarket();
+  if(target==='monsters')return renderMonsters();
+  if(target==='blackmarket')return renderBlackMarket();
+  if(target==='danxia'||target==='tiangong')return renderVisit(target);
+  if(target==='stroll')return showStroll({getSave,actions},renderYunze);
+  if(target==='spirit-peak')return showSpiritPeak({getSave,actions},renderYunze);
+  return renderYunze();
+ }
+ return {render,openGuide};
 }

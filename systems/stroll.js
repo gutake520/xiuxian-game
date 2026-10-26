@@ -1,3 +1,4 @@
+import {markNewcomer} from './newcomer.js';
 import {findXigong} from './dongxia-story.js';
 import {isGoldenRealm} from './golden-core.js';
 import {canEnterDongxia} from './foundation-story.js';
@@ -72,5 +73,6 @@ export function takeStroll(save,id,now=Date.now(),random=Math.random){
  if(!concentration&&!sitting&&!river&&!memory&&!spring&&!traitor&&!ghost&&!found&&!puzzle&&!stall&&random()<RUMOR_CHANCE){const rumors=availableRumors(save);text=rumors[Math.min(rumors.length-1,Math.floor(random()*rumors.length))]}
  const result={placeId:id,text:found?'你经过一处撤摊的角落，拾到一张泛黄的残图。图上依次圈着三处山地，末尾画着一只小小的木匣。':text};
  save.stroll={day:localDay(now),count:count+1,encounters:encounters+(concentration||sitting||river||memory||spring||traitor||ghost||found||puzzle||stall?1:0),last:result};
+ if(save.stroll.encounters>encounters)markNewcomer(save,'encounter');
  return {...result,message:`${place.name}闲逛：${result.text}`};
 }

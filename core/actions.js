@@ -1,3 +1,4 @@
+import {syncNewcomer,markNewcomer} from '../systems/newcomer.js';
 import {foundationStoryPending} from '../systems/foundation-story.js';
 import {settleFlightWeek} from '../systems/sect-flight.js';
 import {syncAchievements} from '../systems/achievements.js';
@@ -19,15 +20,15 @@ import {queueMidAutumn,eatMooncake} from '../systems/mid-autumn.js';
 import {startBreakthrough,rotateMeridian,hintMeridian,retryBreakthrough,chooseFoundationAptitude} from '../systems/breakthrough.js';
 import {maybeMeetYan,resolveYanEncounter,acknowledgeYanAftermath} from '../systems/yan-tingyun.js';
 export function createActions({getSave,setSave}){
- function settleWorld(save){migrateSave(save);dailyTasks(save);const wait=save.qiSecret||save.qiMeditation;if(wait){const until=Math.min(Date.now(),wait.endsAt);save.idle.lastAt=Math.max(save.idle.lastAt,until);save.recovery??={hpAt:until,mpAt:until};save.recovery.hpAt=Math.max(save.recovery.hpAt,until);save.recovery.mpAt=Math.max(save.recovery.mpAt,until)}settleIdle(save);settleFlightWeek(save);settleRecovery(save);ensureBossLine(save);queueMidAutumn(save);maybeMeetYan(save)}
+ function settleWorld(save){migrateSave(save);dailyTasks(save);const wait=save.qiSecret||save.qiMeditation;if(wait){const until=Math.min(Date.now(),wait.endsAt);save.idle.lastAt=Math.max(save.idle.lastAt,until);save.recovery??={hpAt:until,mpAt:until};save.recovery.hpAt=Math.max(save.recovery.hpAt,until);save.recovery.mpAt=Math.max(save.recovery.mpAt,until)}settleIdle(save);settleFlightWeek(save);settleRecovery(save);ensureBossLine(save);queueMidAutumn(save);maybeMeetYan(save);syncNewcomer(save)}
  async function select(slot){const data=await updateSave(slot,s=>{settleWorld(s);return s});setSave(data);return data}
  async function mutate(change,{message,slot=getSave()?.slot,allowBattle=false,allowDebt=false,allowWait=false,allowDivination=false,allowBossStory=false,allowYan=false}={}){
   if(!slot)throw new Error('请先选择存档。');
   let result;
-  const data=await updateSave(slot,s=>{settleWorld(s);if(change&&(s.qiSecret||s.qiMeditation)&&!allowWait)throw new Error('正在等待探索或静坐结束，请稍候。');if(change&&s.battle&&!allowBattle)throw new Error('请先结束当前战斗。');if(change&&s.divinationPending&&!allowDivination)throw new Error('请先回应卦师。');if(change&&(s.yanEncounterPending||s.yanAftermath)&&!allowYan)throw new Error('请先回应燕停云。');if(change&&(s.bossLine?.phase==='ambush'||s.bossLine?.rescuePending||foundationStoryPending(s))&&!allowBossStory&&!allowBattle&&!allowWait&&!allowDivination)throw new Error('请先走完当前剧情。');if(change&&s.player.cultivation< -100&&!allowDebt)throw new Error('请先去修炼。');const before={stones:s.player.spiritStones,battleId:s.lastBattle?.id};result=change?.(s);if(result?.then)throw new Error('操作结算不能包含异步任务。');maybeMeetYan(s);ensureBossLine(s);settleFlightWeek(s);recordDailyProgress(s,before,!allowBattle&&result?.kind!=='thief');syncAchievements(s);const entry=typeof message==='function'?message(result,s):message;if(entry)appendEvent(s,entry);s.updatedAt=Date.now();return s});
+  const data=await updateSave(slot,s=>{settleWorld(s);if(change&&(s.qiSecret||s.qiMeditation)&&!allowWait)throw new Error('正在等待探索或静坐结束，请稍候。');if(change&&s.battle&&!allowBattle)throw new Error('请先结束当前战斗。');if(change&&s.divinationPending&&!allowDivination)throw new Error('请先回应卦师。');if(change&&(s.yanEncounterPending||s.yanAftermath)&&!allowYan)throw new Error('请先回应燕停云。');if(change&&(s.bossLine?.phase==='ambush'||s.bossLine?.rescuePending||foundationStoryPending(s))&&!allowBossStory&&!allowBattle&&!allowWait&&!allowDivination)throw new Error('请先走完当前剧情。');if(change&&s.player.cultivation< -100&&!allowDebt)throw new Error('请先去修炼。');const before={stones:s.player.spiritStones,battleId:s.lastBattle?.id};result=change?.(s);if(result?.then)throw new Error('操作结算不能包含异步任务。');maybeMeetYan(s);ensureBossLine(s);settleFlightWeek(s);recordDailyProgress(s,before,!allowBattle&&result?.kind!=='thief');syncAchievements(s);const entry=typeof message==='function'?message(result,s):message;if(entry)appendEvent(s,entry);syncNewcomer(s);s.updatedAt=Date.now();return s});
   if(getSave()?.slot===slot)setSave(data);return{save:data,result};
  }
- async function create(data){migrateSave(data);queueMidAutumn(data);await writeSave(data);setSave(data);return data}
+ async function create(data){migrateSave(data);queueMidAutumn(data);syncNewcomer(data);await writeSave(data);setSave(data);return data}
  return{select,mutate,create,read:readSave,refresh:()=>mutate(),
   finishExploration:()=>mutate(s=>finishQiExploration(s),{allowWait:true,allowDebt:true,message:result=>result}),
   finishMeditation:()=>mutate(s=>finishMeditation(s),{allowWait:true,allowDebt:true,message:result=>result}),
@@ -51,6 +52,6 @@ export function createActions({getSave,setSave}){
   respondToYan:(id,choice)=>mutate(s=>resolveYanEncounter(s,id,choice),{allowYan:true,allowDebt:true,allowBossStory:true,message:(result,s)=>s.yanAftermath?`与燕停云的第三次相遇已经结束。`:result}),
   acknowledgeYan:id=>mutate(s=>acknowledgeYanAftermath(s,id),{allowYan:true,allowDebt:true,allowBossStory:true}),
   startPractice:()=>mutate(s=>beginPracticeSession(s),{allowDebt:true}),
-  finishPractice:(id,bricks,slot)=>mutate(s=>{if(s.practiceSession?.id!==id)throw new Error('这一局已结算或已失效。');const amount=s.practiceSession.hasMain?practiceReward(bricks,s.player):(bricks>0?1:0);const earned=addCultivation(s,amount);recordDailyPractice(s,earned);s.practiceSession=null;return earned},{slot,allowDebt:true,message:earned=>`主动修炼结束，获得 ${earned} 修为。`})
+  finishPractice:(id,bricks,slot)=>mutate(s=>{if(s.practiceSession?.id!==id)throw new Error('这一局已结算或已失效。');const amount=s.practiceSession.hasMain?practiceReward(bricks,s.player):(bricks>0?1:0);const earned=addCultivation(s,amount);recordDailyPractice(s,earned);markNewcomer(s,'practice');s.practiceSession=null;return earned},{slot,allowDebt:true,message:earned=>`主动修炼结束，获得 ${earned} 修为。`})
  };
 }

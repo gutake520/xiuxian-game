@@ -1,3 +1,4 @@
+import {markNewcomer} from './newcomer.js';
 import {isGoldenRealm} from './golden-core.js';
 import {goldenInheritance} from './golden-inheritance.js';
 import {localDay} from './cultivation.js';
@@ -101,7 +102,7 @@ export function repairOwnEquipment(save,uid){
  const before=equipmentStats(save);
  ore.quantity-=cost;if(!ore.quantity)save.inventory=save.inventory.filter(item=>item!==ore);
  entry.durability=limit;
- recordDailyRepair(save);
+ recordDailyRepair(save);if(item.slot==='weapon')markNewcomer(save,'repair');
  const after=equipmentStats(save);
  save.player.hp=Math.round(Math.min(after.maxHp,save.player.hp+after.maxHp-before.maxHp)*100)/100;
  save.player.mp=Math.round(Math.min(after.maxMp,save.player.mp+after.maxMp-before.maxMp)*100)/100;
