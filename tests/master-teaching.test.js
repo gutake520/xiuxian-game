@@ -10,9 +10,9 @@ import {beginBattle,playRound,fleeBattle} from '../systems/combat.js';
 import {showMasterTeaching} from '../ui/master-teaching.js';
 const now=new Date(2026,9,23,12).getTime();
 const make=(realm='炼气四层')=>migrateSave({slot:'teaching-test',player:{name:'言一',sect:'青岚谷',realm,spiritRoot:'金灵根',cultivation:0,spiritStones:100,hp:100,mp:20,combat:{hp:100,mp:20,attack:100,defense:0,speed:100,critRate:0,dodgeRate:0},stats:{福缘:10}},inventory:[]},now);
-test('one daily attempt has a strict 20 percent boundary; pending tasks never expire or reroll',()=>{
- const s=make();visitTeachingMaster(s,now,()=>.2);assert.equal(s.masterTeaching.task,undefined);assert.throws(()=>visitTeachingMaster(s,now,()=>0),/今日/);
- visitTeachingMaster(s,now+86400000,()=>.199999);const task=structuredClone(s.masterTeaching.task);assert.ok(task);assert.throws(()=>visitTeachingMaster(s,now+5*86400000,()=>0),/手中/);assert.deepEqual(s.masterTeaching.task,task);
+test('one daily attempt has a strict 40 percent boundary; pending tasks never expire or reroll',()=>{
+ const s=make();visitTeachingMaster(s,now,()=>.4);assert.equal(s.masterTeaching.task,undefined);assert.throws(()=>visitTeachingMaster(s,now,()=>0),/今日/);
+ visitTeachingMaster(s,now+86400000,()=>.399999);const task=structuredClone(s.masterTeaching.task);assert.ok(task);assert.throws(()=>visitTeachingMaster(s,now+5*86400000,()=>0),/手中/);assert.deepEqual(s.masterTeaching.task,task);
  const loaded=migrateSave(JSON.parse(JSON.stringify(s)),now+10*86400000);assert.deepEqual(loaded.masterTeaching.task,task);
 });
 test('six beasts, unlocked targets only, nine existing masters and foundation catch-up',()=>{
@@ -49,4 +49,9 @@ test('master screen shows named teacher, persists visits, and permits retry afte
  const s=make();let fail=true;const api={getSave:()=>s,actions:{mutate:async fn=>{if(fail)throw Error('写入失败');return {result:fn(s)}}}};
  showMasterTeaching(api,()=>{});assert.match(document.body.textContent,/谢疏岚/);document.querySelector('[data-visit]').click();await new Promise(r=>setImmediate(r));assert.match(document.body.textContent,/写入失败/);
  fail=false;document.querySelector('[data-visit]').click();await new Promise(r=>setImmediate(r));assert.ok(s.masterTeaching.task);assert.equal(document.querySelector('[data-submit]').disabled,true);assert.match(document.body.textContent,/0 \/ 10/);
+});
+
+test('teaching trigger boundary is forty percent',()=>{
+ const s=make();visitTeachingMaster(s,now,()=>.3999);assert.ok(s.masterTeaching.task);
+ const missed=make();visitTeachingMaster(missed,now,()=>.4);assert.equal(missed.masterTeaching.task,undefined);
 });

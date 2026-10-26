@@ -20,7 +20,7 @@ export function visitTeachingMaster(save,now=Date.now(),random=Math.random){
  const eligible=QI_MONSTERS.filter(m=>TEACHING_MATERIALS[m.id]&&m.minLevel<=realmProgress(save.player).index+1);
  if(!eligible.length)throw new Error('当前境界暂不能领取委托。');
  const state=save.masterTeaching??={qiCompleted:0};state.attemptDay=localDay(now);
- if(random()>=.2){state.lastText=`${master.name}正在闭关参悟，今日未布置委托。明日再来拜访。`;return state.lastText}
+ if(random()>=.4){state.lastText=`${master.name}正在闭关参悟，今日未布置委托。明日再来拜访。`;return state.lastText}
  const monster=pick(eligible,random);
  state.task={id:crypto.randomUUID(),monsterId:monster.id,material:TEACHING_MATERIALS[monster.id],collected:0,target:10,acceptedAt:now,assignedBy:master.name};
  state.lastText=`${master.name}吩咐你击败${monster.name}，带回${state.task.material}十份，再来领受指点。`;
