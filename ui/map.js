@@ -1,3 +1,4 @@
+import {isGoldenRealm} from '../systems/golden-core.js';
 import {showOldFriend} from './old-friend.js';
 import {oldFriendState} from '../systems/old-friend.js';
 import {showPei} from './pei-zhaoheng.js';
@@ -31,6 +32,7 @@ import {yanState,yanEncounterText,giveYanGift,seenYanIntro,seenYanScene,answerYa
 export function createMapUI({getSave,activate,actions,onSectBattleExit}){
  const content=()=>document.getElementById('xg-content');
  const foundationPlayer=()=>String(getSave()?.player?.realm||'').startsWith('筑基');
+ const foundationAccess=()=>foundationPlayer()||isGoldenRealm(getSave().player);
  const petChoices=(save,name)=>{const foundation=String(save.player.realm).startsWith('筑基'),rented=(foundation?save.foundationPetRentals:save.petRentals)>0,attack=beastCanFight(save,'attack'),guard=beastCanFight(save,'guard');return rented||attack||guard?`<fieldset class="xg-card"><legend>灵兽出战</legend><label><input type="radio" name="${name}" value="" checked> 不出战</label>${['attack','guard'].filter(type=>beastCanFight(save,type)||rented).map(type=>`<label><input type="radio" name="${name}" value="${type}"> ${escapeHTML(beastCanFight(save,type)?beastName(save,type):'租借灵兽')} · ${type==='attack'?`追击 +${beastPower(save,'attack',canEnterDongxia(save)?'金丹':foundation?'筑基':'炼气').toFixed(2)}`:`守护 −${beastPower(save,'guard',canEnterDongxia(save)?'金丹':foundation?'筑基':'炼气').toFixed(2)}`}</label>`).join('')}</fieldset>`:''};
  const battle=outcome=>showBattle({getSave,activate,actions,onYanEncounter:renderYanEncounter,onExit:GOLDEN_MONSTERS.some(m=>m.id===(getSave().battle?.monsterId||getSave().lastBattle?.monsterId))?renderDongxia:(getSave().battle?.kind||getSave().lastBattle?.kind)==='old-friend-duel'?()=>showOldFriend({getSave,actions},renderFoundation,'ruins'):foundationStoryPending(getSave())||(getSave().battle?.kind||getSave().lastBattle?.kind)==='wounded-pursuer'?renderYunze:(getSave().battle?.kind||getSave().lastBattle?.kind)==='zhang-intro'?()=>showZhang({getSave,actions},renderYunze):getSave().bossLine?.phase==='ambush'||getSave().bossLine?.rescuePending?renderMonsters:['sect-tournament','sect-senior'].includes(getSave().battle?.kind||getSave().lastBattle?.kind)?onSectBattleExit:(getSave().battle?.kind||getSave().lastBattle?.kind)==='fox-npc'?()=>renderNpc(QI_PEAKS.find(p=>p.id===(getSave().battle?.monsterId||getSave().lastBattle?.monsterId))):FOUNDATION_MONSTERS.some(monster=>monster.id===(getSave().battle?.monsterId||getSave().lastBattle?.monsterId))?renderFoundation:renderMonsters},outcome);
  function heading(title,subtitle){return `<div class="xg-map-heading"><h2>${title}</h2>${subtitle?`<p>${subtitle}</p>`:''}</div>`}
@@ -58,7 +60,7 @@ export function createMapUI({getSave,activate,actions,onSectBattleExit}){
   activate('map');
   content().innerHTML=`<section class="xg-map-sheet"><button class="xg-map-back" type="button">← 返回山河图</button>${heading('云泽国','故土山川，仙途初起。')}<div class="xg-feature xg-feature-row"><button type="button" data-stroll>四处走走</button>${getSave().treasure?'<button type="button" data-treasure>藏宝图</button>':''}</div>${peaks([
    {name:'坊市',id:'market',x:12,y:6,size:.8},{name:'黑市',id:'blackmarket',x:68,y:17,size:.76},
-   foundationPlayer()?{name:'望川岭',id:'foundation',x:36,y:37,size:.85}:{name:'远山 · 待定',x:36,y:37,locked:true,size:.85},{name:'九宗山门',id:'sects',x:8,y:69,size:1.08},
+   foundationAccess()?{name:'望川岭',id:'foundation',x:36,y:37,size:.85}:{name:'远山 · 待定',x:36,y:37,locked:true,size:.85},{name:'九宗山门',id:'sects',x:8,y:69,size:1.08},
    {name:'灵兽峰',id:'spirit-peak',x:10,y:34,size:.7},
    {name:'丰原镇',id:'monsters',x:64,y:62,size:1.04},
    ...(getSave().zhangHuaijin?.unlocked?[{name:ZHANG_CAVE,id:'zhang-cave',x:39,y:5,size:.72}]:[]),
@@ -207,7 +209,7 @@ export function createMapUI({getSave,activate,actions,onSectBattleExit}){
   back(renderYunze);
  }
  function renderFoundation(){
-  if(!foundationPlayer())return renderYunze();
+  if(!foundationAccess())return renderYunze();
   activate('map');
   const storyPeaks=oldFriendState(getSave())?.step>=6?[...FOUNDATION_PEAKS,{id:'old-friend-ruins',name:'照夜台',kind:'story',x:34,y:22,size:.7}]:FOUNDATION_PEAKS;
   content().innerHTML=`<section class="xg-map-sheet"><button class="xg-map-back" type="button">← 返回云泽国</button>${heading('望川岭','筑基修士出没的山岭。')}${peaks(realmProgress(getSave().player).index>=19?[...storyPeaks,{id:'foundation-ending',name:getSave().foundationStory?.phase==='wounded'||getSave().foundationStory?.phase==='dead'?'栖息崖':'归元渡',kind:'boss',x:65,y:72,size:.8}]:storyPeaks,'foundation')}</section>`;
@@ -215,14 +217,14 @@ export function createMapUI({getSave,activate,actions,onSectBattleExit}){
   content().querySelectorAll('[data-foundation]').forEach(button=>button.onclick=()=>renderFoundationPeak(button.dataset.foundation));
  }
  function renderFoundationPeak(id){
-  if(!foundationPlayer())return renderYunze();
+  if(!foundationAccess())return renderYunze();
   if(id==='old-friend-ruins'&&oldFriendState(getSave())?.step>=6)return showOldFriend({getSave,actions},renderFoundation,'ruins');
   if(id==='pei-home')return showPei({getSave,actions},renderFoundation);
   if(id==='foundation-ending')return renderPursuer();
   if(id==='foundation-secret')return renderSecret('foundation');
   const peak=FOUNDATION_PEAKS.find(place=>place.id===id);
   if(!peak)return renderFoundation();
-  const level=realmProgress(getSave().player).index-9;
+  const level=isGoldenRealm(getSave().player)?10:realmProgress(getSave().player).index-9;
   const foes=FOUNDATION_MONSTERS.filter(m=>(m.id===peak.monsterId||m.id.startsWith(peak.monsterId+'-'))&&level>=m.minLevel);
   if(!foes.length)return renderFoundation();
 
@@ -276,7 +278,7 @@ export function createMapUI({getSave,activate,actions,onSectBattleExit}){
   const peak=QI_PEAKS.find(item=>item.id===id);if(!peak)return renderMonsters();
   if(peak.kind==='npc')return renderNpc(peak);
   if(peak.kind==='secret')return renderSecret();
-  const tier=realmProgress(getSave().player).index;
+  const tier=isGoldenRealm(getSave().player)?20:realmProgress(getSave().player).index;
   const monsters=QI_MONSTERS.filter(item=>(item.id===peak.monsterId||item.id===peak.monsterId+'-mid'||item.id===peak.monsterId+'-human')&&tier+1>=item.minLevel);if(!monsters.length)return renderMonsters();
   activate('map');
   content().innerHTML=`<section class="xg-map-sheet"><button class="xg-map-back" type="button">← 返回丰原镇</button>${heading(peak.name,'山中对手')}

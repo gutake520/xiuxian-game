@@ -1,3 +1,4 @@
+import {isGoldenRealm} from './golden-core.js';
 import {ITEMS} from '../data/items.js';
 import {awardItem} from './inventory.js';
 import {localDay} from './cultivation.js';
@@ -46,7 +47,7 @@ function startExploration(save,tier,now){
  if(save.peiExploration?.tier===tier)throw new Error('裴照衡正在探索此处，请先领取他的探索所得。');
  if(save.qiSecret)throw new Error('秘境探索尚未结束。');
  const foundation=tier==='foundation',dayKey=foundation?'foundationSecretDay':'qiSecretDay';
- if(foundation&&!String(save.player.realm).startsWith('筑基'))throw new Error('筑基秘境需达到筑基期。');
+ if(foundation&&!(isGoldenRealm(save.player)||String(save.player.realm).startsWith('筑基')))throw new Error('筑基秘境需达到筑基期。');
  if(save[dayKey]===localDay(now))throw new Error('今天已经探索过秘境，明天再来。');
  const fee=explorationFee(tier);
  if(save.player.spiritStones<fee)throw new Error('灵石不足，无法探索秘境。');

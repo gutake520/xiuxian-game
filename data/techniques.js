@@ -46,7 +46,7 @@ export function hintAllowance(spirit){return Number(spirit)>=10?2:Number(spirit)
 export function techniqueEligible(player,method){
  if(!method)return false;
  if(method.goldenCore&&!isGoldenRealm(player))return false;
- if(method.minRealmIndex&&realmProgress(player).index<method.minRealmIndex)return false;
+ if(method.minRealmIndex&&!isGoldenRealm(player)&&realmProgress(player).index<method.minRealmIndex)return false;
  if(method.rootCounts&&(!method.rootCounts.includes(rootCount(player))||(realmProgress(player).index<10&&!isGoldenRealm(player))))return false;
  if(!method.sect)return true;
  if(player.sect!==method.sect)return false;

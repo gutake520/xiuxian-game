@@ -1,3 +1,4 @@
+import {isGoldenRealm} from './golden-core.js';
 import {IDLE_LIMIT_MS,PRACTICE,PRACTICE_ENTRY_FEES} from '../data/balance.js';
 import {TECHNIQUES} from '../data/techniques.js';
 import {realmProgress,addCultivation} from '../data/realms.js';
@@ -12,7 +13,7 @@ export function worldDay(save,now=Date.now()){
  return Math.max(recorded,(created?1:recorded)+Math.max(0,calendarDay(now)-calendarDay(startedAt)));
 }
 function nextMidnight(time){const d=new Date(time);d.setHours(24,0,0,0);return d.getTime()}
-export function idleRate(save){const rate=save.techniques.mastered.includes(save.techniques.main)?TECHNIQUES[save.techniques.main]?.idlePerMinute||0:0;return rate*(String(save.player.realm).startsWith('筑基')?2+Math.floor(Math.max(0,realmProgress(save.player).index-10)/3):1)}
+export function idleRate(save){const rate=save.techniques.mastered.includes(save.techniques.main)?TECHNIQUES[save.techniques.main]?.idlePerMinute||0:0;return rate*(isGoldenRealm(save.player)?5:String(save.player.realm).startsWith('筑基')?2+Math.floor(Math.max(0,realmProgress(save.player).index-10)/3):1)}
 // 新的大境界只需在对应功法的 idleHoursByRealm 中追加上限。
 export function idleLimitMs(save){
  const method=TECHNIQUES[save.techniques.main],hours=method?.idleHoursByRealm;
@@ -40,10 +41,11 @@ export function settleIdle(save,now=Date.now()){
   const rate=idleRate(save);
   const day=localDay(start);if(idle.day!==day){idle.day=day;idle.usedMs=0}
   const end=Math.min(now,nextMidnight(start));
-  if(rate>0&&realmProgress(save.player).index>=0&&!realmProgress(save.player).complete){
+  if(rate>0&&(realmProgress(save.player).index>=0||isGoldenRealm(save.player))&&!realmProgress(save.player).complete){
    const dailyLimit=idleLimitMs(save)+(save.goldenPillDay===day?67.5*60000:save.qiPillDay===day?(save.foundationPillDay===day?45:30)*60*1000:save.foundationPillDay===day?45*60*1000:0);
    const counted=Math.min(end-start,Math.max(0,dailyLimit-idle.usedMs));
    idle.usedMs+=counted;
+   if(isGoldenRealm(save.player)){earned+=addCultivation(save,counted/60000*rate);start=end;continue}
    // Settle each day before its mishap, including multi-day offline sessions.
    let remaining=counted/60000;
    while(remaining>0&&!realmProgress(save.player).complete){
@@ -62,11 +64,11 @@ export function settleIdle(save,now=Date.now()){
  return Math.round(earned*100)/100;
 }
 export function paddleWidth(root){return Math.min(PRACTICE.maxPaddle,Math.max(PRACTICE.minPaddle,(Number(root)||0)*PRACTICE.paddlePerRoot))}
-export function practiceReward(bricks,player){return Math.round(Math.max(0,Math.min(PRACTICE.rows*PRACTICE.columns,Math.floor(bricks)))*(String(player?.realm||'').startsWith('筑基')?100/30:PRACTICE.rewardPerBrick)*100)/100}
-export function practiceEntryFee(player){return PRACTICE_ENTRY_FEES[String(player.realm||'').slice(0,2)]??null}
+export function practiceReward(bricks,player){return Math.round(Math.max(0,Math.min(PRACTICE.rows*PRACTICE.columns,Math.floor(bricks)))*((isGoldenRealm(player||{})||String(player?.realm||'').startsWith('筑基'))?100/30:PRACTICE.rewardPerBrick)*100)/100}
+export function practiceEntryFee(player){return isGoldenRealm(player)?5:PRACTICE_ENTRY_FEES[String(player.realm||'').slice(0,2)]??null}
 export function beginPracticeSession(save,now=Date.now()){
  const progress=realmProgress(save.player),fee=practiceEntryFee(save.player);
- if(progress.index<0||progress.complete||fee===null)throw new Error('当前境界暂不开放灵境修炼。');
+ if((progress.index<0&&!isGoldenRealm(save.player))||progress.complete||fee===null)throw new Error('当前境界暂不开放灵境修炼。');
  if(save.player.spiritStones<fee)throw new Error(`进入灵境需要 ${fee} 灵石。`);
  const id=crypto.randomUUID();
  save.player.spiritStones=Math.round((save.player.spiritStones-fee)*100)/100;

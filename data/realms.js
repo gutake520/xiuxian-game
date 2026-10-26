@@ -1,3 +1,4 @@
+import {isGoldenRealm} from '../systems/golden-core.js';
 export const QI_REALMS = ['炼气一层','炼气二层','炼气三层','炼气四层','炼气五层','炼气六层','炼气七层','炼气八层','炼气九层','炼气十层'];
 export const QI_REQUIREMENTS = [150,200,250,300,350,400,500,600,750,1000];
 export const FOUNDATION_REALMS=['筑基一层','筑基二层','筑基三层','筑基四层','筑基五层','筑基六层','筑基七层','筑基八层','筑基九层','筑基十层'];
@@ -30,6 +31,7 @@ export function applyRealmHp(save){
  save.realmMpBonusApplied=mpBonus;
 }
 export function addCultivation(save,amount) {
+ if(isGoldenRealm(save.player)){if(!Number.isFinite(amount)||amount<=0)return 0;save.player.cultivation=Math.round(((Number(save.player.cultivation)||0)+amount)*100)/100;return Math.round(amount*100)/100}
  let {index}=realmProgress(save.player);if(index<0||realmProgress(save.player).complete||!Number.isFinite(amount)||amount<=0)return 0;
  let value=Math.round(((Number(save.player.cultivation)||0)+amount)*100)/100,used=amount;
  if(index>=10){

@@ -1,3 +1,4 @@
+import {isGoldenRealm} from './golden-core.js';
 import {goldenInheritance} from './golden-inheritance.js';
 import {convergingDamage} from './golden-core.js';
 import {finishOldFriendDuel} from './old-friend.js';
@@ -138,7 +139,7 @@ export function beginBattle(save,id,pet=null,retaliation=false){
  if(save.seniorRewardPending)throw new Error('请先领取大比奖励。');
  if(save.bossLine?.phase==='ambush'||save.bossLine?.rescuePending||foundationStoryPending(save))throw new Error('请先走完当前剧情。');
  if(save.player.cultivation< -100)throw new Error('请先去修炼。');
- const tier=realmProgress(save.player).index;if(tier<0&&!canEnterDongxia(save))throw new Error('当前境界暂未开放此处战斗。');
+ const tier=isGoldenRealm(save.player)?20:realmProgress(save.player).index;if(tier<0&&!canEnterDongxia(save))throw new Error('当前境界暂未开放此处战斗。');
  if(save.player.hp<=0)throw new Error('生命不足，无法迎战。');
  if(id==='foundation-warden')throw new Error('归元渡旧事已更替，请返回地图查看师父剧情。');
  if(id==='wounded-pursuer'){
@@ -155,7 +156,7 @@ export function beginBattle(save,id,pet=null,retaliation=false){
  }
  if(FOXES[id]){
   const fox=FOXES[id],chosen=selectBattlePet(save,pet);
-  save.battle={id:crypto.randomUUID(),kind:'fox-npc',monsterId:id,name:fox.name,stage:'炼气',maxHp:fox.hp,hp:fox.hp,attack:fox.attack,defense:.3,speed:5,maxMp:5,mp:5,round:0,pet:chosen,petName:chosen?(beastCanFight(save,chosen)?beastName(save,chosen):'租借灵兽'):null,petStage:canEnterDongxia(save)?'金丹':String(save.player.realm).startsWith('筑基')?'筑基':'炼气',guard:false,bindRounds:[],arrayRound:0,talismansUsed:0,talismanRound:0,freeArrayUsed:false,criticalFocus:false,skillReady:{},log:[`${fox.name}向你出手。`]};
+  save.battle={id:crypto.randomUUID(),kind:'fox-npc',monsterId:id,name:fox.name,stage:'炼气',maxHp:fox.hp,hp:fox.hp,attack:fox.attack,defense:.3,speed:5,maxMp:5,mp:5,round:0,pet:chosen,petName:chosen?(beastCanFight(save,chosen)?beastName(save,chosen):'租借灵兽'):null,petStage:isGoldenRealm(save.player)?'金丹':(isGoldenRealm(save.player)||String(save.player.realm).startsWith('筑基'))?'筑基':'炼气',guard:false,bindRounds:[],arrayRound:0,talismansUsed:0,talismanRound:0,freeArrayUsed:false,criticalFocus:false,skillReady:{},log:[`${fox.name}向你出手。`]};
   return save.battle;
  }
  const monster=monsters.find(entry=>entry.id===id);if(!monster)throw new Error('对手不存在。');
@@ -168,7 +169,7 @@ export function beginBattle(save,id,pet=null,retaliation=false){
  if(monster.stage!=='金丹'&&monster.stage!=='筑基'&&tier+1<monster.minLevel)throw new Error(`需炼气${['一','二','三','四','五','六','七','八','九','十'][monster.minLevel-1]}层解锁此处。`);
  selectBattlePet(save,pet);
  const maxHp=monster.hpMin+Math.floor(Math.random()*(monster.hpMax-monster.hpMin+1));
- save.battle={id:crypto.randomUUID(),monsterId:id,name:monster.name,stage:monster.stage||'炼气',maxHp,hp:maxHp,attack:monster.attack,defense:monster.defense||0,...(monster.stage==='筑基'?{foundationBalanceVersion:1}:{}),speed:monster.speed,mp:monster.mp||0,round:0,pet,petName:pet?(beastCanFight(save,pet)?beastName(save,pet):'租借灵兽'):null,petStage:canEnterDongxia(save)?'金丹':String(save.player.realm).startsWith('筑基')?'筑基':'炼气',retaliation,guard:false,bindRounds:[],arrayRound:0,talismansUsed:0,talismanRound:0,freeArrayUsed:false,criticalFocus:false,skillReady:{},log:['狭路相逢，战斗开始。']};
+ save.battle={id:crypto.randomUUID(),monsterId:id,name:monster.name,stage:monster.stage||'炼气',maxHp,hp:maxHp,attack:monster.attack,defense:monster.defense||0,...(monster.stage==='筑基'?{foundationBalanceVersion:1}:{}),speed:monster.speed,mp:monster.mp||0,round:0,pet,petName:pet?(beastCanFight(save,pet)?beastName(save,pet):'租借灵兽'):null,petStage:isGoldenRealm(save.player)?'金丹':(isGoldenRealm(save.player)||String(save.player.realm).startsWith('筑基'))?'筑基':'炼气',retaliation,guard:false,bindRounds:[],arrayRound:0,talismansUsed:0,talismanRound:0,freeArrayUsed:false,criticalFocus:false,skillReady:{},log:['狭路相逢，战斗开始。']};
  return save.battle;
 }
 export function playRound(save,action='attack',now=Date.now()){
@@ -299,7 +300,7 @@ export function playRound(save,action='attack',now=Date.now()){
  battle.bindRounds=(battle.bindRounds||[]).filter(round=>round>battle.round);
  if(battle.kind==='zhang-intro'&&(battle.round>=3||battle.hp<=0||save.player.hp<=0))finishZhangEncounter(save);
  else if(battle.hp<=0)resolveVictory(save,now,messages);
- else if(save.player.hp<=0){if(battle.kind==='old-friend-duel')finishOldFriendDuel(save,'defeat');else if(tournament)resolveTournamentLoss(save,'defeat',messages);else{const foundation=String(save.player.realm).startsWith('筑基'),loss=foundation?70:50,hp=foundation?7:5;save.player.cultivation=round2(save.player.cultivation-loss);save.player.hp=hp;messages.push(`战败：修为 −${loss}，生命恢复至 ${hp}；无战利品。`);finish(save,'defeat',{log:[...battle.log,...messages].slice(-10)})}}
+ else if(save.player.hp<=0){if(battle.kind==='old-friend-duel')finishOldFriendDuel(save,'defeat');else if(tournament)resolveTournamentLoss(save,'defeat',messages);else{const foundation=(isGoldenRealm(save.player)||String(save.player.realm).startsWith('筑基')),loss=foundation?70:50,hp=foundation?7:5;save.player.cultivation=round2(save.player.cultivation-loss);save.player.hp=hp;messages.push(`战败：修为 −${loss}，生命恢复至 ${hp}；无战利品。`);finish(save,'defeat',{log:[...battle.log,...messages].slice(-10)})}}
  else{battle.log=[...battle.log,...messages].slice(-10)}
  return {messages,dealt,taken,result:save.lastBattle?.id===battle.id?save.lastBattle:null};
 }
@@ -313,11 +314,11 @@ export function useBattleArray(save,uid){
  const battle=save.battle;if(!battle)throw new Error('没有正在进行的战斗。');
  if(battle.arrayRound===battle.round+1)throw new Error('本轮已经使用过阵盘。');
  const ids=['binding-array','crafted-binding-array','foundation-binding-array','foundation-crafted-array','golden-crafted-array'];
- const targetFoundation=battle.stage==='筑基'||String(save.player.realm).startsWith('筑基')&&['sect-tournament','sect-senior'].includes(battle.kind);
+ const targetFoundation=battle.stage==='筑基'||(isGoldenRealm(save.player)||String(save.player.realm).startsWith('筑基'))&&['sect-tournament','sect-senior'].includes(battle.kind);
  const entry=uid?save.inventory.find(item=>item.uid===uid):save.inventory.find(item=>ids.includes(item.itemId)&&(!item.itemId.includes('crafted')||item.usesLeft>0)&&(!targetFoundation||['筑基','金丹'].includes(ITEMS[item.itemId]?.stage))&&(battle.stage!=='金丹'||ITEMS[item.itemId]?.stage==='金丹'));
  if(!entry||!ids.includes(entry.itemId))throw new Error('储物中没有可用的阵盘。');
  if(targetFoundation&&!['筑基','金丹'].includes(ITEMS[entry.itemId].stage))throw new Error('此阵灵力不足，困不住筑基修士。');
- if(ITEMS[entry.itemId].stage==='筑基'&&!String(save.player.realm).startsWith('筑基'))throw new Error('灵力尚浅，无法催动这枚阵盘。');
+ if(ITEMS[entry.itemId].stage==='筑基'&&!(isGoldenRealm(save.player)||String(save.player.realm).startsWith('筑基')))throw new Error('灵力尚浅，无法催动这枚阵盘。');
  if(battle.stage==='金丹'&&ITEMS[entry.itemId].stage!=='金丹')throw new Error('需要金丹阵盘。');
  if(ITEMS[entry.itemId].stage==='金丹'&&!goldenInheritance(save,'planting-flags'))throw new Error('请先参悟金丹阵法传承。');
  if(entry.itemId==='golden-crafted-array'&&(battle.goldenArrayUses||0)>=2)throw new Error('每场最多发动两次困杀阵盘。');
@@ -338,7 +339,7 @@ export function useBattleTalisman(save,id){
  const battle=save.battle;if(!battle)throw new Error('没有正在进行的战斗。');
  if(ITEMS[id]?.stage==='金丹'&&!/^(金丹|元婴|化神|炼虚|合体|大乘|渡劫)/.test(save.player.realm))throw new Error('尚不能使用金丹符箓。');
  if(!['attack-talisman','guard-talisman','foundation-attack-talisman','foundation-guard-talisman','golden-attack-talisman','golden-dual-talisman'].includes(id))throw new Error('符箓不存在。');
- if(ITEMS[id].stage==='筑基'&&!String(save.player.realm).startsWith('筑基'))throw new Error('灵力尚浅，无法催动这张符箓。');
+ if(ITEMS[id].stage==='筑基'&&!(isGoldenRealm(save.player)||String(save.player.realm).startsWith('筑基')))throw new Error('灵力尚浅，无法催动这张符箓。');
  if(battle.talismansUsed>=2)throw new Error('每场最多使用两张符箓。');
  if(battle.talismanRound===battle.round+1)throw new Error('本轮已经使用过符箓。');
  consumeItem(save,id);battle.talismansUsed++;battle.talismanRound=battle.round+1;
@@ -354,7 +355,7 @@ export function fleeBattle(save){
  if(!save.battle)throw new Error('没有正在进行的战斗。');
  if(save.battle.kind==='zhang-intro')return finishZhangEncounter(save);
  if(['sect-tournament','sect-senior'].includes(save.battle.kind)){const result=finish(save,'fled',{log:['你结束了这场切磋。']});refillTournament(save);return result}
- const foundation=String(save.player.realm).startsWith('筑基'),fee=foundation?5:3,loss=foundation?50:30;
+ const foundation=(isGoldenRealm(save.player)||String(save.player.realm).startsWith('筑基')),fee=foundation?5:3,loss=foundation?50:30;
  const paid=save.player.spiritStones>=fee;
  if(paid)save.player.spiritStones=round2(save.player.spiritStones-fee);
  else save.player.cultivation=round2(save.player.cultivation-loss);

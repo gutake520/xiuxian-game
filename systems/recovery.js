@@ -1,3 +1,4 @@
+import {isGoldenRealm} from './golden-core.js';
 import {equipmentStats} from './inventory.js';
 import {realmProgress} from '../data/realms.js';
 
@@ -6,8 +7,8 @@ export function settleRecovery(save,now=Date.now()){
  if(save.vitalBuff&&save.vitalBuff.until<=now){delete save.vitalBuff;const cap=equipmentStats(save,now);save.player.hp=Math.min(save.player.hp,cap.maxHp);save.player.mp=Math.min(save.player.mp,cap.maxMp)}
  const p=save.player;save.recovery??={hpAt:now,mpAt:now};
  const r=save.recovery;
- if(save.battle||realmProgress(p).index<0){r.hpAt=now;r.mpAt=now;return}
- const {maxHp,maxMp}=equipmentStats(save);
+ if(save.battle||(realmProgress(p).index<0&&!isGoldenRealm(p))){r.hpAt=now;r.mpAt=now;return}
+ const {maxHp,maxMp}=equipmentStats(save,now);
  if(now>r.hpAt){const ticks=Math.floor((now-r.hpAt)/30000);p.hp=Math.min(maxHp,Math.round((p.hp+ticks)*100)/100);r.hpAt=p.hp>=maxHp?now:r.hpAt+ticks*30000}
  if(now>r.mpAt){const ticks=Math.floor((now-r.mpAt)/60000);p.mp=Math.min(maxMp,Math.round((p.mp+ticks)*100)/100);r.mpAt=p.mp>=maxMp?now:r.mpAt+ticks*60000}
 }

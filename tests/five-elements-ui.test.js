@@ -1,3 +1,4 @@
+import {isGoldenRealm} from '../systems/golden-core.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
@@ -11,10 +12,10 @@ test('sect shop renders all five actual purchase buttons at 29 stones for founda
  const source=readFileSync(new URL('../index.js',import.meta.url),'utf8');
  const fn=source.slice(source.indexOf('function renderSectShop('),source.indexOf('function renderSectRoom('));
  const {document}=parseHTML('<div id="shop"></div>');const sheet=document.getElementById('shop');
- const render=Function('sectOverlay','sectHeader','currentSave','SECT_MANUALS','ITEMS','TECHNIQUES','escapeHTML','game','renderSectHall',fn+';return renderSectShop;');
- for(const realm of ['炼气十层','筑基一层']){
-  render(()=>sheet,()=>'<button id="xg-sect-back"></button>',{player:{realm}},ELEMENTAL_MANUALS.map(id=>[id,ITEMS[id].methodId]),ITEMS,TECHNIQUES,escapeHTML,{},()=>{})({});
-  const buttons=[...sheet.querySelectorAll('[data-sect-manual]')];assert.equal(buttons.length,realm==='筑基一层'?5:0);
+ const render=Function('sectOverlay','sectHeader','currentSave','SECT_MANUALS','ITEMS','TECHNIQUES','escapeHTML','game','renderSectHall','isGoldenRealm',fn+';return renderSectShop;');
+ for(const realm of ['炼气十层','筑基一层','金丹一层']){
+  render(()=>sheet,()=>'<button id="xg-sect-back"></button>',{player:{realm}},ELEMENTAL_MANUALS.map(id=>[id,ITEMS[id].methodId]),ITEMS,TECHNIQUES,escapeHTML,{},()=>{},isGoldenRealm)({});
+  const buttons=[...sheet.querySelectorAll('[data-sect-manual]')];assert.equal(buttons.length,realm==='炼气十层'?0:5);
   for(const button of buttons)assert.match(button.textContent,/29 灵石/);
  }
 });

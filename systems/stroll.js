@@ -1,3 +1,4 @@
+import {isGoldenRealm} from './golden-core.js';
 import {canEnterDongxia} from './foundation-story.js';
 import {maybeFindConcentration} from './concentration.js';
 import {maybeFindStallSitting} from './stall-sitting.js';
@@ -18,7 +19,7 @@ import {maybeFindTreasure} from './treasure.js';
 import {STROLL_PLACES,STROLL_ENCOUNTER_LIMIT} from '../data/stroll.js';
 import {localDay} from './cultivation.js';
 // Matches the main map's current foundation-region gate. Encounter residences are excluded.
-export const strollPlaces=save=>STROLL_PLACES.filter(p=>p.dongxia?canEnterDongxia(save):!p.foundation||String(save.player.realm).startsWith('筑基'));
+export const strollPlaces=save=>STROLL_PLACES.filter(p=>p.dongxia?canEnterDongxia(save):!p.foundation||(isGoldenRealm(save.player)||String(save.player.realm).startsWith('筑基')));
 export const strollCount=(save,now=Date.now())=>save.stroll?.day===localDay(now)?save.stroll.count||0:0;
 export const strollEncounterCount=(save,now=Date.now())=>save.stroll?.day===localDay(now)?save.stroll.encounters||0:0;
 export const STROLL_EXTRA_PRICE=20;

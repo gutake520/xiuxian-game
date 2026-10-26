@@ -17,7 +17,7 @@ export const GOLDEN_RECIPES={
  'golden-mixed-pill':{'golden-healing-herb':2,'golden-spirit-herb':1}
 };
 
-item('golden-qi-pill','凝元丹',{kind:'pill',stackable:true,glyph:'丹',price:11.25,description:'当天挂机上限增加67.5分钟；与其他挂机丹每日共用一次机会。金丹后续修炼尚未开放。'});
+item('golden-qi-pill','凝元丹',{kind:'pill',stackable:true,glyph:'丹',price:11.25,description:'当天挂机上限增加67.5分钟；与其他挂机丹每日共用一次机会。金丹修为可积累，后续层数暂未开放。'});
 item('golden-vital-pill','固元丹',{kind:'pill',stackable:true,glyph:'丹',description:'一小时生命上限+13、法力上限+4，服用时当前值同步增加；两小时可服一枚，仅本宗金丹传承自炼自用。'});
 item('golden-attack-talisman','裂金符',{kind:'talisman',stackable:true,glyph:'符',damage:8,description:'额外造成8点伤害。'});
 item('golden-dual-talisman','金罡符',{kind:'talisman',stackable:true,glyph:'符',damage:8,guard:true,description:'造成8点伤害并免疫下一次伤害；每日限制作一张。'});

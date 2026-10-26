@@ -1,3 +1,4 @@
+import {isGoldenRealm} from './golden-core.js';
 import {goldenInheritance} from './golden-inheritance.js';
 import {localDay} from './cultivation.js';
 import {TECHNIQUES,techniqueEligible,hasActiveTechnique} from '../data/techniques.js';
@@ -77,7 +78,7 @@ export function craftSectItem(save,id,herb='healing-herb'){
  if(!hasActiveTechnique(save,talisman?'fairy-painting':'planting-flags'))throw new Error('请先学会本宗制作传承。');
  if(id==='golden-crafted-array'&&!goldenInheritance(save,'planting-flags'))throw new Error('请先参悟金丹阵法传承。');
  const stage=ITEMS[id]?.stage==='金丹'?'金丹':ITEMS[id]?.stage==='筑基'?'筑基':'炼气';
- if(stage==='筑基'&&!String(save.player.realm).startsWith('筑基'))throw new Error('灵力尚浅，无法炼制筑基法器。');
+ if(stage==='筑基'&&!(isGoldenRealm(save.player)||String(save.player.realm).startsWith('筑基')))throw new Error('灵力尚浅，无法炼制筑基法器。');
  const permitted=stage==='筑基'?['foundation-healing-herb','foundation-spirit-herb','foundation-qi-herb']:['healing-herb','spirit-herb','qi-herb'];
  if(talisman&&!permitted.includes(herb))throw new Error('此草灵气不合，需用相应境界的药草。');
  const oreId=stage==='金丹'?'golden-ore':stage==='筑基'?'foundation-ore':'ore';

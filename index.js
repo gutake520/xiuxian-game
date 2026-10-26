@@ -1,3 +1,4 @@
+import {isGoldenRealm} from './systems/golden-core.js';
 import {showCompanionMemories} from './ui/companion-memories.js';
 import {showMasterTeaching} from './ui/master-teaching.js';
 import {showBackup} from './ui/backup.js';
@@ -260,7 +261,7 @@ function renderSectHall(sect){
 }
 function renderSectShop(sect){
  const sheet=sectOverlay();
- sheet.innerHTML=`${sectHeader(sect,'返回宗门')}<div class="xg-card"><h3>门派商店</h3><p>通用典籍 15 灵石，可精进的三部典籍 25 灵石；「等等再来」30 灵石；五行中级功法 29 灵石。多余的通用典籍可在坊市出售。</p>${SECT_MANUALS.filter(([id])=>!ITEMS[id].minFoundationLevel||String(currentSave.player.realm).startsWith('筑基')).map(([itemId,methodId])=>{const price=ITEMS[itemId].sectPrice??(itemId==='wait-manual'?30:['gamble-manual','steal-manual','only-once-manual'].includes(itemId)?25:15);return `<button type="button" data-sect-manual="${itemId}">${escapeHTML(TECHNIQUES[methodId].name)} · ${price} 灵石</button>`}).join('')}</div><p id="xg-sect-status" role="status"></p>`;
+ sheet.innerHTML=`${sectHeader(sect,'返回宗门')}<div class="xg-card"><h3>门派商店</h3><p>通用典籍 15 灵石，可精进的三部典籍 25 灵石；「等等再来」30 灵石；五行中级功法 29 灵石。多余的通用典籍可在坊市出售。</p>${SECT_MANUALS.filter(([id])=>!ITEMS[id].minFoundationLevel||(isGoldenRealm(currentSave.player)||String(currentSave.player.realm).startsWith('筑基'))).map(([itemId,methodId])=>{const price=ITEMS[itemId].sectPrice??(itemId==='wait-manual'?30:['gamble-manual','steal-manual','only-once-manual'].includes(itemId)?25:15);return `<button type="button" data-sect-manual="${itemId}">${escapeHTML(TECHNIQUES[methodId].name)} · ${price} 灵石</button>`}).join('')}</div><p id="xg-sect-status" role="status"></p>`;
  sheet.querySelector('#xg-sect-back').onclick=()=>renderSectHall(sect);
  sheet.querySelectorAll('[data-sect-manual]').forEach(button=>button.onclick=async()=>{
   button.disabled=true;
