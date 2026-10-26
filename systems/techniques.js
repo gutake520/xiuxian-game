@@ -1,9 +1,10 @@
+import {isGoldenRealm} from './golden-core.js';
 import {combatSlots} from '../data/technique-slots.js';
 import {ITEMS} from '../data/items.js';
 import {TECHNIQUES,PUZZLE_SIZES,UPGRADEABLE_TECHNIQUES,hintAllowance,techniqueEligible} from '../data/techniques.js';
 import {ensureSpiritBeasts} from './pets.js';
 import {hasManual} from './inventory.js';
-const canStudy=(save,id)=>id.startsWith('upgrade:')?UPGRADEABLE_TECHNIQUES.includes(id.slice(8))&&save.techniques.mastered.includes(id.slice(8))&&Boolean(save.techniques.puzzles?.[id])&&!save.techniques.upgraded?.includes(id.slice(8)):techniqueEligible(save.player,TECHNIQUES[id])&&(hasManual(save,id)||save.techniques.sectManuals?.includes(id));
+const canStudy=(save,id)=>id.startsWith('golden:')?isGoldenRealm(save.player)&&save.techniques.goldenPaid?.includes(id.slice(7))&&save.techniques.mastered.includes(id.slice(7))&&!save.techniques.goldenInheritances?.includes(id.slice(7))&&techniqueEligible(save.player,TECHNIQUES[id.slice(7)]):id.startsWith('upgrade:')?UPGRADEABLE_TECHNIQUES.includes(id.slice(8))&&save.techniques.mastered.includes(id.slice(8))&&Boolean(save.techniques.puzzles?.[id])&&!save.techniques.upgraded?.includes(id.slice(8)):techniqueEligible(save.player,TECHNIQUES[id])&&(hasManual(save,id)||save.techniques.sectManuals?.includes(id));
 const shuffle=values=>{for(let i=values.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[values[i],values[j]]=[values[j],values[i]]}return values};
 export function countSolutions(input,size,limit=2){
  const cells=[...input];let count=0;
@@ -57,6 +58,7 @@ export function useHint(save,id){
 export function completeLearning(save,id){
  const puzzle=save.techniques.puzzles[id],upgrade=id.startsWith('upgrade:');if(!puzzle||!upgrade&&save.techniques.mastered.includes(id)||!canStudy(save,id))throw new Error('当前无法结算学习。');
  if(puzzle.cells.some((v,i)=>v!==puzzle.solution[i]))throw new Error('数阵尚未解开，请检查每一行、每一列。');
+ if(id.startsWith('golden:')){(save.techniques.goldenInheritances??=[]).push(id.slice(7));delete save.techniques.puzzles[id];return}
  if(upgrade){save.techniques.upgraded??=[];save.techniques.upgraded.push(id.slice(8));delete save.techniques.puzzles[id];return}
  save.techniques.mastered.push(id);
  if(id==='beast-keeper')ensureSpiritBeasts(save);

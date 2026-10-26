@@ -16,7 +16,7 @@ export function techniqueLibrary(api,onClose){
 }
 export function learningPuzzle(api,id,onClose,selected=-1){
  const puzzle=api.getSave().techniques.puzzles[id];if(!puzzle){onClose();return}
- const upgrade=id.startsWith('upgrade:'),method=TECHNIQUES[upgrade?id.slice(8):id];
+ const upgrade=id.startsWith('upgrade:'),method=TECHNIQUES[id.startsWith('golden:')?id.slice(7):upgrade?id.slice(8):id];
  const sheet=createSheet((upgrade?'精进':'参悟')+' · '+method.name,onClose),body=sheet.querySelector('[data-body]'),message=sheet.querySelector('[role=status]');
  body.innerHTML=`<p>每行、每列填入 1～${puzzle.size}，数字不可重复。亮色格可填写。</p><div class="xg-number-grid" style="--size:${puzzle.size}" role="group" aria-label="学习数阵">${puzzle.cells.map((v,i)=>`<button type="button" data-cell="${i}" class="${puzzle.givens[i]?'xg-puzzle-given':''} ${i===selected?'xg-puzzle-selected':''}" ${puzzle.givens[i]?'disabled':''} aria-label="第 ${Math.floor(i/puzzle.size)+1} 行第 ${i%puzzle.size+1} 列，${v||'空'}">${v||'·'}</button>`).join('')}</div><div class="xg-number-pad">${Array.from({length:puzzle.size},(_,i)=>`<button type="button" data-number="${i+1}">${i+1}</button>`).join('')}<button type="button" data-number="0">清除</button></div><div class="xg-feature-row"><button type="button" data-hint ${puzzle.hintsUsed>=puzzle.hintLimit?'disabled':''}>灵光提示 ${puzzle.hintLimit-puzzle.hintsUsed}/${puzzle.hintLimit}</button><button type="button" data-submit>完成参悟</button></div><small>学习进度与已用提示自动保存，返回后可继续。</small>`;
  body.querySelectorAll('[data-cell]').forEach(button=>button.onclick=()=>{selected=Number(button.dataset.cell);body.querySelectorAll('[data-cell]').forEach(b=>b.classList.toggle('xg-puzzle-selected',Number(b.dataset.cell)===selected))});

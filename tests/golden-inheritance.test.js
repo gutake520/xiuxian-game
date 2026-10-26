@@ -1,19 +1,21 @@
+import {completeLearning} from '../systems/techniques.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {parseHTML} from 'linkedom';
-import {upgradeGoldenInheritance,enchantWeapon} from '../systems/golden-inheritance.js';
+import {upgradeGoldenInheritance as beginGolden,enchantWeapon} from '../systems/golden-inheritance.js';
 import {brewPill,usePill,equipmentStats,saleUnitPrice} from '../systems/inventory.js';
 import {settleRecovery} from '../systems/recovery.js';
 import {craftSectItem} from '../systems/sect-progression.js';
 import {feedBeast,beastCanFight} from '../systems/pets.js';
 import {beastPower} from '../data/titles.js';
-import {beginBattle,playRound,useBattleTalisman} from '../systems/combat.js';
+import {beginBattle,playRound,useBattleTalisman,useBattleArray} from '../systems/combat.js';
 import {showSectInheritance,showSectWorkshop} from '../ui/sect-progression.js';
+function upgradeGoldenInheritance(s,id){beginGolden(s,id);const p=s.techniques.puzzles['golden:'+id];p.cells=[...p.solution];completeLearning(s,'golden:'+id)}
 const make=(sect,id)=>({slot:'upgrade',bagCapacity:30,sectPoints:198,dongxiaUnlocked:true,player:{realm:'金丹一层',sect,spiritRoot:'金木双灵根',stats:{魅力:10,根骨:10,悟性:10,神识:10},hp:15,mp:10,spiritStones:20,cultivation:0,combat:{hp:15,mp:10,attack:10,defense:1,speed:30,critRate:0,dodgeRate:0},goldenCoreBonus:{attack:0,defense:0,speed:0,mp:0,critRate:0,dodgeRate:0}},inventory:['golden-healing-herb','golden-spirit-herb','golden-qi-herb','golden-ore'].map((itemId,i)=>({uid:'m'+i,itemId,quantity:30})),equipment:{},techniques:{mastered:[id],combat:[id],sectManuals:[]}});
 test('99 points gate and duplicate protection, inheritance UI upgrades',async t=>{
  const s=make('凌霄剑宗','one-sword');s.sectPoints=98;assert.throws(()=>upgradeGoldenInheritance(s,'one-sword'));s.sectPoints=99;
  const old=globalThis.document;globalThis.document=parseHTML('<html><body><section id="xg-panel"></section></body></html>').document;t.after(()=>globalThis.document=old);
- const api={getSave:()=>s,actions:{mutate:async fn=>({result:fn(s)})}};showSectInheritance(api,()=>{});await document.querySelector('[data-golden-upgrade]').onclick({currentTarget:document.querySelector('[data-golden-upgrade]')});assert.equal(s.sectPoints,0);assert.throws(()=>upgradeGoldenInheritance(s,'one-sword'));assert.ok(document.querySelector('[data-golden-upgrade]').disabled);
+ const api={getSave:()=>s,actions:{mutate:async fn=>({result:fn(s)})}};showSectInheritance(api,()=>{});await document.querySelector('[data-golden-upgrade]').onclick({currentTarget:document.querySelector('[data-golden-upgrade]')});assert.equal(s.sectPoints,0);assert.equal(s.techniques.goldenInheritances,undefined);assert.equal(s.techniques.puzzles['golden:one-sword'].size,4);document.querySelector('[data-close]').click();await document.querySelector('[data-golden-upgrade]').onclick({currentTarget:document.querySelector('[data-golden-upgrade]')});assert.equal(s.sectPoints,0);const puzzle=s.techniques.puzzles['golden:one-sword'];puzzle.cells=[...puzzle.solution];await document.querySelector('[data-submit]').onclick();await new Promise(r=>setImmediate(r));assert.throws(()=>upgradeGoldenInheritance(s,'one-sword'));assert.ok(document.querySelector('[data-golden-upgrade]').disabled);
 });
 test('vital pill adds current values, cannot sell, expires without subtracting damage, two hour cooldown',()=>{
  const s=make('丹霞谷','divine-pharmacopoeia'),now=Date.now();upgradeGoldenInheritance(s,'divine-pharmacopoeia');brewPill(s,'golden-vital-pill');brewPill(s,'golden-vital-pill');const e=s.inventory.find(x=>x.itemId==='golden-vital-pill');assert.equal(saleUnitPrice(s,e),null);usePill(s,e.uid,now);assert.equal(s.player.hp,28);assert.equal(s.player.mp,14);assert.equal(equipmentStats(s,now).maxHp,28);s.player.hp=8;assert.throws(()=>usePill(s,e.uid,now+3600000));settleRecovery(s,now+3600000);assert.equal(s.player.hp,8);assert.equal(equipmentStats(s,now+3600000).maxHp,15);usePill(s,e.uid,now+7200000);assert.equal(s.player.hp,21);
@@ -44,10 +46,18 @@ test('golden passive rates change actual combat results',t=>{
  t.mock.method(Math,'random',()=>.99);
  for(const [sect,id] of [['凌霄剑宗','one-sword'],['合欢宗','life-steal'],['镇岳宗','resentment']]){
   const base=make(sect,id);base.player.combat.hp=100;base.player.hp=50;beginBattle(base,'golden-rock-rhino');base.battle.hp=100;base.battle.maxHp=100;
-  const upgraded=structuredClone(base);upgradeGoldenInheritance(upgraded,id);
+  const upgraded=structuredClone(base),battle=upgraded.battle;delete upgraded.battle;upgradeGoldenInheritance(upgraded,id);upgraded.battle=battle;
   const a=playRound(base,'attack'),b=playRound(upgraded,'attack');
   if(id==='one-sword')assert.ok(b.dealt>a.dealt);
   if(id==='life-steal')assert.ok(upgraded.player.hp>base.player.hp);
   if(id==='resentment')assert.ok(upgraded.battle.hp<base.battle.hp);
  }
+});
+
+test('golden array six charges and two per battle, delayed five damage survives reload',t=>{
+ t.mock.method(Math,'random',()=>.99);let s=make('玄机门','planting-flags');upgradeGoldenInheritance(s,'planting-flags');craftSectItem(s,'golden-crafted-array');const e=s.inventory.find(e=>e.itemId==='golden-crafted-array');assert.equal(e.usesLeft,6);beginBattle(s,'golden-rock-rhino');s.player.hp=100;s.player.combat.hp=100;
+ useBattleArray(s,e.uid);assert.equal(e.usesLeft,5);playRound(s,'skip');s=structuredClone(s);const hp=s.battle.hp;playRound(s,'skip');assert.equal(s.battle.hp,hp-5);useBattleArray(s,e.uid);playRound(s,'skip');assert.throws(()=>useBattleArray(s,e.uid),/最多/);
+});
+test('paid learning persists, rejects unsolved submission and insufficient realm',()=>{
+ const s=make('凌霄剑宗','one-sword');beginGolden(s,'one-sword');assert.equal(s.sectPoints,99);assert.throws(()=>completeLearning(s,'golden:one-sword'));const copy=structuredClone(s);beginGolden(copy,'one-sword');assert.equal(copy.sectPoints,99);assert.deepEqual(copy.techniques.puzzles,s.techniques.puzzles);copy.player.realm='筑基一层';assert.throws(()=>beginGolden(copy,'one-sword'));
 });

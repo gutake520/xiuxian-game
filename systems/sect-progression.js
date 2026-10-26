@@ -73,13 +73,14 @@ export function craftSectItem(save,id,herb='healing-herb'){
   addItem(save,id);if(dual)save.goldenTalismanDay=day;return '金丹符箓制作完成。';
  }
  const talisman=['attack-talisman','guard-talisman','foundation-attack-talisman','foundation-guard-talisman'].includes(id);
- if(!talisman&&!['crafted-binding-array','foundation-crafted-array'].includes(id))throw new Error('制作配方尚未开放。');
+ if(!talisman&&!['crafted-binding-array','foundation-crafted-array','golden-crafted-array'].includes(id))throw new Error('制作配方尚未开放。');
  if(!hasActiveTechnique(save,talisman?'fairy-painting':'planting-flags'))throw new Error('请先学会本宗制作传承。');
- const stage=ITEMS[id]?.stage==='筑基'?'筑基':'炼气';
+ if(id==='golden-crafted-array'&&!goldenInheritance(save,'planting-flags'))throw new Error('请先参悟金丹阵法传承。');
+ const stage=ITEMS[id]?.stage==='金丹'?'金丹':ITEMS[id]?.stage==='筑基'?'筑基':'炼气';
  if(stage==='筑基'&&!String(save.player.realm).startsWith('筑基'))throw new Error('灵力尚浅，无法炼制筑基法器。');
  const permitted=stage==='筑基'?['foundation-healing-herb','foundation-spirit-herb','foundation-qi-herb']:['healing-herb','spirit-herb','qi-herb'];
  if(talisman&&!permitted.includes(herb))throw new Error('此草灵气不合，需用相应境界的药草。');
- const oreId=stage==='筑基'?'foundation-ore':'ore';
+ const oreId=stage==='金丹'?'golden-ore':stage==='筑基'?'foundation-ore':'ore';
  const recipe=talisman?{[herb]:1,[oreId]:1}:{[oreId]:20};
  for(const [material,count] of Object.entries(recipe))if((save.inventory.find(e=>e.itemId===material)?.quantity||0)<count)throw new Error('材料不足。');
  const freed=Object.entries(recipe).filter(([material,count])=>save.inventory.find(e=>e.itemId===material)?.quantity===count).length;

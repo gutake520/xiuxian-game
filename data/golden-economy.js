@@ -23,3 +23,5 @@ item('golden-attack-talisman','裂金符',{kind:'talisman',stackable:true,glyph:
 item('golden-dual-talisman','金罡符',{kind:'talisman',stackable:true,glyph:'符',damage:8,guard:true,description:'造成8点伤害并免疫下一次伤害；每日限制作一张。'});
 GOLDEN_RECIPES['golden-qi-pill']={'golden-qi-herb':5};
 GOLDEN_RECIPES['golden-vital-pill']={'golden-healing-herb':2,'golden-spirit-herb':1,'golden-qi-herb':1};
+
+item('golden-crafted-array','困杀阵盘',{kind:'array',glyph:'阵',description:'困住对手下一轮并造成5点固定伤害；可用六次，每场最多两次。'});

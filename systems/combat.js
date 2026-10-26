@@ -242,6 +242,7 @@ export function playRound(save,action='attack',now=Date.now()){
  };
  const enemyTurn=()=>{
   if(battle.skipRounds?.includes(battle.round+1)){messages.push('对手选择跳过本轮。');return}
+  if(battle.goldenArrayRounds?.includes(battle.round+1)){battle.goldenArrayRounds=battle.goldenArrayRounds.filter(r=>r!==battle.round+1);battle.hp=round2(Math.max(0,battle.hp-5));messages.push('困杀阵发动，对手受到5点固定伤害。');if(battle.hp<=0)return}
   if(battle.bindRounds?.includes(battle.round+1)||battle.stunnedRound===battle.round+1){messages.push(battle.stunnedRound===battle.round+1?'对手被裂风剑震晕，本轮无法行动。':'对手被阵盘困住，无法行动。');return}
   if(elementalEffect(battle,'fire-burn')){battle.hp=round2(Math.max(0,battle.hp-3));messages.push('火·灼烧：对手受到 3.00 点伤害。');if(battle.hp<=0)return}
   const silenced=(battle.silencedTurns||0)>0;
@@ -311,17 +312,21 @@ export function useBattleArray(save,uid){
  if(save.battle?.kind==='zhang-intro')throw new Error('阴风太急，来不及取出阵盘。');
  const battle=save.battle;if(!battle)throw new Error('没有正在进行的战斗。');
  if(battle.arrayRound===battle.round+1)throw new Error('本轮已经使用过阵盘。');
- const ids=['binding-array','crafted-binding-array','foundation-binding-array','foundation-crafted-array'];
+ const ids=['binding-array','crafted-binding-array','foundation-binding-array','foundation-crafted-array','golden-crafted-array'];
  const targetFoundation=battle.stage==='筑基'||String(save.player.realm).startsWith('筑基')&&['sect-tournament','sect-senior'].includes(battle.kind);
- const entry=uid?save.inventory.find(item=>item.uid===uid):save.inventory.find(item=>ids.includes(item.itemId)&&(!item.itemId.includes('crafted')||item.usesLeft>0)&&(!targetFoundation||ITEMS[item.itemId]?.stage==='筑基'));
+ const entry=uid?save.inventory.find(item=>item.uid===uid):save.inventory.find(item=>ids.includes(item.itemId)&&(!item.itemId.includes('crafted')||item.usesLeft>0)&&(!targetFoundation||['筑基','金丹'].includes(ITEMS[item.itemId]?.stage))&&(battle.stage!=='金丹'||ITEMS[item.itemId]?.stage==='金丹'));
  if(!entry||!ids.includes(entry.itemId))throw new Error('储物中没有可用的阵盘。');
- if(targetFoundation&&ITEMS[entry.itemId].stage!=='筑基')throw new Error('此阵灵力不足，困不住筑基修士。');
+ if(targetFoundation&&!['筑基','金丹'].includes(ITEMS[entry.itemId].stage))throw new Error('此阵灵力不足，困不住筑基修士。');
  if(ITEMS[entry.itemId].stage==='筑基'&&!String(save.player.realm).startsWith('筑基'))throw new Error('灵力尚浅，无法催动这枚阵盘。');
+ if(battle.stage==='金丹'&&ITEMS[entry.itemId].stage!=='金丹')throw new Error('需要金丹阵盘。');
+ if(ITEMS[entry.itemId].stage==='金丹'&&!goldenInheritance(save,'planting-flags'))throw new Error('请先参悟金丹阵法传承。');
+ if(entry.itemId==='golden-crafted-array'&&(battle.goldenArrayUses||0)>=2)throw new Error('每场最多发动两次困杀阵盘。');
  const crafted=entry.itemId.includes('crafted');
  if(crafted){
   if(!Number.isInteger(entry.usesLeft)||entry.usesLeft<=0)throw new Error('这枚阵盘已经损坏。');
   entry.usesLeft--;
  }else if(entry.quantity>1)entry.quantity--;else save.inventory=save.inventory.filter(item=>item!==entry);
+ if(entry.itemId==='golden-crafted-array'){battle.goldenArrayUses=(battle.goldenArrayUses||0)+1;(battle.goldenArrayRounds??=[]).push(battle.round+2)}
  battle.arrayRound=battle.round+1;
  battle.bindRounds??=[];battle.bindRounds.push(battle.round+2);
  const message=`阵盘发动，对手下一轮无法行动；你仍可进行本轮行动。${crafted?entry.usesLeft?'剩余 '+entry.usesLeft+' 次。':'阵盘已损坏。':''}`;

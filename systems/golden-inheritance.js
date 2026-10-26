@@ -1,15 +1,20 @@
+import {createPuzzle} from './techniques.js';
 import {ITEMS} from '../data/items.js';
 import {isGoldenRealm} from './golden-core.js';
 import {TECHNIQUES,techniqueEligible} from '../data/techniques.js';
 export const GOLDEN_INHERITANCES={
+ 'planting-flags':'困杀阵盘：赤金矿×20，可用六次；困住对手下一轮并造成5点固定伤害，每场最多发动两次。',
  'one-sword':'自身伤害提高13%。','life-steal':'实际伤害的13%转为生命。','resentment':'反弹原始伤害的15%。','healing-hands':'每轮恢复3.5生命，持续三轮；耗蓝2，冷却4轮。','beast-keeper':'追击和守护在筑基基础上各增加1。','divine-pharmacopoeia':'解锁固元丹：一小时生命上限+13、法力上限+4，两小时可服一枚。','fairy-painting':'解锁金丹攻击符和每日一张的攻守复合符。','mending':'武器附魔：赤金矿×5，每把最多三次，结果可叠加。'
 };
 export function goldenInheritance(save,id){return Boolean(isGoldenRealm(save.player)&&save.techniques?.goldenInheritances?.includes(id)&&save.techniques?.mastered?.includes(id)&&techniqueEligible(save.player,TECHNIQUES[id]))}
 export function upgradeGoldenInheritance(save,id){
+ if(save.battle)throw new Error('战斗中不能参悟传承。');
  if(!GOLDEN_INHERITANCES[id]||!isGoldenRealm(save.player)||!save.techniques?.mastered?.includes(id)||!techniqueEligible(save.player,TECHNIQUES[id]))throw new Error('金丹后须先学会本宗传承。');
  if(save.techniques.goldenInheritances?.includes(id))throw new Error('已经升级过这部传承。');
+ const key='golden:'+id;save.techniques.puzzles??={};
+ if(save.techniques.goldenPaid?.includes(id))return save.techniques.puzzles[key]??=createPuzzle(4,save.player.stats?.神识);
  if((save.sectPoints||0)<99)throw new Error('需要99宗门积分。');
- save.sectPoints-=99;(save.techniques.goldenInheritances??=[]).push(id);return '金丹传承升级完成。';
+ const puzzle=createPuzzle(4,save.player.stats?.神识);save.sectPoints-=99;(save.techniques.goldenPaid??=[]).push(id);save.techniques.puzzles[key]=puzzle;return puzzle;
 }
 export function enchantWeapon(save,uid,rng=Math.random){
  if(save.battle||!goldenInheritance(save,'mending'))throw new Error('请先升级本宗金丹传承，并离开战斗。');
