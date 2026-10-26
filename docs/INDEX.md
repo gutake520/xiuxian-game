@@ -33,6 +33,7 @@
 
 通常规则在 `systems/<模块>.js`，界面在 `ui/<模块>.js`；有独立配置时再查 `data/`。
 
+- 东夏秘境回星古阵：`golden-secret`；无灯集与旧黑市共用 `black-market`，保底独立。
 - 凝神试炼：`concentration`；辨认灵符：`talisman-memory`；雾中渡舟：`river-crossing`。
 - 替人看摊：`stall-sitting`；棋摊／骰局：`stall-games`；抓叛徒：`traitor-puzzle`。
 - 藏宝图：`treasure`；迷宫／推箱子：`peak-puzzles`；灵泉：`spirit-spring`。
@@ -45,5 +46,5 @@
 - 测试：`tests/*.test.js`，多数与模块同名；全量命令 `npm test`。
 - 金丹突破与成长领取、典籍学习：`tests/golden-core.test.js`；东夏国试炼：`tests/concentration.test.js`；金丹物价与补给：`tests/golden-economy.test.js`。
 - 金丹传承付费资格、学习完成与困杀阵盘：`systems/golden-inheritance.js`、`systems/techniques.js`；验证：`tests/golden-inheritance.test.js`。
-- 筑基→金丹兼容回归：`tests/golden-transition.test.js`；金丹修为暂只积累，不自动升层。
+- 筑基→金丹兼容回归：`tests/golden-transition.test.js`；金丹修为可升层，层间属性成长暂未开放。
 - 索引只保留位置、职责、关键调用关系；详细规则按需查 `docs/STRUCTURE.md`，数值以代码为准。

@@ -3,7 +3,10 @@ export const QI_REALMS = ['炼气一层','炼气二层','炼气三层','炼气�
 export const QI_REQUIREMENTS = [150,200,250,300,350,400,500,600,750,1000];
 export const FOUNDATION_REALMS=['筑基一层','筑基二层','筑基三层','筑基四层','筑基五层','筑基六层','筑基七层','筑基八层','筑基九层','筑基十层'];
 export const FOUNDATION_REQUIREMENTS=[1200,1500,1800,2100,2400,2700,3000,3300,3600,4000];
+export const GOLDEN_REALMS=QI_REALMS.map(r=>r.replace('炼气','金丹'));
+export const GOLDEN_REQUIREMENTS=[5000,6000,7000,8000,9000,10000,11000,12000,13000,15000];
 export function realmProgress(player) {
+ const gold=GOLDEN_REALMS.indexOf(player.realm);if(gold>=0)return {index:20+gold,required:GOLDEN_REQUIREMENTS[gold],next:GOLDEN_REALMS[gold+1]??null,complete:gold===9&&Number(player.cultivation)>=15000,current:Number(player.cultivation)||0};
  const qi=QI_REALMS.indexOf(player.realm),foundation=FOUNDATION_REALMS.indexOf(player.realm);
  const index=qi>=0?qi:foundation>=0?10+foundation:-1;
  const required=qi>=0?QI_REQUIREMENTS[qi]:FOUNDATION_REQUIREMENTS[foundation]??null;
@@ -11,11 +14,11 @@ export function realmProgress(player) {
 }
 // 炼气一至五层：每升一层增加 1 点生命上限。五层之后暂不继续增加。
 function foundationMilestones(step){return Number(step>=3)+Number(step>=6)}
-export function realmHpBonus(player){if(player.goldenCoreBonus)return player.goldenCoreHpBonus||0;const step=Math.max(0,FOUNDATION_REALMS.indexOf(player.realm));return Math.max(0,Math.min(4,realmProgress(player).index))+step*2+foundationMilestones(step)*3}
+export function realmHpBonus(player){if(isGoldenRealm(player))return player.goldenCoreHpBonus||0;const step=Math.max(0,FOUNDATION_REALMS.indexOf(player.realm));return Math.max(0,Math.min(4,realmProgress(player).index))+step*2+foundationMilestones(step)*3}
 export function realmBattleBonus(player){
  if(player.goldenCoreBonus)return {...player.goldenCoreBonus};
  if(String(player.realm).startsWith('筑基')){const step=Math.max(0,FOUNDATION_REALMS.indexOf(player.realm)),base={defense:0,mp:0,attack:0,critRate:0,dodgeRate:0,speed:0,...player.foundationBonus};return {...base,attack:Math.round((base.attack+step*.3+foundationMilestones(step)*.2)*100)/100,defense:Math.round((base.defense+step*.08)*100)/100,mp:base.mp+Math.floor(step/2),speed:Math.round((base.speed+step*.3)*100)/100}}
- const tier=realmProgress(player).index;
+ const tier=isGoldenRealm(player)?-1:realmProgress(player).index;
  const root=String(player.spiritRoot||'');
  const count=root.includes('五灵根')?5:root.includes('四灵根')?4:root.includes('三灵根')?3:root.includes('双灵根')?2:1;
  const defense=count===1?.4:count<=3?.3:.2;
@@ -31,7 +34,17 @@ export function applyRealmHp(save){
  save.realmMpBonusApplied=mpBonus;
 }
 export function addCultivation(save,amount) {
- if(isGoldenRealm(save.player)){if(!Number.isFinite(amount)||amount<=0)return 0;save.player.cultivation=Math.round(((Number(save.player.cultivation)||0)+amount)*100)/100;return Math.round(amount*100)/100}
+ if(isGoldenRealm(save.player)){
+  if(!Number.isFinite(amount)||amount<0)return 0;
+  let step=GOLDEN_REALMS.indexOf(save.player.realm);if(step<0)return 0;
+  let value=Math.round(((Number(save.player.cultivation)||0)+amount)*100)/100,used=amount;
+  while(step<9&&value>=GOLDEN_REQUIREMENTS[step]){value-=GOLDEN_REQUIREMENTS[step];step++}
+  if(value>15000){used-=value-15000;value=15000}
+  save.player.realm=GOLDEN_REALMS[step];save.player.cultivation=Math.round(value*100)/100;
+  save.player.cultivationRequired=GOLDEN_REQUIREMENTS[step];
+  // Golden breakthrough bonuses are frozen; per-layer attribute growth is deferred.
+  return Math.max(0,Math.round(used*100)/100);
+ }
  let {index}=realmProgress(save.player);if(index<0||realmProgress(save.player).complete||!Number.isFinite(amount)||amount<=0)return 0;
  let value=Math.round(((Number(save.player.cultivation)||0)+amount)*100)/100,used=amount;
  if(index>=10){

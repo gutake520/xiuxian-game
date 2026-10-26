@@ -269,7 +269,9 @@ export function playRound(save,action='attack',now=Date.now()){
   const afterDefense=mist||enemyAction==='fox-bloom'?2:Math.max(1,rawDamage-stats.defense-elementalBonus(battle,'earth-rampart')-(guarded?1:0));
   const capped=action==='only-one'&&playerFirst?Math.min(1,afterDefense):afterDefense;
   const guardAmount=!mist&&battle.pet==='guard'?beastPower(save,'guard',battle.petStage):0;
-  taken=round2(Math.max(0,capped-guardAmount));save.player.hp=round2(Math.max(0,save.player.hp-taken));
+  taken=round2(Math.max(0,capped-guardAmount));
+  if(taken>=save.player.hp&&save.player.hp>0&&!battle.cogitoUsed&&hasActiveTechnique(save,'cogito')){battle.cogitoUsed=true;taken=0;messages.push('我思故我在：免疫本次致命伤害。')}
+  save.player.hp=round2(Math.max(0,save.player.hp-taken));
   if(guardAmount)messages.push(`${battle.petName||'灵兽'}抵挡 ${guardAmount.toFixed(2)} 伤害。`);
   messages.push(`你受到 ${taken.toFixed(2)} 伤害。`);
   const rescued=tryZhangRescue(save,now);if(rescued)messages.push(rescued);

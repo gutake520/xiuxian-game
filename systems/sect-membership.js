@@ -5,6 +5,7 @@ export function sectExitPrice(player){
  const realm=String(player.realm||'');
  if(realm.startsWith('炼气'))return 100;
  if(realm.startsWith('筑基'))return 300;
+ if(realm.startsWith('金丹'))return 600;
  return null;
 }
 export function assertCanJoinSect(save,now=Date.now()){

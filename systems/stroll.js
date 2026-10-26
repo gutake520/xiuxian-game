@@ -24,14 +24,16 @@ export const strollCount=(save,now=Date.now())=>save.stroll?.day===localDay(now)
 export const strollEncounterCount=(save,now=Date.now())=>save.stroll?.day===localDay(now)?save.stroll.encounters||0:0;
 export const STROLL_EXTRA_PRICE=20;
 export const STROLL_EXTRA_DAILY_LIMIT=2;
-export const strollExtraCount=(save,now=Date.now())=>save.strollExtra?.day===localDay(now)?Math.min(STROLL_EXTRA_DAILY_LIMIT,Math.max(0,Math.floor(Number(save.strollExtra.purchased)||0))):0;
+export const strollExtraDailyLimit=save=>isGoldenRealm(save.player)?3:STROLL_EXTRA_DAILY_LIMIT;
+export const strollExtraPrice=(save,now=Date.now())=>strollExtraCount(save,now)>=2?30:20;
+export const strollExtraCount=(save,now=Date.now())=>save.strollExtra?.day===localDay(now)?Math.min(strollExtraDailyLimit(save),Math.max(0,Math.floor(Number(save.strollExtra.purchased)||0))):0;
 export const strollEncounterLimit=(save,now=Date.now())=>STROLL_ENCOUNTER_LIMIT+strollExtraCount(save,now);
 export function buyStrollEncounter(save,now=Date.now()){
  if(save.battle)throw new Error('请先结束战斗。');
  const purchased=strollExtraCount(save,now);
- if(purchased>=STROLL_EXTRA_DAILY_LIMIT)throw new Error('今日已购买两次额外奇遇。');
- if(!Number.isFinite(save.player.spiritStones)||save.player.spiritStones<STROLL_EXTRA_PRICE)throw new Error('灵石不足，需要 20 灵石。');
- save.player.spiritStones-=STROLL_EXTRA_PRICE;
+ if(purchased>=strollExtraDailyLimit(save))throw new Error(isGoldenRealm(save.player)?'今日三次额外奇遇已购满。':'今日两次额外奇遇已购满。');
+ if(!Number.isFinite(save.player.spiritStones)||save.player.spiritStones<strollExtraPrice(save,now))throw new Error(`灵石不足，需要 ${strollExtraPrice(save,now)} 灵石。`);
+ save.player.spiritStones-=strollExtraPrice(save,now);
  save.strollExtra={day:localDay(now),purchased:purchased+1};
  return {message:'购买成功：今日奇遇上限 +1，仅当天有效。'};
 }

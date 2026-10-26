@@ -1,3 +1,4 @@
+import {showGoldenSecret} from './golden-secret.js';
 import {isGoldenRealm} from '../systems/golden-core.js';
 import {showOldFriend} from './old-friend.js';
 import {oldFriendState} from '../systems/old-friend.js';
@@ -237,11 +238,13 @@ export function createMapUI({getSave,activate,actions,onSectBattleExit}){
  function renderDongxia(){
   if(!canEnterDongxia(getSave()))return render();
   activate('map');
-  content().innerHTML=`<section class="xg-map-sheet"><button class="xg-map-back" type="button">← 返回山河图</button>${heading('东夏国','关山万里，自此远游。')}<div class="xg-card"><p>长风越过关楼，远山连着云海。商旅与修士在城门下交错而过，你收起师父所赠的舆图，踏进这片陌生的山河。</p></div><div class="xg-feature-row"><button type="button" data-dongxia-stroll>四处走走</button><button type="button" data-golden-wilds>出城历练</button><button type="button" data-golden-shop>东夏商行</button></div>${peaks([{id:'gate',name:'东夏边关',x:8,y:12,size:.95},{id:'street',name:'长街',x:62,y:35,size:.85},{id:'river',name:'望山桥',x:20,y:65,size:.8}],'dongxia')}<article class="xg-card" data-dongxia-scene><p>点选地标，看看沿途风物。</p></article></section>`;
+  content().innerHTML=`<section class="xg-map-sheet"><button class="xg-map-back" type="button">← 返回山河图</button>${heading('东夏国','关山万里，自此远游。')}<div class="xg-card"><p>长风越过关楼，远山连着云海。商旅与修士在城门下交错而过，你收起师父所赠的舆图，踏进这片陌生的山河。</p></div><div class="xg-feature-row"><button type="button" data-dongxia-stroll>四处走走</button><button type="button" data-golden-wilds>出城历练</button><button type="button" data-golden-shop>东夏商行</button><button type="button" data-golden-secret>回星古阵</button><button type="button" data-dongxia-market>无灯集</button></div>${peaks([{id:'gate',name:'东夏边关',x:8,y:12,size:.95},{id:'street',name:'长街',x:62,y:35,size:.85},{id:'river',name:'望山桥',x:20,y:65,size:.8}],'dongxia')}<article class="xg-card" data-dongxia-scene><p>点选地标，看看沿途风物。</p></article></section>`;
   back(render);
   content().querySelector('[data-dongxia-stroll]').onclick=()=>showStroll({getSave,actions},renderDongxia,0,'dongxia');
   content().querySelector('[data-golden-wilds]').onclick=renderGoldenWilds;
   content().querySelector('[data-golden-shop]').onclick=()=>showShop({getSave,actions},false,renderDongxia);
+  content().querySelector('[data-golden-secret]').onclick=()=>showGoldenSecret({getSave,actions},renderDongxia);
+  content().querySelector('[data-dongxia-market]').onclick=()=>showBlackMarket({getSave,actions,activate},renderDongxia,true);
   const scenes={gate:'关楼投下长长的影子。守关修士验过你的路引，侧身让开通往东夏国的道路。',street:'檐下悬着各色幡旗，茶香混着新磨的墨香。你在人群间缓步而行，听着陌生口音谈论远方的山川。',river:'桥下流水映着晚霞，远山一重叠着一重。此刻回望，来时的关楼已隐在薄雾里。'};
   content().querySelectorAll('[data-dongxia]').forEach(b=>b.onclick=()=>{content().querySelector('[data-dongxia-scene]').textContent=scenes[b.dataset.dongxia]});
  }

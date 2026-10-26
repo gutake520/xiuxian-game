@@ -19,7 +19,7 @@ test('leaving pays exact tier fee, disables inheritance and blocks reentry for 7
 });
 test('insufficient funds and undefined future exit fees leave state untouched',()=>{
  const s=make();s.player.spiritStones=99;const before=JSON.stringify(s);assert.throws(()=>leaveSect(s));assert.equal(JSON.stringify(s),before);
- s.player.realm='金丹一层';assert.equal(sectExitPrice(s.player),null);assert.throws(()=>leaveSect(s),/尚未开放/);
+ s.player.realm='元婴一层';assert.equal(sectExitPrice(s.player),null);assert.throws(()=>leaveSect(s),/尚未开放/);
 });
 test('leaving cancels unfinished library exam while keeping visits and earned fragments',()=>{
  const s=make();s.libraryExam={id:'old-exam',elder:'裴寒声',index:1,questions:[]};

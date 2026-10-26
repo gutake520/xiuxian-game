@@ -13,8 +13,8 @@ test('only unlocked golden characters can challenge; no premature pet support',(
 test('two consecutive fights match agreed balance, consume MP and durability, grant golden loot',t=>{
  t.mock.method(Math,'random',()=>.99);
  for(const [i,left] of [[0,9.84],[1,4.56],[2,12.96]]){
-  const s=make(),m=GOLDEN_MONSTERS[i];for(let n=0;n<2;n++){const result=fight(s,m.id);assert.equal(result.outcome,'victory');assert.ok(result.rewards.length>0);assert.equal(result.xp,0)}
-  assert.equal(s.player.hp,left);assert.equal(s.player.cultivation,0);assert.ok(s.player.spiritStones>=20);assert.ok(s.inventory.length>1);assert.equal(s.inventory[0].durability,18);assert.ok(s.player.mp<20);assert.equal(s.encounterPending,undefined);assert.equal(s.divinationPending,undefined);
+  const s=make(),m=GOLDEN_MONSTERS[i];for(let n=0;n<2;n++){const result=fight(s,m.id);assert.equal(result.outcome,'victory');assert.ok(result.rewards.length>0);assert.equal(result.xp,100)}
+  assert.equal(s.player.hp,left);assert.equal(s.player.cultivation,200);assert.ok(s.player.spiritStones>=20);assert.ok(s.inventory.length>1);assert.equal(s.inventory[0].durability,18);assert.ok(s.player.mp<20);assert.equal(s.encounterPending,undefined);assert.equal(s.divinationPending,undefined);
  }
 });
 test('battle survives migration and can flee or lose',t=>{
