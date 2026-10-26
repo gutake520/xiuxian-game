@@ -241,11 +241,32 @@ export function createMapUI({getSave,activate,actions,onSectBattleExit}){
   content().innerHTML=`<section class="xg-map-sheet"><button class="xg-map-back" type="button">← 返回山河图</button>${heading('东夏国','关山万里，自此远游。')}<div class="xg-card"><p>长风越过关楼，远山连着云海。商旅与修士在城门下交错而过，你收起师父所赠的舆图，踏进这片陌生的山河。</p></div><div class="xg-feature-row"><button type="button" data-golden-wilds>东夏山野</button><button type="button" data-golden-shop>东夏商行</button><button type="button" data-golden-secret>回星古阵</button><button type="button" data-dongxia-market>无灯集</button></div>${peaks([{id:'gate',name:'东夏边关',x:8,y:12,size:.95},{id:'street',name:'长街',x:62,y:35,size:.85},{id:'river',name:'望山桥',x:20,y:65,size:.8}],'dongxia')}<article class="xg-card" data-dongxia-scene><p>点选地标，看看沿途风物。</p></article></section>`;
   back(render);
   content().querySelector('[data-golden-wilds]').onclick=renderGoldenWilds;
-  content().querySelector('[data-golden-shop]').onclick=()=>showShop({getSave,actions},false,renderDongxia);
+  content().querySelector('[data-golden-shop]').onclick=renderGoldenMarket;
   content().querySelector('[data-golden-secret]').onclick=()=>showGoldenSecret({getSave,actions},renderDongxia);
   content().querySelector('[data-dongxia-market]').onclick=()=>showBlackMarket({getSave,actions,activate},renderDongxia,true);
   const scenes={gate:'关楼投下长长的影子。守关修士验过你的路引，侧身让开通往东夏国的道路。',street:'檐下悬着各色幡旗，茶香混着新磨的墨香。你在人群间缓步而行，听着陌生口音谈论远方的山川。',river:'桥下流水映着晚霞，远山一重叠着一重。此刻回望，来时的关楼已隐在薄雾里。'};
   content().querySelectorAll('[data-dongxia]').forEach(b=>b.onclick=()=>{content().querySelector('[data-dongxia-scene]').textContent=scenes[b.dataset.dongxia]});
+ }
+ function renderGoldenMarket(notice=''){
+  if(!canEnterDongxia(getSave()))return render();
+  activate('map');
+  content().innerHTML=`<section class="xg-map-sheet"><button class="xg-map-back" type="button">← 返回东夏国</button>${heading('东夏商行','买卖货物，修补法器。')}<div class="xg-feature-row"><button type="button" data-golden-buy>购买商品</button><button type="button" data-golden-sell>出售物品</button><button type="button" data-golden-repair>修理装备</button></div><p role="status">${escapeHTML(notice)}</p></section>`;
+  back(renderDongxia);
+  const api={getSave,actions,closeFeature:()=>document.getElementById('xg-feature-sheet')?.remove()},close=()=>{api.closeFeature();renderGoldenMarket()};
+  content().querySelector('[data-golden-buy]').onclick=()=>showShop(api,false,close);
+  content().querySelector('[data-golden-sell]').onclick=()=>showSell(api,close);
+  content().querySelector('[data-golden-repair]').onclick=()=>renderGoldenRepairs();
+ }
+ function renderGoldenRepairs(notice=''){
+  if(!canEnterDongxia(getSave()))return render();
+  const save=getSave(),own=save.player.sect==='天工阁',gear=save.inventory.filter(e=>ITEMS[e.itemId]?.kind==='equipment'&&repairPrice(e)>0);
+  content().innerHTML=`<section class="xg-map-sheet"><button class="xg-map-back" type="button">← 返回东夏商行</button>${heading('修理装备',`随身灵石 ${format(save.player.spiritStones)}`)}${own?'<p>炼器师请你自行修补，请使用宗门的修补手艺。</p>':gear.length?gear.map(e=>`<article class="xg-card"><h3>${escapeHTML(ITEMS[e.itemId].name)}</h3><p>耐久 ${format(e.durability)} / ${maxDurability(e)}</p><button type="button" data-golden-mend="${escapeHTML(e.uid)}" ${save.player.spiritStones<repairPrice(e)?'disabled':''}>修至满耐久 · ${format(repairPrice(e))} 灵石</button></article>`).join(''):'<p>没有需要修理的装备。</p>'}<p role="status" aria-live="polite">${escapeHTML(notice)}</p></section>`;
+  back(()=>renderGoldenMarket());const section=content().firstElementChild;let busy=false;
+  section.querySelectorAll('[data-golden-mend]').forEach(button=>button.onclick=async()=>{
+   if(busy||button.disabled)return;busy=true;section.querySelectorAll('[data-golden-mend]').forEach(b=>b.disabled=true);
+   try{const {result}=await actions.mutate(s=>repairEquipment(s,button.dataset.goldenMend),{message:r=>r});if(section.isConnected)renderGoldenRepairs(result)}
+   catch(error){if(section.isConnected)renderGoldenRepairs(error.message)}
+  });
  }
  function renderGoldenWilds(){
   if(!canEnterDongxia(getSave()))return render();

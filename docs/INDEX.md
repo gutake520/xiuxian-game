@@ -20,7 +20,7 @@
 | 战斗、技能结算 | `systems/combat.js`、`systems/five-elements.js` | `ui/combat.js` |
 | 功法学习、装备与资格 | `data/techniques.js`、`data/technique-slots.js`、`systems/techniques.js` | `ui/techniques.js` |
 | 装备、储物锁、买卖 | `data/items.js`、`data/golden-economy.js`、`systems/inventory.js` | `ui/inventory.js` |
-| 国家地图、怪物与秘境（云泽／东夏） | `data/locations.js`、`systems/exploration.js` | `ui/map.js`（山河图 → 国家 → 地点） |
+| 国家地图、怪物与秘境（云泽／东夏） | `data/locations.js`、`systems/exploration.js` | `ui/map.js`（山河图 → 国家 → 地点；东夏商行含买卖与修理） |
 | 主线、仇人、东夏国解锁 | `systems/boss-line.js`、`systems/foundation-story.js`、`data/masters.js` | `ui/boss-line.js`、`ui/foundation-story.js`、`ui/map.js`、`ui/master-teaching.js` |
 | 四处走走、每日奇遇额度 | `data/stroll.js`、`systems/stroll.js` | `ui/stroll.js` |
 | 宗门、服务与资格 | `data/sects.js`、`systems/sects.js`、`systems/sect-services.js`、`systems/sect-eligibility.js`、`systems/golden-inheritance.js` | `index.js` 宗门页、`ui/map.js` 拜访 |
