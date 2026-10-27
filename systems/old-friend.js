@@ -22,7 +22,7 @@ export function oldFriendChoiceReason(save,choice){const q=oldFriendState(save),
  if(choice==='private'&&!f.token)return '需要师父的信物';
  if(choice==='broker'&&save.player.spiritStones<3)return '需要 3 灵石';
  if(choice==='pay'&&save.player.spiritStones<5)return '需要 5 灵石';
- if(choice==='talisman'&&!save.inventory.some(e=>e.itemId==='guard-talisman'))return '需要一张护身符';
+ if(choice==='talisman'&&!save.inventory.some(e=>['old-friend-ward','guard-talisman'].includes(e.itemId)))return '需要一张护身符';
  if(choice==='custody'&&!f.guarantee)return '需要师父出具担保';
  return '';
 }
@@ -45,8 +45,8 @@ export function chooseOldFriend(save,id,step,choice,context,now=Date.now()){
  const f=q.flags;f.trust??=0;
  if(choice==='broker')save.player.spiritStones=Math.round((save.player.spiritStones-3)*100)/100;
  if(choice==='pay')save.player.spiritStones=Math.round((save.player.spiritStones-5)*100)/100;
- if(choice==='bring')addItem(save,'guard-talisman');
- if(choice==='talisman'){const e=save.inventory.find(e=>e.itemId==='guard-talisman');if(e.quantity>1)e.quantity--;else save.inventory=save.inventory.filter(x=>x!==e)}
+ if(choice==='bring')addItem(save,'old-friend-ward');
+ if(choice==='talisman'){const e=save.inventory.find(e=>e.itemId==='old-friend-ward')||save.inventory.find(e=>e.itemId==='guard-talisman');if(e.quantity>1)e.quantity--;else save.inventory=save.inventory.filter(x=>x!==e)}
  if(choice==='listen'){f.token=true;f.trust++}if(choice==='judge')f.repair=true;
  if(['public','broker'].includes(choice))f.pursuit=true;
  if(choice==='private')f.trust++;

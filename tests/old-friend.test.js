@@ -88,3 +88,11 @@ test('report CG is available only at master and becomes readable after submissio
  document.querySelector('[data-old-friend-report]').click();await new Promise(r=>setImmediate(r));assert.match(document.body.textContent,/灯下有人/);assert.equal(document.querySelector('[data-old-friend-report]'),null);
  showMasterTeaching(api,()=>{});assert.match(document.querySelector('[data-old-friend]').textContent,/重读/);
 });
+test('master quest ward is locked and consumed by story before ordinary locked talismans',()=>{
+ const s=make();startOldFriend(s);const q=s.oldFriend;chooseOldFriend(s,q.id,0,'bring','master');
+ const ward=s.inventory.find(e=>e.itemId==='old-friend-ward');assert.equal(ward.locked,true);
+ const guard=s.inventory.find(e=>e.itemId==='guard-talisman');guard.locked=true;const count=guard.quantity;
+ q.step=3;q.phase='ready';chooseOldFriend(s,q.id,3,'talisman','foundation');
+ assert.ok(!s.inventory.some(e=>e.itemId==='old-friend-ward'));assert.equal(guard.quantity,count);
+ q.step=3;q.phase='ready';chooseOldFriend(s,q.id,3,'talisman','foundation');assert.equal(guard.quantity,count-1);
+});

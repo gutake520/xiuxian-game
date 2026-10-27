@@ -43,6 +43,7 @@ export function migrateSave(save,now=Date.now()){
  }
  if(!Number.isFinite(p.spiritStones))p.spiritStones=INITIAL_STONES;
  save.inventory=Array.isArray(save.inventory)?save.inventory:[];
+ for(const entry of save.inventory)if(ITEMS[entry.itemId]?.storyOnly)entry.locked=true;
  save.bagCapacity=Number.isSafeInteger(save.bagCapacity)?Math.max(INITIAL_BAG_SIZE,save.bagCapacity):INITIAL_BAG_SIZE;
  save.equipment??={weapon:null,armor:null};
  for(const slot of ['weapon','armor','shoes','accessoryVital','accessoryFate'])save.equipment[slot]??=null;

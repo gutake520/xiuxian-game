@@ -10,6 +10,7 @@ export function setItemLocked(save,uid,locked){
  if(save.battle)throw new Error('请先结束战斗。');
  const entry=save.inventory.find(e=>e.uid===uid);
  if(!entry||typeof locked!=='boolean')throw new Error('物品不存在或锁定状态无效。');
+ if(ITEMS[entry.itemId]?.storyOnly)throw new Error('剧情物品自动上锁，只能在对应剧情中使用。');
  entry.locked=locked;
  return locked?'物品已上锁，不能出售、丢弃或赠礼。':'物品已解锁。';
 }
@@ -26,9 +27,9 @@ export function addItem(save,id,quantity=1){
  const item=ITEMS[id];if(!item)throw new Error('物品不存在。');
  if(!Number.isSafeInteger(quantity)||quantity<1)throw new Error('物品数量无效。');
  if(item.kind==='manual'&&!item.repeatable&&ownsTechnique(save,item.methodId))return false;
- if(item.stackable){const stack=save.inventory.find(entry=>entry.itemId===id);if(stack){stack.quantity=(stack.quantity||1)+quantity;return true}}
+ if(item.stackable){const stack=save.inventory.find(entry=>entry.itemId===id);if(stack){if(item.storyOnly)stack.locked=true;stack.quantity=(stack.quantity||1)+quantity;return true}}
  if(save.inventory.length>=save.bagCapacity)throw new Error('储物格已满，暂时无法收下物品。');
- save.itemSerial=(save.itemSerial||0)+1;save.inventory.push({uid:'item-'+save.itemSerial,itemId:id,quantity,...(item.kind==='equipment'?{durability:item.maxDurability??DURABILITY_MAX}:['crafted-binding-array','foundation-crafted-array','golden-crafted-array'].includes(id)?{usesLeft:6}:{})});return true;
+ save.itemSerial=(save.itemSerial||0)+1;save.inventory.push({uid:'item-'+save.itemSerial,itemId:id,quantity,...(item.storyOnly?{locked:true}:{}),...(item.kind==='equipment'?{durability:item.maxDurability??DURABILITY_MAX}:['crafted-binding-array','foundation-crafted-array','golden-crafted-array'].includes(id)?{usesLeft:6}:{})});return true;
 }
 export function purchase(save,id,sectDiscount=false){
  const item=ITEMS[id];if(!item)throw new Error('商品不存在。');

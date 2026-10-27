@@ -28,6 +28,7 @@ export const ITEMS={
  'mixed-pill':{id:'mixed-pill',name:'养元丹',price:3.5,kind:'pill',stackable:true,hp:7,mp:3,glyph:'丹',description:'恢复 7 点生命与 3 点法力。'},
  'qi-pill':{id:'qi-pill',name:'聚气丹',price:5,kind:'pill',stackable:true,glyph:'丹',description:'服用当天的挂机上限增加半小时；当天不可叠加。'},
  'attack-talisman':{id:'attack-talisman',name:'攻击符',price:2.5,kind:'talisman',stackable:true,glyph:'符',description:'战斗中额外造成 2 点伤害，每轮限一张。'},
+ 'old-friend-ward':{id:'old-friend-ward',name:'师门护身符',kind:'quest',storyOnly:true,stackable:true,glyph:'符',description:'师父为故人之子委托所赠。剧情专用，自动上锁，仅能在该支线中使用。'},
  'guard-talisman':{id:'guard-talisman',name:'护身符',price:2.5,kind:'talisman',stackable:true,glyph:'符',description:'免疫下一次受到的伤害，每轮限一张。'},
  'binding-array':{id:'binding-array',name:'定身阵盘',price:3,kind:'array',stackable:true,glyph:'阵',description:'使小妖下一轮无法行动。'},
  'crafted-binding-array':{id:'crafted-binding-array',name:'自制定身阵盘',kind:'array',glyph:'阵',description:'玄机门自制阵盘，制作消耗 20 个矿石，可发动六次。耗尽后保留损坏的阵盘。'},

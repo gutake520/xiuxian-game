@@ -78,6 +78,8 @@
 - `systems/companion-memories.js`、`ui/companion-memories.js`：根据已记录状态回看 CG，不补造未经历剧情、不重新执行奖励。
 - `data/titles.js`、`systems/titles.js`、`ui/titles.js`：称号与有效资质；加成不写入基础资质，入宗及燕停云最终选择在提交时复核。
 
+剧情专用物品由 `data/items.js` 的 `storyOnly` 标记，获得与迁移时自动上锁，不提供手动解锁及普通物品操作；仅由对应剧情消费。师门护身符在故人之子中优先消耗，普通护身符也可主动用于该剧情。
+
 ## 新手与维护
 
 - `data/newcomer.js` 定义十一项任务；`systems/newcomer.js` 管理完成标记、奖励及境界补偿；`ui/newcomer.js` 与 `styles/newcomer.css` 管理顶部入口。

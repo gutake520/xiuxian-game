@@ -44,3 +44,16 @@ test('item detail locks/unlocks, restores buttons on failure, excludes locks fro
  await click('[data-cancel-sale]');showSell(api);assert.equal(document.querySelector(`[data-material="${entries.ore.uid}"]`),null);
  api.closeFeature();renderInventory(api);await click(`[data-item="${entries.ore.uid}"]`);await click('[data-item-lock]');assert.equal(entries.ore.locked,false);assert.ok(document.querySelector('[data-stack-sale]'));
 });
+test('story items auto-lock, cannot unlock or use normal actions, and survive reload',async t=>{
+ const {s}=make();addItem(s,'old-friend-ward');const ward=s.inventory.at(-1);
+ assert.equal(ward.locked,true);assert.equal(saleUnitPrice(s,ward),null);
+ for(const fn of [()=>setItemLocked(s,ward.uid,false),()=>sellExtra(s,ward.uid),()=>discardJunk(s,ward.uid),()=>equipItem(s,ward.uid),()=>usePill(s,ward.uid)]){
+  const before=structuredClone(s);assert.throws(fn);assert.deepEqual(s,before);
+ }
+ assert.ok(!giftableEntries(s).some(e=>e.uid===ward.uid));
+ ward.locked=false;const restored=migrateSave(JSON.parse(JSON.stringify(s)));assert.equal(restored.inventory.at(-1).locked,true);
+ const previous=globalThis.document,{document,Event}=parseHTML('<main id="xg-panel"><div id="xg-content"></div></main>');globalThis.document=document;t.after(()=>globalThis.document=previous);
+ const api={getSave:()=>restored,activate:()=>{},closeFeature:()=>document.querySelector('#xg-feature-sheet')?.remove(),actions:{mutate:async fn=>({result:fn(restored)})}};
+ renderInventory(api);document.querySelector(`[data-item="${ward.uid}"]`).dispatchEvent(new Event('click'));
+ assert.equal(document.querySelector('[data-item-lock]'),null);assert.equal(document.querySelector('[data-use]'),null);assert.match(document.querySelector('[data-body]').textContent,/剧情物品/);
+});
