@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {indexedDB} from 'fake-indexeddb';
 import {parseHTML} from 'linkedom';
 import {STALL_STORIES} from '../data/stall-sitting.js';
-import {maybeFindStallSitting,playStallSitting,stallSittingProgress} from '../systems/stall-sitting.js';
+import {maybeFindStallSitting,playStallSitting,stallSittingProgress,availableStallChoices} from '../systems/stall-sitting.js';
 import {takeStroll,strollEncounterCount} from '../systems/stroll.js';
 import {migrateSave} from '../storage/migrations.js';
 import {writeSave,readSave,updateSave} from '../storage/saves.js';
@@ -31,8 +31,9 @@ test('all thirty outcomes pay exactly their authored amount without removing pla
  for(let index=0;index<10;index++)for(const c of STALL_STORIES[index].choices){
   const s=make();s.stallSittingProgress=index;s.inventory=[{uid:'keepsake',itemId:'guard-talisman',quantity:1}];const inventory=structuredClone(s.inventory);
   maybeFindStallSitting(s,()=>0);const id=s.stallSitting.id;
+  if(c.requiresInspection)playStallSitting(s,id,'inspect');
   playStallSitting(s,id,'choose',c.id);assert.equal(s.player.spiritStones,22+c.bonus);assert.deepEqual(s.inventory,inventory);
-  assert.equal(s.stallSitting.text,c.result);assert.equal(stallSittingProgress(s),index+1);assert.equal(s.stallSittingHistory.length,1);
+  assert.ok(s.stallSitting.text.startsWith(c.result));assert.equal(stallSittingProgress(s),index+1);assert.equal(s.stallSittingHistory.length,1);
   const done=structuredClone(s);assert.throws(()=>playStallSitting(s,id,'choose',c.id));assert.deepEqual(s,done);
  }
 });
@@ -72,5 +73,44 @@ test('UI exposes clues, preserves return/scroll, handles save errors, finishes a
  fail=false;s.slot='other';await document.querySelector('[data-sitting-choice="test"]').onclick();assert.equal(s.stallSitting.phase,'choosing');s.slot='sitting';
  await document.querySelector('[data-sitting-choice="test"]').onclick();assert.equal(document.querySelectorAll('[data-sitting-choice]').length,0);assert.equal(document.querySelector('[data-body]').scrollTop,0);assert.match(document.querySelector('.xg-sitting-pay').textContent,/4 灵石/);
  await document.querySelector('[data-sitting-action="dismiss"]').onclick();assert.equal(document.querySelector('[data-stall-sitting]'),null);
- s.stallSittingProgress=9;maybeFindStallSitting(s,()=>0);playStallSitting(s,s.stallSitting.id,'choose','finish');showStallSitting(api,()=>{});assert.match(document.querySelector('.xg-sitting-end').textContent,/不再触发/);document.querySelector('[data-close]').click();
+ s.stallSittingProgress=9;maybeFindStallSitting(s,()=>0);playStallSitting(s,s.stallSitting.id,'inspect');playStallSitting(s,s.stallSitting.id,'choose','finish');showStallSitting(api,()=>{});assert.match(document.querySelector('.xg-sitting-end').textContent,/不再触发/);document.querySelector('[data-close]').click();
+});
+
+test('clue-dependent choices are hidden and rejected before inspection, including pending old saves',()=>{
+ for(let index=0;index<STALL_STORIES.length;index++){
+  const s=make();s.stallSittingProgress=index;maybeFindStallSitting(s,()=>0);
+  delete s.stallSitting.inspected; // Older pending state without an inspection flag.
+  const id=s.stallSitting.id,before=structuredClone(s);
+  assert.ok(availableStallChoices(s.stallSitting).length>=2);
+  for(const c of STALL_STORIES[index].choices.filter(c=>c.requiresInspection)){
+   assert.ok(!availableStallChoices(s.stallSitting).includes(c));
+   assert.throws(()=>playStallSitting(s,id,'choose',c.id),/先仔细查看/);assert.deepEqual(s,before);
+  }
+  playStallSitting(s,id,'inspect');assert.equal(availableStallChoices(s.stallSitting).length,3);
+ }
+});
+test('UI reveals the debt calculation only after inspection and keeps it on reopening',async t=>{
+ const previous=globalThis.document;globalThis.document=parseHTML('<main id="xg-panel"></main>').document;t.after(()=>globalThis.document=previous);
+ let s=make();s.stallSittingProgress=2;maybeFindStallSitting(s,()=>0);
+ const api={getSave:()=>s,actions:{mutate:async fn=>({result:fn(s)})}};
+ showStallSitting(api,()=>{});
+ assert.equal(document.querySelector('[data-sitting-choice="record"]'),null);
+ assert.ok(!document.querySelector('[data-body]').textContent.includes('还欠一枚'));
+ await document.querySelector('[data-sitting-action="inspect"]').onclick();
+ assert.ok(document.querySelector('[data-sitting-choice="record"]'));
+ document.querySelector('[data-close]').click();s=migrateSave(JSON.parse(JSON.stringify(s)));showStallSitting(api,()=>{});
+ await document.querySelector('[data-sitting-choice="record"]').onclick();assert.equal(s.player.spiritStones,24);
+});
+test('farewell reflects the history and a saved ending stays immutable across reloads',()=>{
+ const endings=[];
+ for(const reward of [2,3,4]){
+  const s=make();s.stallSittingProgress=9;s.stallSittingHistory=Array.from({length:9},(_,index)=>({index,reward,choice:'old',inspected:false}));
+  maybeFindStallSitting(s,()=>0);const id=s.stallSitting.id;playStallSitting(s,id,'inspect');playStallSitting(s,id,'choose','finish');
+  const text=s.stallSitting.text;endings.push(text);
+  const loaded=migrateSave(JSON.parse(JSON.stringify(s)));assert.equal(loaded.stallSitting.text,text);
+  assert.throws(()=>playStallSitting(loaded,id,'choose','finish'));assert.equal(loaded.player.spiritStones,24);
+ }
+ assert.equal(new Set(endings).size,3);assert.match(endings[0],/有过差错/);assert.match(endings[2],/肯费心/);
+ const legacy=make();legacy.stallSittingProgress=10;legacy.stallSitting={id:'legacy',index:9,phase:'done',text:'旧版已完成的结局',reward:4};
+ const loaded=migrateSave(JSON.parse(JSON.stringify(legacy)));playStallSitting(loaded,'legacy','dismiss');assert.equal(loaded.player.spiritStones,20);assert.equal(loaded.stallSittingProgress,10);
 });
