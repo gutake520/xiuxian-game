@@ -35,7 +35,11 @@ export function renderInventory(api,selection=null){
  content.querySelectorAll('[data-claim]').forEach(button=>button.onclick=()=>buttonTask(button,async()=>{await api.actions.mutate(s=>claimLoot(s,button.dataset.claim));renderInventory(api)},message));
 }
 export function showShop(api,gearOnly=false,onClose=()=>{api.closeFeature();renderInventory(api)}){
- const sheet=createSheet(gearOnly?'购买装备':'坊市商店',onClose),body=sheet.querySelector('[data-body]');
+ const sheet=createSheet(gearOnly?'购买装备':'坊市商店',event=>{
+  event?.stopPropagation();
+  sheet.remove();
+  onClose();
+ }),body=sheet.querySelector('[data-body]');
  const save=api.getSave();body.innerHTML=`<p>随身灵石：<b data-shop-stones>${format(save.player.spiritStones)}</b></p>${SHOP_ITEMS.filter(id=>(!gearOnly||ITEMS[id].kind==='equipment')&&(!ITEMS[id].minFoundationLevel||isGoldenRealm(save.player)||realmProgress(save.player).index-9>=ITEMS[id].minFoundationLevel)&&itemStageAllowed(save.player,ITEMS[id])).map(id=>{const item=ITEMS[id],owned=item.kind==='manual'&&!item.repeatable&&ownsTechnique(save,item.methodId);return `<article class="xg-feature-card"><h3>${item.name}<small>${item.price} 灵石</small></h3><p>${item.description}</p><button type="button" data-buy="${id}" ${owned?'disabled':''}>${owned?'已拥有':'购买'}</button><p class="xg-feature-message" data-purchase-status role="status" aria-live="polite"></p></article>`}).join('')}`;
  body.querySelectorAll('[data-buy]').forEach(button=>button.onclick=async()=>{
   if(button.disabled)return;
